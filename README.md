@@ -101,4 +101,4 @@ The `.windsurfrules` file contains AI configuration for Windsurf.
 Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
 
 ## License
-This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
+This project is licensed under the **MIT License**.
