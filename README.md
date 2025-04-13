@@ -1,9 +1,11 @@
 # 10x-cards
 
 ## Overview
-10x-cards is an AI-powered flashcard generator designed to simplify the creation and management of educational flashcards. It leverages advanced language models via Openrouter.ai to automatically generate flashcard suggestions from user-provided text, saving time and effort in content creation. 
+
+10x-cards is an AI-powered flashcard generator designed to simplify the creation and management of educational flashcards. It leverages advanced language models via Openrouter.ai to automatically generate flashcard suggestions from user-provided text, saving time and effort in content creation.
 
 ## Table of Contents
+
 - [Tech Stack](#tech-stack)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
@@ -101,4 +103,5 @@ The `.windsurfrules` file contains AI configuration for Windsurf.
 Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
 
 ## License
+
 This project is licensed under the **MIT License**.
