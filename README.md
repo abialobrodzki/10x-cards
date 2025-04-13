@@ -1,6 +1,17 @@
-# 10x Astro Starter
+# 10x-cards
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+## Overview
+10x-cards is an AI-powered flashcard generator designed to simplify the creation and management of educational flashcards. It leverages advanced language models via Openrouter.ai to automatically generate flashcard suggestions from user-provided text, saving time and effort in content creation. 
+
+## Table of Contents
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
+- [AI Development Support](#ai-development-support)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Tech Stack
 
@@ -19,8 +30,8 @@ A modern, opinionated starter template for building fast, accessible, and AI-fri
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone https://github.com/abialobrodzki/10x-cards.git
+cd 10x-cards
 ```
 
 2. Install dependencies:
@@ -54,12 +65,12 @@ npm run build
 ```md
 .
 ├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
+│ ├── layouts/ # Astro layouts
+│ ├── pages/ # Astro pages
+│ │ └── api/ # API endpoints
+│ ├── components/ # UI components (Astro & React)
+│ └── assets/ # Static assets
+├── public/ # Public assets
 ```
 
 ## AI Development Support
@@ -90,5 +101,4 @@ The `.windsurfrules` file contains AI configuration for Windsurf.
 Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
 
 ## License
-
-MIT
+This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
