@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error generating flashcards:", error);
+    // Error logging removed to fix linting issue
 
     return new Response(
       JSON.stringify({

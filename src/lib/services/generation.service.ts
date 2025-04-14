@@ -38,7 +38,6 @@ export async function generateFlashcards(
     .single();
 
   if (generationError) {
-    console.error("Error creating generation record:", generationError);
     throw new Error("Failed to create generation record");
   }
 
@@ -60,7 +59,6 @@ export async function generateFlashcards(
       .single();
 
     if (updateError) {
-      console.error("Error updating generation record:", updateError);
       throw new Error("Failed to update generation record");
     }
 

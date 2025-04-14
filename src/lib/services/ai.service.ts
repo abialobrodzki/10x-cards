@@ -120,9 +120,8 @@ Example response format:
       flashcards,
       model: data.model,
     };
-  } catch (error) {
-    console.error("Error calling OpenRouter API:", error);
-    throw new Error(`Failed to generate flashcards: ${error instanceof Error ? error.message : String(error)}`);
+  } catch {
+    throw new Error("Failed to parse AI-generated flashcards");
   }
 }
 
@@ -158,8 +157,7 @@ function extractFlashcardsFromResponse(responseText: string): Omit<CreateFlashca
     }
 
     throw new Error("Could not extract valid flashcards from AI response");
-  } catch (error) {
-    console.error("Error extracting flashcards from response:", error);
+  } catch {
     throw new Error("Failed to parse AI-generated flashcards");
   }
 }
