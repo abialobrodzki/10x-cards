@@ -128,19 +128,19 @@ export interface FlashcardReviewResponseDto {
 // Common pagination parameters
 export interface PaginationParams {
   page?: number;
-  pageSize?: number;
+  page_size?: number;
 }
 
 // Flashcard Filtering Parameters
 export type FlashcardFilterParams = PaginationParams & {
-  sortBy?: keyof FlashcardDto;
+  sort_by?: keyof FlashcardDto;
   generation_id?: number;
   source?: FlashcardSourceType;
 };
 
 // Generation Filtering Parameters
 export type GenerationFilterParams = PaginationParams & {
-  sortBy?: keyof GenerationDto;
+  sort_by?: keyof GenerationDto;
 };
 
 // Error Log Filtering Parameters
@@ -151,4 +151,27 @@ export type ErrorLogFilterParams = PaginationParams & {
 // Study Session Parameters
 export interface StudySessionParams {
   limit?: number;
+}
+
+// ============= Error Response DTOs =============
+
+// Standardowa odpowiedź błędu walidacji (400 Bad Request)
+export interface ValidationErrorResponseDto {
+  error: string;
+}
+
+// Standardowa odpowiedź błędu wewnętrznego (500 Internal Server Error)
+export interface InternalErrorResponseDto {
+  error: string;
+  details?: string;
+}
+
+// Standardowa odpowiedź błędu typu "Not Found" (404 Not Found)
+export interface NotFoundErrorResponseDto {
+  error: string;
+}
+
+// Standardowa odpowiedź błędu autoryzacji (401 Unauthorized, 403 Forbidden)
+export interface AuthErrorResponseDto {
+  error: string;
 }

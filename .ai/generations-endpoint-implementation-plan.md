@@ -78,7 +78,7 @@ interface OpenRouterResponse {
     flashcards: {
       front: string;
       back: string;
-      source: "ai-full";
+      source: "ai-full"; // Ograniczone tylko do "ai-full", ponieważ fiszki zwracane bezpośrednio po generacji nie mogą być jeszcze edytowane ani utworzone manualnie
     }
     [];
   }

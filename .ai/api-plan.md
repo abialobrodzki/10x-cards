@@ -24,8 +24,8 @@ For endpoints that reference user-specific data, a temporary system-assigned use
   - _Description_: Retrieve a paginated list of flashcards.
   - _Query Parameters_:
     - `page` (number)
-    - `pageSize` (number)
-    - `sortBy` (e.g., created_at)
+    - `page_size` (number)
+    - `sort_by` (e.g., created_at)
     - Optional filters (e.g., by generation_id, source type)
   - _Response_:
     ```json
@@ -114,8 +114,8 @@ These endpoints handle the auto-generation workflow of flashcards using an exter
   - _Description_: Retrieve a paginated list of generation records.
   - _Query Parameters_:
     - `page` (number)
-    - `pageSize` (number)
-    - `sortBy` (e.g., created_at)
+    - `page_size` (number)
+    - `sort_by` (e.g., created_at)
   - _Response_:
     ```json
     { "generations": [ { "id": 1, "generated_count": number, "accepted_unedited_count": number, "accepted_edited_count": number, "created_at": "timestamp", "updated_at": "timestamp", "model": "string", "source_text_hash": "string", "source_text_length": number, "generation_duration": number } ], "total": number }
@@ -164,7 +164,7 @@ These endpoints handle the auto-generation workflow of flashcards using an exter
   - _Description_: Retrieve a list of error logs related to flashcard generation for debugging purposes.
   - _Query Parameters_:
     - `page` (number)
-    - `pageSize` (number)
+    - `page_size` (number)
     - `error_code` (optional filter by error code)
   - _Response_:
     ```json
