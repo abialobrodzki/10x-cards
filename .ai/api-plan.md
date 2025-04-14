@@ -11,7 +11,7 @@
 
 ### 2.1. Authentication Note
 
-**Authentication will be implemented in a later phase of the project.** 
+**Authentication will be implemented in a later phase of the project.**
 
 For the initial MVP implementation, all endpoints will operate without requiring user authentication. This allows for faster development and testing of core functionalities. In future iterations, authentication will be added using Supabase's auth system.
 
@@ -20,171 +20,189 @@ For endpoints that reference user-specific data, a temporary system-assigned use
 ### 2.2. Flashcards Endpoints
 
 - **GET /flashcards**
-  - *Description*: Retrieve a paginated list of flashcards.
-  - *Query Parameters*: 
+
+  - _Description_: Retrieve a paginated list of flashcards.
+  - _Query Parameters_:
     - `page` (number)
     - `pageSize` (number)
     - `sortBy` (e.g., created_at)
     - Optional filters (e.g., by generation_id, source type)
-  - *Response*: 
+  - _Response_:
     ```json
     { "flashcards": [ { "id": 1, "front": "string", "back": "string", "source": "string", "created_at": "timestamp", "updated_at": "timestamp", "generation_id": "number" } ], "total": number }
     ```
-  - *Success Code*: 200 OK
+  - _Success Code_: 200 OK
 
 - **GET /flashcards/{id}**
-  - *Description*: Retrieve details of a specific flashcard.
-  - *Response*: 
+
+  - _Description_: Retrieve details of a specific flashcard.
+  - _Response_:
     ```json
-    { "id": 1, "front": "string", "back": "string", "source": "string", "created_at": "timestamp", "updated_at": "timestamp", "generation_id": "number" }
+    {
+      "id": 1,
+      "front": "string",
+      "back": "string",
+      "source": "string",
+      "created_at": "timestamp",
+      "updated_at": "timestamp",
+      "generation_id": "number"
+    }
     ```
-  - *Success Code*: 200 OK
-  - *Error Codes*: 404 Not Found
+  - _Success Code_: 200 OK
+  - _Error Codes_: 404 Not Found
 
 - **POST /flashcards**
-  - *Description*: Create one or more flashcards manually. This endpoint accepts either a single flashcard object or an array of flashcards, and is used during both manual creation and AI-generated flashcard creation (including both complete and edited flashcards).
-  - *Request Payload*: 
-    - *Single flashcard example*:
+
+  - _Description_: Create one or more flashcards manually. This endpoint accepts either a single flashcard object or an array of flashcards, and is used during both manual creation and AI-generated flashcard creation (including both complete and edited flashcards).
+  - _Request Payload_:
+    - _Single flashcard example_:
     ```json
     { "front": "string", "back": "string", "source": "string", "generation_id": "number (optional)" }
     ```
-    - *Multiple flashcards example*:
+    - _Multiple flashcards example_:
     ```json
-    { "flashcards": [ { "front": "string", "back": "string", "source": "string", "generation_id": "number (optional)" } ] }
+    {
+      "flashcards": [{ "front": "string", "back": "string", "source": "string", "generation_id": "number (optional)" }]
+    }
     ```
-  - *Response*: Created flashcard object or array of flashcard objects with all details.
-  - *Success Code*: 201 Created
-  - *Error Codes*: 400 Bad Request
+  - _Response_: Created flashcard object or array of flashcard objects with all details.
+  - _Success Code_: 201 Created
+  - _Error Codes_: 400 Bad Request
 
 - **PUT /flashcards/{id}** or **PATCH /flashcards/{id}**
-  - *Description*: Update an existing flashcard. Partial updates can be supported with PATCH.
-  - *Request Payload*: Fields to update (e.g., front, back, source).
-  - *Response*: Updated flashcard details.
-  - *Success Code*: 200 OK
-  - *Error Codes*: 400 Bad Request, 404 Not Found
+
+  - _Description_: Update an existing flashcard. Partial updates can be supported with PATCH.
+  - _Request Payload_: Fields to update (e.g., front, back, source).
+  - _Response_: Updated flashcard details.
+  - _Success Code_: 200 OK
+  - _Error Codes_: 400 Bad Request, 404 Not Found
 
 - **DELETE /flashcards/{id}**
-  - *Description*: Delete a flashcard.
-  - *Success Code*: 204 No Content
-  - *Error Codes*: 404 Not Found
+  - _Description_: Delete a flashcard.
+  - _Success Code_: 204 No Content
+  - _Error Codes_: 404 Not Found
 
 ### 2.3. Generations Endpoints
 
 These endpoints handle the auto-generation workflow of flashcards using an external LLM API.
 
 - **POST /generations/generate**
-  - *Description*: Accepts user-provided text (between 1000 and 10000 characters) to trigger automatic flashcard generation. The system automatically selects the AI model used for generation.
-  - *Request Payload*: 
+
+  - _Description_: Accepts user-provided text (between 1000 and 10000 characters) to trigger automatic flashcard generation. The system automatically selects the AI model used for generation.
+  - _Request Payload_:
     ```json
     { "text": "string" }
     ```
-  - *Process*: 
+  - _Process_:
     - Validate text length.
     - Create a new generation record.
     - Initiate an LLM API call to generate flashcard suggestions using the system-selected model.
     - On success, return the list of generated flashcards along with generation metadata.
-  - *Response*: 
+  - _Response_:
     ```json
     {
       "generation": { "id": 1, "generated_count": number, "accepted_unedited_count": number, "accepted_edited_count": number, "created_at": "timestamp", "updated_at": "timestamp", "model": "string" },
       "flashcards": [ { "front": "string", "back": "string", "source": "ai-full" } ]
     }
     ```
-    *Note*: The `model` field is included in the response for informational purposes only.
-  - *Success Code*: 200 OK
-  - *Error Codes*: 400 Bad Request, 500 Internal Server Error
+    _Note_: The `model` field is included in the response for informational purposes only.
+  - _Success Code_: 200 OK
+  - _Error Codes_: 400 Bad Request, 500 Internal Server Error
 
 - **GET /generations**
-  - *Description*: Retrieve a paginated list of generation records.
-  - *Query Parameters*: 
+
+  - _Description_: Retrieve a paginated list of generation records.
+  - _Query Parameters_:
     - `page` (number)
     - `pageSize` (number)
     - `sortBy` (e.g., created_at)
-  - *Response*: 
+  - _Response_:
     ```json
     { "generations": [ { "id": 1, "generated_count": number, "accepted_unedited_count": number, "accepted_edited_count": number, "created_at": "timestamp", "updated_at": "timestamp", "model": "string", "source_text_hash": "string", "source_text_length": number, "generation_duration": number } ], "total": number }
     ```
-  - *Success Code*: 200 OK
+  - _Success Code_: 200 OK
 
 - **GET /generations/{id}**
-  - *Description*: Get details for a specific generation record, optionally including associated flashcards.
-  - *Query Parameters*: 
+
+  - _Description_: Get details for a specific generation record, optionally including associated flashcards.
+  - _Query Parameters_:
     - `include_flashcards` (boolean, default: false) - Whether to include associated flashcards in the response
-  - *Response*: 
+  - _Response_:
     ```json
-    { 
+    {
       "generation": { "id": 1, "generated_count": number, "accepted_unedited_count": number, "accepted_edited_count": number, "created_at": "timestamp", "updated_at": "timestamp", "model": "string", "source_text_hash": "string", "source_text_length": number, "generation_duration": number },
       "flashcards": [ { "id": 1, "front": "string", "back": "string", "source": "string", "created_at": "timestamp", "updated_at": "timestamp" } ]
     }
     ```
-  - *Success Code*: 200 OK
-  - *Error Codes*: 404 Not Found
+  - _Success Code_: 200 OK
+  - _Error Codes_: 404 Not Found
 
 - **POST /generations/{id}/accept-flashcards**
-  - *Description*: Accept and store AI-generated flashcards, either as presented or after editing.
-  - *Request Payload*: 
+  - _Description_: Accept and store AI-generated flashcards, either as presented or after editing.
+  - _Request Payload_:
     ```json
-    { 
+    {
       "flashcards": [
         { "front": "string", "back": "string", "source": "ai-full" },
         { "front": "string", "back": "string", "source": "ai-edited" }
       ]
     }
     ```
-  - *Response*: 
+  - _Response_:
     ```json
     {
       "generation": { "id": 1, "accepted_unedited_count": number, "accepted_edited_count": number, "updated_at": "timestamp" },
       "flashcards": [ { "id": 1, "front": "string", "back": "string", "source": "string", "created_at": "timestamp" } ]
     }
     ```
-  - *Success Code*: 201 Created
-  - *Error Codes*: 400 Bad Request, 404 Not Found
+  - _Success Code_: 201 Created
+  - _Error Codes_: 400 Bad Request, 404 Not Found
 
 ### 2.4. Generation Error Logs Endpoints
 
 - **GET /generation-error-logs**
-  - *Description*: Retrieve a list of error logs related to flashcard generation for debugging purposes.
-  - *Query Parameters*: 
+  - _Description_: Retrieve a list of error logs related to flashcard generation for debugging purposes.
+  - _Query Parameters_:
     - `page` (number)
-    - `pageSize` (number) 
+    - `pageSize` (number)
     - `error_code` (optional filter by error code)
-  - *Response*: 
+  - _Response_:
     ```json
     { "logs": [ { "id": 1, "error_code": "string", "error_message": "string", "created_at": "timestamp", "model": "string", "source_text_hash": "string", "source_text_length": number } ], "total": number }
     ```
-  - *Success Code*: 200 OK
+  - _Success Code_: 200 OK
 
 ### 2.5. Study Session Endpoints
 
 These endpoints support the spaced repetition learning algorithm integration as mentioned in the PRD.
 
 - **GET /study-session**
-  - *Description*: Retrieve flashcards that are scheduled for a study session based on a spaced repetition algorithm. The system uses an external ready-made spaced repetition algorithm as specified in the PRD.
-  - *Query Parameters*:
+
+  - _Description_: Retrieve flashcards that are scheduled for a study session based on a spaced repetition algorithm. The system uses an external ready-made spaced repetition algorithm as specified in the PRD.
+  - _Query Parameters_:
     - `limit` (number) - Number of flashcards to retrieve for the session (default: 20)
-  - *Response*: 
+  - _Response_:
     ```json
-    { "flashcards": [ { "id": 1, "front": "string", "back": "string", "source": "string", "next_review": "timestamp" } ] }
+    { "flashcards": [{ "id": 1, "front": "string", "back": "string", "source": "string", "next_review": "timestamp" }] }
     ```
-  - *Success Code*: 200 OK
+  - _Success Code_: 200 OK
 
 - **POST /study-session/review**
-  - *Description*: Submit a review result for a flashcard after studying it, updating its scheduling based on the spaced repetition algorithm.
-  - *Request Payload*: 
+  - _Description_: Submit a review result for a flashcard after studying it, updating its scheduling based on the spaced repetition algorithm.
+  - _Request Payload_:
     ```json
     { "flashcard_id": 1, "quality": number }
     ```
-    *Note*: The quality parameter should be an integer from 0-5 indicating how well the user remembered the flashcard (0=failed, 5=perfect recall), following the selected spaced repetition algorithm's rating scale.
-  - *Response*: 
+    _Note_: The quality parameter should be an integer from 0-5 indicating how well the user remembered the flashcard (0=failed, 5=perfect recall), following the selected spaced repetition algorithm's rating scale.
+  - _Response_:
     ```json
-    { 
-      "flashcard_id": 1, 
-      "next_review": "timestamp" 
+    {
+      "flashcard_id": 1,
+      "next_review": "timestamp"
     }
     ```
-  - *Success Code*: 200 OK
-  - *Error Codes*: 400 Bad Request, 404 Not Found
+  - _Success Code_: 200 OK
+  - _Error Codes_: 400 Bad Request, 404 Not Found
 
 ## 3. Authorization
 
@@ -199,6 +217,7 @@ For the initial MVP implementation, the system will operate without user-specifi
 ## 4. Validation and Business Logic
 
 - **Input Validation**:
+
   - Flashcards: Ensure `front` and `back` are non-null strings with a length between 100 and 500 characters, and `source` is a non-null string whose value is restricted to one of the allowed types: 'ai-full', 'ai-edited', or 'manual'.
   - Generation: Validate that the provided text is within the 1000 to 10000 character range.
   - Study Session Review: The quality rating must be an integer between 0 and 5.
