@@ -3,12 +3,14 @@
 ## 1. Tabele
 
 ### 1.1. Tabela: auth.users
+
 - **id**: UUID, klucz główny
 - Tabela zarządzana przez system autoryzacji
 
 ---
 
 ### 1.2. Tabela: flashcards
+
 - **id**: INT8, klucz główny, sekwencja
 - **front**: VARCHAR, nie NULL
 - **back**: VARCHAR, nie NULL
@@ -19,23 +21,28 @@
 - **user_id**: UUID, nie NULL, klucz obcy odnoszący się do auth.users(id)
 
 **Relacje:**
+
 - Każdy rekord w flashcards należy do jednego użytkownika (auth.users), relacja jeden-do-wielu.
 - Opcjonalna relacja do konkretnej generacji (generations), relacja jeden-do-wielu.
 
 **Indeksy:**
+
 - Indeks na kolumnie user_id
 - Indeks na kolumnie created_at
 - Indeks na kolumnie generation_id
 
 **Trigery:**
+
 - Trigger typu BEFORE UPDATE do automatycznej aktualizacji pola updated_at
 
 **Row Level Security (RLS):**
+
 - Włączone zabezpieczenie RLS, z polityką umożliwiającą dostęp do wierszy tylko użytkownikowi, którego id odpowiada wartości w kolumnie user_id.
 
 ---
 
 ### 1.3. Tabela: generations
+
 - **id**: INT8, klucz główny, sekwencja
 - **user_id**: UUID, nie NULL, klucz obcy odnoszący się do auth.users(id)
 - **model**: VARCHAR, nie NULL
@@ -49,10 +56,12 @@
 - **updated_at**: TIMESTAMPTZ, nie NULL, domyślna wartość: now()
 
 **Relacje:**
+
 - Każdy rekord w generations jest powiązany z jednym użytkownikiem (auth.users), relacja jeden-do-wielu.
 - Jedna generacja może być źródłem wielu rekordów, ale każdy rekord należy tylko do jednego użytkownika.
 
 **Indeksy:**
+
 - Indeks na kolumnie user_id
 - Indeks na kolumnie created_at
 - Indeks na kolumnie source_text_hash
@@ -60,6 +69,7 @@
 ---
 
 ### 1.4. Tabela: generation_error_logs
+
 - **id**: INT8, klucz główny, sekwencja
 - **user_id**: UUID, nie NULL, klucz obcy odnoszący się do auth.users(id)
 - **model**: VARCHAR, nie NULL
@@ -70,9 +80,11 @@
 - **created_at**: TIMESTAMPTZ, nie NULL, domyślna wartość: now()
 
 **Relacje:**
+
 - Każdy rekord w generation_error_logs jest powiązany z jednym użytkownikiem (auth.users), relacja jeden-do-wielu.
 
 **Indeksy:**
+
 - Indeks na kolumnie user_id
 - Indeks na kolumnie created_at
 - Indeks na kolumnie error_code
@@ -99,8 +111,10 @@
 ## 4. Zasady PostgreSQL (RLS & Trigery)
 
 **Row Level Security (RLS):**
+
 - W tabelach flashcards, generations oraz generation_error_logs włączono RLS.
 - Polityka: dostęp do wiersza mają tylko użytkownicy, których id odpowiada wartości w kolumnie user_id.
 
 **Trigery:**
-- Trigery wykonujące automatyczną aktualizację pola updated_at przy każdej modyfikacji rekordów w tabelach flashcards i generations. 
+
+- Trigery wykonujące automatyczną aktualizację pola updated_at przy każdej modyfikacji rekordów w tabelach flashcards i generations.
