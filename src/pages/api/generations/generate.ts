@@ -16,14 +16,21 @@ const generateFlashcardsSchema = z.object({
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // console.log("Received generation request");
+
     // No authentication needed for now, using DEFAULT_USER_ID
     const userId = DEFAULT_USER_ID;
+    // console.log("Using user ID:", userId);
 
     // Validate the request body
     const body = (await request.json()) as GenerateFlashcardsRequestDto;
+    // console.log("Request body:", body);
+
     const result = generateFlashcardsSchema.safeParse(body);
+    // console.log("Validation result:", result);
 
     if (!result.success) {
+      // console.log("Validation failed:", result.error.errors[0].message);
       return new Response(
         JSON.stringify({
           error: result.error.errors[0].message,
@@ -36,14 +43,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Process the generation request
+    // console.log("Starting flashcards generation...");
     const response = await generateFlashcards(locals.supabase, userId, result.data.text);
+    // console.log("Generation completed:", response);
 
     return new Response(JSON.stringify(response), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    // Error logging removed to fix linting issue
+    // console.error("Error in generate endpoint:", error);
 
     return new Response(
       JSON.stringify({

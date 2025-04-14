@@ -16,11 +16,15 @@ export async function generateFlashcards(
   userId: string,
   text: string
 ): Promise<GenerationWithFlashcardsResponseDto> {
+  //   console.log("Starting flashcards generation...");
+
   // 1. Create hash of the source text (using MD5 as requested)
   const sourceTextHash = crypto.createHash("md5").update(text).digest("hex");
+  //   console.log("Generated hash:", sourceTextHash);
 
   // 2. Create initial generation record
   const startTime = Date.now();
+  //   console.log("Creating initial generation record...");
 
   const { data: generation, error: generationError } = await supabase
     .from("generations")
@@ -38,15 +42,21 @@ export async function generateFlashcards(
     .single();
 
   if (generationError) {
+    // console.error("Error creating generation record:", generationError);
     throw new Error("Failed to create generation record");
   }
 
+  //   console.log("Generation record created:", generation);
+
   try {
     // 3. Generate flashcards using mock AI service
+    // console.log("Generating flashcards with AI...");
     const { flashcards, model } = await generateFlashcardsWithAI(text);
     const generationDuration = Date.now() - startTime;
+    // console.log("Flashcards generated:", flashcards);
 
     // 4. Update generation record with results
+    // console.log("Updating generation record...");
     const { data: updatedGeneration, error: updateError } = await supabase
       .from("generations")
       .update({
@@ -59,8 +69,11 @@ export async function generateFlashcards(
       .single();
 
     if (updateError) {
+      // console.error("Error updating generation record:", updateError);
       throw new Error("Failed to update generation record");
     }
+
+    //   console.log("Generation record updated:", updatedGeneration);
 
     // 5. Return response with generation data and flashcards
     return {
@@ -80,6 +93,7 @@ export async function generateFlashcards(
       })),
     };
   } catch (error) {
+    // console.error("Error in generation process:", error);
     // Log the error for generation
     await supabase.from("generation_error_logs").insert({
       user_id: userId,
