@@ -2,7 +2,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import type { GenerationWithFlashcardsResponseDto, CreateFlashcardDto } from "../../types";
 import { generateFlashcardsWithAI } from "./ai-mock.service";
+import { createFlashcardsService } from "./flashcard.service";
 import crypto from "crypto";
+
+function stringifyError(err: unknown): string {
+  if (typeof err === "object" && err !== null) {
+    const errorObj = err as Record<string, unknown>;
+    return Object.keys(errorObj)
+      .map((key) => key + ": " + errorObj[key])
+      .join(", ");
+  }
+  return String(err);
+}
 
 /**
  * Generates flashcards based on provided text using AI
@@ -43,7 +54,7 @@ export async function generateFlashcards(
 
   if (generationError) {
     // console.error("Error creating generation record:", generationError);
-    throw new Error("Failed to create generation record");
+    throw new Error("Failed to create generation record: " + stringifyError(generationError));
   }
 
   //   console.log("Generation record created:", generation);
@@ -70,12 +81,26 @@ export async function generateFlashcards(
 
     if (updateError) {
       // console.error("Error updating generation record:", updateError);
-      throw new Error("Failed to update generation record");
+      throw new Error("Failed to update generation record: " + stringifyError(updateError));
     }
 
     //   console.log("Generation record updated:", updatedGeneration);
 
-    // 5. Return response with generation data and flashcards
+    // 5. Insert generated flashcards into flashcards table
+    const cardsToInsert: CreateFlashcardDto[] = flashcards.map((card: Omit<CreateFlashcardDto, "generation_id">) => ({
+      front: card.front,
+      back: card.back,
+      source: "ai-full" as const,
+      generation_id: updatedGeneration.id,
+    }));
+    const insertedFlashcards = await createFlashcardsService(supabase, userId, { flashcards: cardsToInsert });
+
+    const mappedFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = insertedFlashcards.map((card) => ({
+      front: card.front,
+      back: card.back,
+      source: "ai-full" as const,
+    }));
+
     return {
       generation: {
         id: updatedGeneration.id,
@@ -86,25 +111,20 @@ export async function generateFlashcards(
         updated_at: updatedGeneration.updated_at,
         model: updatedGeneration.model,
       },
-      flashcards: flashcards.map((card: Omit<CreateFlashcardDto, "generation_id">) => ({
-        front: card.front,
-        back: card.back,
-        source: "ai-full" as const,
-      })),
+      flashcards: mappedFlashcards,
     };
   } catch (error) {
-    // console.error("Error in generation process:", error);
     // Log the error for generation
     await supabase.from("generation_error_logs").insert({
       user_id: userId,
       generation_id: generation.id,
       model: "unknown", // Will be updated if known
       error_code: error instanceof Error ? error.name : "UNKNOWN_ERROR",
-      error_message: error instanceof Error ? error.message : String(error),
+      error_message: error instanceof Error ? error.message : stringifyError(error),
       source_text_hash: sourceTextHash,
       source_text_length: text.length,
     });
 
-    throw error;
+    throw new Error(error instanceof Error ? error.message : stringifyError(error));
   }
 }
