@@ -1,12 +1,15 @@
 # Plan implementacji widoku zarządzania fiszkami
 
 ## 1. Przegląd
+
 Widok zarządzania fiszkami umożliwia użytkownikom przeglądanie, tworzenie, edytowanie oraz usuwanie fiszek edukacyjnych. Jest to kluczowy element aplikacji 10x-cards, pozwalający na efektywne zarządzanie materiałami do nauki.
 
 ## 2. Routing widoku
+
 Widok powinien być dostępny pod ścieżką `/flashcards`.
 
 ## 3. Struktura komponentów
+
 ```
 FlashcardsPage
 ├── FlashcardFilterBar
@@ -23,6 +26,7 @@ FlashcardsPage
 ## 4. Szczegóły komponentów
 
 ### FlashcardsPage
+
 - Opis komponentu: Główny komponent widoku zarządzania fiszkami, który zarządza całym stanem i logiką widoku.
 - Główne elementy: Container, nagłówek strony, komponenty filtrów, lista fiszek, paginacja, modalne okna.
 - Obsługiwane interakcje: Inicjalizacja ładowania fiszek, obsługa stanu modalnych okien.
@@ -31,16 +35,18 @@ FlashcardsPage
 - Propsy: brak (komponent najwyższego poziomu)
 
 ### FlashcardFilterBar
+
 - Opis komponentu: Komponent umożliwiający filtrowanie i sortowanie listy fiszek.
 - Główne elementy: Select do sortowania, select do filtrowania po źródle, input do filtrowania po tekście.
 - Obsługiwane interakcje: Zmiana opcji sortowania, zmiana filtrów, resetowanie filtrów.
 - Obsługiwana walidacja: Poprawność wartości filtrów.
 - Typy: FlashcardFilters
-- Propsy: 
+- Propsy:
   - filters: FlashcardFilters
   - onFilterChange: (filters: Partial<FlashcardFilters>) => void
 
 ### CreateFlashcardButton
+
 - Opis komponentu: Przycisk otwierający modal do tworzenia nowej fiszki.
 - Główne elementy: Button z ikoną dodawania.
 - Obsługiwane interakcje: Kliknięcie (otwarcie modala tworzenia).
@@ -50,6 +56,7 @@ FlashcardsPage
   - onClick: () => void
 
 ### FlashcardsList
+
 - Opis komponentu: Lista wyświetlająca wszystkie fiszki użytkownika.
 - Główne elementy: Container, lista elementów FlashcardItem.
 - Obsługiwane interakcje: Renderowanie listy fiszek.
@@ -62,6 +69,7 @@ FlashcardsPage
   - isLoading: boolean
 
 ### FlashcardItem
+
 - Opis komponentu: Pojedyncza fiszka wyświetlana na liście.
 - Główne elementy: Card z przednią i tylną stroną fiszki, przyciski akcji.
 - Obsługiwane interakcje: Kliknięcie przycisków edycji i usuwania.
@@ -73,6 +81,7 @@ FlashcardsPage
   - onDelete: () => void
 
 ### FlashcardFormModal
+
 - Opis komponentu: Modal z formularzem do tworzenia/edycji fiszki.
 - Główne elementy: Modal, formularz z polami na przód i tył fiszki, przyciski akcji.
 - Obsługiwane interakcje: Wypełnianie formularza, zapisywanie, anulowanie.
@@ -88,6 +97,7 @@ FlashcardsPage
   - isSubmitting: boolean
 
 ### DeleteConfirmationDialog
+
 - Opis komponentu: Dialog potwierdzający usunięcie fiszki.
 - Główne elementy: Dialog, tekst potwierdzenia, przyciski akcji.
 - Obsługiwane interakcje: Potwierdzenie lub anulowanie usunięcia.
@@ -101,6 +111,7 @@ FlashcardsPage
   - flashcardFront: string
 
 ### Pagination
+
 - Opis komponentu: Komponent paginacji listy fiszek.
 - Główne elementy: Przyciski nawigacji, wybór ilości elementów na stronę.
 - Obsługiwane interakcje: Zmiana strony, zmiana ilości elementów na stronę.
@@ -116,6 +127,7 @@ FlashcardsPage
 ## 5. Typy
 
 ### Typy z API (istniejące)
+
 ```typescript
 // Źródło fiszki
 type FlashcardSourceType = "ai-full" | "ai-edited" | "manual";
@@ -159,6 +171,7 @@ interface FlashcardFilterParams {
 ```
 
 ### Nowe typy (do utworzenia)
+
 ```typescript
 // Wartości formularza fiszki
 interface FlashcardFormValues {
@@ -198,22 +211,22 @@ function useFlashcardsManager() {
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Stan filtrów
   const [filters, setFilters] = useState<FlashcardFilters>({
     page: 1,
     page_size: 20,
     sort_by: "created_at",
-    sortOrder: "desc"
+    sortOrder: "desc",
   });
-  
+
   // Stan UI modali
   const [isCreating, setIsCreating] = useState(false);
   const [editingFlashcardId, setEditingFlashcardId] = useState<number | null>(null);
   const [deletingFlashcardId, setDeletingFlashcardId] = useState<number | null>(null);
-  
+
   // Funkcje zarządzające stanem fiszek i wykonujące operacje API...
-  
+
   return {
     flashcards,
     totalCount,
@@ -239,6 +252,7 @@ function useFlashcardsManager() {
 ```
 
 Hook zarządza całym stanem widoku, w tym:
+
 - Pobieraniem, filtrowaniem i paginacją fiszek
 - Tworzeniem, edycją i usuwaniem fiszek
 - Zarządzaniem stanem modali i dialogów
@@ -247,19 +261,20 @@ Hook zarządza całym stanem widoku, w tym:
 ## 7. Integracja API
 
 ### Pobieranie listy fiszek
+
 ```typescript
 async function fetchFlashcards(filters: FlashcardFilters) {
   const params = new URLSearchParams();
-  if (filters.page) params.append('page', filters.page.toString());
-  if (filters.page_size) params.append('page_size', filters.page_size.toString());
-  if (filters.sort_by) params.append('sort_by', filters.sort_by.toString());
-  if (filters.generation_id) params.append('generation_id', filters.generation_id.toString());
-  if (filters.source) params.append('source', filters.source);
+  if (filters.page) params.append("page", filters.page.toString());
+  if (filters.page_size) params.append("page_size", filters.page_size.toString());
+  if (filters.sort_by) params.append("sort_by", filters.sort_by.toString());
+  if (filters.generation_id) params.append("generation_id", filters.generation_id.toString());
+  if (filters.source) params.append("source", filters.source);
 
   try {
     const response = await fetch(`/api/flashcards?${params}`);
-    if (!response.ok) throw new Error('Failed to fetch flashcards');
-    return await response.json() as FlashcardListResponseDto;
+    if (!response.ok) throw new Error("Failed to fetch flashcards");
+    return (await response.json()) as FlashcardListResponseDto;
   } catch (error) {
     throw new Error(`Error fetching flashcards: ${error}`);
   }
@@ -267,16 +282,17 @@ async function fetchFlashcards(filters: FlashcardFilters) {
 ```
 
 ### Tworzenie fiszki
+
 ```typescript
 async function createFlashcard(flashcard: CreateFlashcardDto) {
   try {
-    const response = await fetch('/api/flashcards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(flashcard)
+    const response = await fetch("/api/flashcards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(flashcard),
     });
-    if (!response.ok) throw new Error('Failed to create flashcard');
-    return await response.json() as FlashcardDto;
+    if (!response.ok) throw new Error("Failed to create flashcard");
+    return (await response.json()) as FlashcardDto;
   } catch (error) {
     throw new Error(`Error creating flashcard: ${error}`);
   }
@@ -284,16 +300,17 @@ async function createFlashcard(flashcard: CreateFlashcardDto) {
 ```
 
 ### Aktualizacja fiszki
+
 ```typescript
 async function updateFlashcard(id: number, flashcard: UpdateFlashcardDto) {
   try {
     const response = await fetch(`/api/flashcards/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(flashcard)
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(flashcard),
     });
-    if (!response.ok) throw new Error('Failed to update flashcard');
-    return await response.json() as FlashcardDto;
+    if (!response.ok) throw new Error("Failed to update flashcard");
+    return (await response.json()) as FlashcardDto;
   } catch (error) {
     throw new Error(`Error updating flashcard: ${error}`);
   }
@@ -301,13 +318,14 @@ async function updateFlashcard(id: number, flashcard: UpdateFlashcardDto) {
 ```
 
 ### Usuwanie fiszki
+
 ```typescript
 async function deleteFlashcard(id: number) {
   try {
     const response = await fetch(`/api/flashcards/${id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
-    if (!response.ok) throw new Error('Failed to delete flashcard');
+    if (!response.ok) throw new Error("Failed to delete flashcard");
     return true;
   } catch (error) {
     throw new Error(`Error deleting flashcard: ${error}`);
@@ -318,21 +336,25 @@ async function deleteFlashcard(id: number) {
 ## 8. Interakcje użytkownika
 
 1. **Przeglądanie listy fiszek**
+
    - Użytkownik wchodzi na stronę `/flashcards`
    - System wyświetla paginowaną listę fiszek
    - Użytkownik może przewijać strony za pomocą paginacji
 
 2. **Filtrowanie i sortowanie**
+
    - Użytkownik wybiera opcje filtrowania/sortowania z FlashcardFilterBar
    - System aktualizuje listę fiszek zgodnie z wybranymi filtrami
 
 3. **Tworzenie nowej fiszki**
+
    - Użytkownik klika przycisk "Dodaj fiszkę"
    - System wyświetla modal z pustym formularzem
    - Użytkownik wypełnia pola formularza i klika "Zapisz"
    - System tworzy nową fiszkę, zamyka modal i odświeża listę
 
 4. **Edycja fiszki**
+
    - Użytkownik klika przycisk edycji przy fiszce
    - System wyświetla modal z wypełnionym formularzem
    - Użytkownik modyfikuje pola i klika "Zapisz"
@@ -347,13 +369,16 @@ async function deleteFlashcard(id: number) {
 ## 9. Warunki i walidacja
 
 ### Walidacja formularza fiszki
+
 - **Przód fiszki**:
+
   - Wymagane pole (nie może być puste)
   - Minimum 3 znaki
   - Maksimum 500 znaków
   - Walidacja w czasie rzeczywistym podczas wpisywania
 
 - **Tył fiszki**:
+
   - Wymagane pole (nie może być puste)
   - Minimum 3 znaki
   - Maksimum 500 znaków
@@ -364,11 +389,14 @@ async function deleteFlashcard(id: number) {
   - Zachowanie oryginalnej wartości przy edycji
 
 ### Walidacja parametrów filtrowania
+
 - **Strona**:
+
   - Liczba całkowita dodatnia
   - Domyślnie 1
 
 - **Elementy na stronę**:
+
   - Liczba całkowita dodatnia
   - Maksymalnie 100
   - Domyślnie 20
@@ -380,60 +408,73 @@ async function deleteFlashcard(id: number) {
 ## 10. Obsługa błędów
 
 ### Błędy podczas ładowania danych
+
 - Wyświetlenie komunikatu o błędzie w miejscu listy
 - Przycisk "Spróbuj ponownie" do ponownego załadowania
 
 ### Błędy podczas operacji na fiszkach
+
 - Tworzenie: Wyświetlenie komunikatu o błędzie w modalu, zachowanie wartości formularza
 - Edycja: Wyświetlenie komunikatu o błędzie w modalu, zachowanie wartości formularza
 - Usuwanie: Wyświetlenie komunikatu o błędzie, możliwość ponownej próby
 
 ### Błędy autoryzacji
+
 - Przekierowanie do strony logowania z komunikatem o wygaśnięciu sesji
 
 ### Błędy walidacji
+
 - Wyświetlenie komunikatu błędu pod odpowiednim polem formularza
 - Zablokowanie przycisku "Zapisz" do czasu poprawienia błędów
 
 ## 11. Kroki implementacji
 
 1. **Przygotowanie podstawowej struktury**
+
    - Utworzenie pliku strony w `src/pages/flashcards.astro`
    - Stworzenie podstawowej struktury komponentów React w `src/components`
 
 2. **Implementacja typów**
+
    - Utworzenie nowych typów wymienionych w sekcji "Typy"
 
 3. **Implementacja hooka useFlashcardsManager**
+
    - Implementacja funkcji zarządzających stanem i operacjami API
 
 4. **Implementacja komponentów UI**
+
    - Implementacja FlashcardsPage
    - Implementacja FlashcardFilterBar
    - Implementacja FlashcardsList i FlashcardItem
    - Implementacja komponentu Pagination
 
 5. **Implementacja modali i dialogów**
+
    - Implementacja FlashcardFormModal
    - Implementacja DeleteConfirmationDialog
 
 6. **Integracja z API**
+
    - Implementacja funkcji do komunikacji z endpointami API
 
 7. **Walidacja i obsługa błędów**
+
    - Implementacja walidacji formularza
    - Implementacja obsługi błędów API
 
 8. **Testowanie**
+
    - Testowanie wszystkich funkcjonalności
    - Testowanie walidacji i obsługi błędów
    - Testowanie responsywności i dostępności
 
 9. **Optymalizacja wydajności**
+
    - Optymalizacja renderowania listy
    - Implementacja opóźnionego wyszukiwania (debouncing)
 
 10. **Finalizacja**
     - Dodanie ostatecznych stylów
     - Refaktoryzacja kodu
-    - Dokumentacja komponentów 
+    - Dokumentacja komponentów
