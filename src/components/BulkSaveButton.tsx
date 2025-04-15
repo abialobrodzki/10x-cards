@@ -24,7 +24,7 @@ const BulkSaveButton: React.FC<BulkSaveButtonProps> = ({
   const canSaveAll = !isSaving && totalCount > 0 && generationId !== null;
 
   return (
-    <div className="sticky bottom-4 flex justify-center mt-8 pt-4 border-t">
+    <div className="sticky bottom-4 flex justify-center mt-8">
       <div className="bg-white border rounded-lg shadow-md p-4 flex flex-col sm:flex-row items-center gap-4">
         <div className="text-sm text-gray-600">
           <span className="font-medium">{acceptedCount}</span> z <span className="font-medium">{totalCount}</span>{" "}

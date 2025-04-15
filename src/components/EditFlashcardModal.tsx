@@ -14,6 +14,10 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
   const [back, setBack] = useState("");
   const [frontError, setFrontError] = useState<string | null>(null);
   const [backError, setBackError] = useState<string | null>(null);
+  const [frontCharsCount, setFrontCharsCount] = useState(0);
+  const [backCharsCount, setBackCharsCount] = useState(0);
+
+  const MAX_CHARS = 500; // Maksymalna ilość znaków w polu
 
   useEffect(() => {
     if (flashcard && isOpen) {
@@ -21,6 +25,8 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
       setBack(flashcard.back);
       setFrontError(null);
       setBackError(null);
+      setFrontCharsCount(flashcard.front.length);
+      setBackCharsCount(flashcard.back.length);
     }
   }, [flashcard, isOpen]);
 
@@ -30,6 +36,9 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
     if (!front.trim()) {
       setFrontError("Pole przodu fiszki nie może być puste");
       isValid = false;
+    } else if (front.length > MAX_CHARS) {
+      setFrontError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
+      isValid = false;
     } else {
       setFrontError(null);
     }
@@ -37,11 +46,40 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
     if (!back.trim()) {
       setBackError("Pole tyłu fiszki nie może być puste");
       isValid = false;
+    } else if (back.length > MAX_CHARS) {
+      setBackError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
+      isValid = false;
     } else {
       setBackError(null);
     }
 
     return isValid;
+  };
+
+  const handleFrontChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setFront(text);
+    setFrontCharsCount(text.length);
+    if (text.length > MAX_CHARS) {
+      setFrontError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
+    } else if (!text.trim()) {
+      setFrontError("Pole przodu fiszki nie może być puste");
+    } else {
+      setFrontError(null);
+    }
+  };
+
+  const handleBackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setBack(text);
+    setBackCharsCount(text.length);
+    if (text.length > MAX_CHARS) {
+      setBackError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
+    } else if (!text.trim()) {
+      setBackError("Pole tyłu fiszki nie może być puste");
+    } else {
+      setBackError(null);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,13 +114,18 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="front" className="block text-sm font-medium text-gray-700 mb-1">
-                Przód fiszki
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="front" className="block text-sm font-medium text-gray-700">
+                  Przód fiszki
+                </label>
+                <span className={`text-xs ${frontCharsCount > MAX_CHARS ? "text-red-600" : "text-gray-500"}`}>
+                  {frontCharsCount} / {MAX_CHARS}
+                </span>
+              </div>
               <textarea
                 id="front"
                 value={front}
-                onChange={(e) => setFront(e.target.value)}
+                onChange={handleFrontChange}
                 className={`w-full p-3 border rounded-md min-h-[100px] ${
                   frontError ? "border-red-500" : "border-gray-300"
                 }`}
@@ -91,13 +134,18 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
             </div>
 
             <div>
-              <label htmlFor="back" className="block text-sm font-medium text-gray-700 mb-1">
-                Tył fiszki
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="back" className="block text-sm font-medium text-gray-700">
+                  Tył fiszki
+                </label>
+                <span className={`text-xs ${backCharsCount > MAX_CHARS ? "text-red-600" : "text-gray-500"}`}>
+                  {backCharsCount} / {MAX_CHARS}
+                </span>
+              </div>
               <textarea
                 id="back"
                 value={back}
-                onChange={(e) => setBack(e.target.value)}
+                onChange={handleBackChange}
                 className={`w-full p-3 border rounded-md min-h-[100px] ${
                   backError ? "border-red-500" : "border-gray-300"
                 }`}
@@ -109,7 +157,9 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
               <Button type="button" variant="outline" onClick={onClose}>
                 Anuluj
               </Button>
-              <Button type="submit">Zapisz zmiany</Button>
+              <Button type="submit" disabled={!!frontError || !!backError}>
+                Zapisz zmiany
+              </Button>
             </div>
           </form>
         </div>
