@@ -105,3 +105,35 @@ Please follow the AI guidelines and coding practices defined in the AI configura
 ## License
 
 This project is licensed under the **MIT License**.
+
+## Test - API - manual
+
+**SQL Query - Supabase**
+RLS - disable (now):
+
+```sql
+ALTER TABLE flashcards DISABLE ROW LEVEL SECURITY;
+```
+
+RLS - enable (need auth):
+
+```sql
+ALTER TABLE flashcards ENABLE ROW LEVEL SECURITY;
+```
+
+**Postman curl**
+generate flashcards - POST:
+
+```bash
+curl --location 'http://localhost:3000/api/generations/generate' \
+--header 'Content-Type: application/json' \
+--data '{
+    "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis auctor semper lorem et rhoncus. Aliquam vitae ultricies sapien, eu posuere mauris. Quisque tincidunt placerat nibh, vitae laoreet dui tempor et. Etiam id sapien vel ipsum gravida ullamcorper sit amet in magna. Aliquam mollis vehicula semper. Fusce nec volutpat purus. Vivamus id egestas ex. Maecenas augue lectus, mattis eu auctor id, elementum porttitor sem. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce pellentesque risus in ligula dictum placerat. Morbi in erat leo. Pellentesque dapibus facilisis mi vitae viverra. Phasellus ultrices rhoncus est, ac elementum risus venenatis et. Nam vel faucibus est. Ut vestibulum ullamcorper quam in tristique. Nulla pulvinar ipsum non ligula auctor auctor. Vivamus laoreet metus ac enim hendrerit, nec laoreet est malesuada. Vestibulum rutrum, ipsum ac varius finibus, elit dolor dignissim tellus, nec consequat ex tortor et lorem. Proin massa justo, pulvinar eu venenatis id cras."
+}'
+```
+
+pull flashcards - GET:
+
+```bash
+curl --location 'http://localhost:3000/api/flashcards'
+```
