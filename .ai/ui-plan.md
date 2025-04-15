@@ -100,4 +100,4 @@ Architektura UI projektu 10x-cards opiera się na przejrzystej strukturze widok�
 - **Modal edycji**: Okienko modalne umożliwiające edycję wybranej fiszki z zapisem zmian.
 - **Topbar nawigacyjny**: Komponent z użyciem shadcn/ui, zapewniający intuicyjną nawigację i responsywność.
 - **Komponenty sesji nauki**: Interaktywna karta fiszki z przyciskiem odsłonięcia odpowiedzi i systemem oceny.
-- **Informacyjne komponenty komunikatów błędów**: Wyświetlanie błędów inline przy formularzach lub listach, z wykorzystaniem roli alert i ARIA.
+- **Informacyjne komponenty komunikatów błędów**: Wyświetlanie błędów inline przy formularzach lub listach, z wykorzystaniem roli alert i ARIA(tam, gdzie semantyczny HTML nie wystarcza).
