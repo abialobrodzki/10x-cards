@@ -8,8 +8,6 @@ Widok Generowanie fiszek umożliwia użytkownikowi wprowadzenie tekstu edukacyjn
 
 Widok będzie dostępny pod ścieżką `/generate`.
 
-**Uwaga:** Uwierzytelnianie i autoryzacja zostaną zaimplementowane w późniejszym etapie developmentu. Na potrzeby MVP, widok będzie dostępny bez konieczności logowania.
-
 ## 3. Struktura komponentów
 
 ```
