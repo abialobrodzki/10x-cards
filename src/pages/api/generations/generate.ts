@@ -10,8 +10,8 @@ export const prerender = false;
 const generateFlashcardsSchema = z.object({
   text: z
     .string()
-    .min(1000, "Text must be between 1000 and 10000 characters")
-    .max(10000, "Text must be between 1000 and 10000 characters"),
+    .min(1000, "Tekst jest zbyt krótki. Minimum to 1000 znaków.")
+    .max(10000, "Tekst jest zbyt długi. Maksimum to 10000 znaków."),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
