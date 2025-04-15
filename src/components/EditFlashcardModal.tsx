@@ -122,14 +122,36 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                   {frontCharsCount} / {MAX_CHARS}
                 </span>
               </div>
-              <textarea
-                id="front"
-                value={front}
-                onChange={handleFrontChange}
-                className={`w-full p-3 border rounded-md min-h-[100px] ${
-                  frontError ? "border-red-500" : "border-gray-300"
-                }`}
-              />
+              <div className="relative">
+                <textarea
+                  id="front"
+                  value={front}
+                  onChange={handleFrontChange}
+                  className={`w-full p-3 border rounded-md min-h-[100px] ${
+                    frontError ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {front.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFront("");
+                      setFrontCharsCount(0);
+                      setFrontError(null);
+                    }}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100"
+                    aria-label="Wyczyść pole"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
               {frontError && <p className="mt-1 text-sm text-red-600">{frontError}</p>}
             </div>
 
@@ -142,14 +164,36 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                   {backCharsCount} / {MAX_CHARS}
                 </span>
               </div>
-              <textarea
-                id="back"
-                value={back}
-                onChange={handleBackChange}
-                className={`w-full p-3 border rounded-md min-h-[100px] ${
-                  backError ? "border-red-500" : "border-gray-300"
-                }`}
-              />
+              <div className="relative">
+                <textarea
+                  id="back"
+                  value={back}
+                  onChange={handleBackChange}
+                  className={`w-full p-3 border rounded-md min-h-[100px] ${
+                    backError ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {back.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBack("");
+                      setBackCharsCount(0);
+                      setBackError(null);
+                    }}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100"
+                    aria-label="Wyczyść pole"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
               {backError && <p className="mt-1 text-sm text-red-600">{backError}</p>}
             </div>
 

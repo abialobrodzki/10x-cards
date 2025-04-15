@@ -52,16 +52,35 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
           Wprowadź tekst edukacyjny (min. {MIN_CHARS}, max. {MAX_CHARS} znaków)
         </label>
 
-        <textarea
-          id="inputText"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Wklej tutaj tekst z którego chcesz wygenerować fiszki..."
-          className={`w-full min-h-[200px] p-4 border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary ${
-            textError ? "border-red-500" : "border-gray-300"
-          }`}
-          disabled={isGenerating}
-        />
+        <div className="relative">
+          <textarea
+            id="inputText"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Wklej tutaj tekst z którego chcesz wygenerować fiszki..."
+            className={`w-full min-h-[200px] p-4 border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary ${
+              textError ? "border-red-500" : "border-gray-300"
+            }`}
+            disabled={isGenerating}
+          />
+
+          {text.length > 0 && !isGenerating && (
+            <button
+              type="button"
+              onClick={() => setText("")}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100"
+              aria-label="Wyczyść tekst"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
 
         <div className="flex justify-between items-center">
           <div>{textError && <p className="text-sm text-red-600">{textError}</p>}</div>
