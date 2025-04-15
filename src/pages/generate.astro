@@ -1,11 +1,13 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
 import GenerateView from "../components/GenerateView";
 ---
 
-<Layout title="Generowanie fiszek | 10xCards">
-  <main class="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
-    <h1 class="text-3xl font-bold mb-6">Generowanie fiszek</h1>
-    <GenerateView client:load />
-  </main>
-</Layout>
+<MainLayout title="Generowanie fiszek | 10xCards">
+  <div class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold mb-6">Generowanie fiszek</h1>
+      <GenerateView client:load />
+    </div>
+  </div>
+</MainLayout>

@@ -113,10 +113,38 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
               name="front"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Przód fiszki</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Wpisz treść przodu fiszki..." className="min-h-[100px]" {...field} />
-                  </FormControl>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Przód fiszki</FormLabel>
+                    <span className="text-xs text-muted-foreground">{field.value.length}/500 znaków</span>
+                  </div>
+                  <div className="relative">
+                    <FormControl>
+                      <Textarea placeholder="Wpisz treść przodu fiszki..." className="min-h-[100px]" {...field} />
+                    </FormControl>
+                    {field.value && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-2 h-6 w-6 p-0"
+                        onClick={() => field.onChange("")}
+                      >
+                        <span className="sr-only">Wyczyść pole</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </Button>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -127,10 +155,38 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
               name="back"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tył fiszki</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Wpisz treść tyłu fiszki..." className="min-h-[100px]" {...field} />
-                  </FormControl>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Tył fiszki</FormLabel>
+                    <span className="text-xs text-muted-foreground">{field.value.length}/500 znaków</span>
+                  </div>
+                  <div className="relative">
+                    <FormControl>
+                      <Textarea placeholder="Wpisz treść tyłu fiszki..." className="min-h-[100px]" {...field} />
+                    </FormControl>
+                    {field.value && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-2 h-6 w-6 p-0"
+                        onClick={() => field.onChange("")}
+                      >
+                        <span className="sr-only">Wyczyść pole</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </Button>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
