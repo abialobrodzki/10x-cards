@@ -11,6 +11,7 @@ import {
   createFlashcardService,
   createFlashcardsService,
 } from "../../lib/services/flashcard.service";
+import { DEFAULT_USER_ID } from "../../db/supabase.client";
 
 export const prerender = false;
 
@@ -39,12 +40,13 @@ const FlashcardsSchema = z.object({
 export async function GET({ request, locals }: APIContext) {
   try {
     // Check authorization
-    if (!locals.supabase || !locals.user) {
+    if (!locals.supabase) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
+    const userId = locals.user?.id || DEFAULT_USER_ID;
 
     // Parse and validate query parameters
     const url = new URL(request.url);
@@ -62,7 +64,7 @@ export async function GET({ request, locals }: APIContext) {
 
     // Get flashcards using the service
     const params: FlashcardFilterParams = queryParamsResult.data;
-    const response = await getFlashcardsService(locals.supabase, locals.user.id, params);
+    const response = await getFlashcardsService(locals.supabase, userId, params);
 
     // Return successful response
     return new Response(JSON.stringify(response), {
@@ -82,12 +84,13 @@ export async function GET({ request, locals }: APIContext) {
 export async function POST({ request, locals }: APIContext) {
   try {
     // Check authorization
-    if (!locals.supabase || !locals.user) {
+    if (!locals.supabase) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
+    const userId = locals.user?.id || DEFAULT_USER_ID;
 
     // Parse request body
     const body = await request.json();
@@ -111,7 +114,7 @@ export async function POST({ request, locals }: APIContext) {
 
       // Create multiple flashcards
       const flashcardsDto: CreateFlashcardsDto = validationResult.data;
-      response = await createFlashcardsService(locals.supabase, locals.user.id, flashcardsDto);
+      response = await createFlashcardsService(locals.supabase, userId, flashcardsDto);
     } else {
       // Validate single flashcard
       const validationResult = FlashcardSchema.safeParse(body);
@@ -128,7 +131,7 @@ export async function POST({ request, locals }: APIContext) {
 
       // Create single flashcard
       const flashcardDto: CreateFlashcardDto = validationResult.data;
-      response = await createFlashcardService(locals.supabase, locals.user.id, flashcardDto);
+      response = await createFlashcardService(locals.supabase, userId, flashcardDto);
     }
 
     // Return successful response
