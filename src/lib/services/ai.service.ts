@@ -1,31 +1,9 @@
+import { logger } from "../openrouter.logger";
 import type { CreateFlashcardDto } from "../../types";
 
-// Types for OpenRouter API
-interface OpenRouterRequest {
-  model: string;
-  messages: {
-    role: "system" | "user" | "assistant";
-    content: string;
-  }[];
-  max_tokens: number;
-}
-
-interface OpenRouterResponse {
-  id: string;
-  model: string;
-  choices: {
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
+// Types for OpenRouter API - removed unused interfaces
+// interface OpenRouterRequest { /* ... */ }
+// interface OpenRouterResponse { /* ... */ }
 
 export interface AIGeneratedData {
   flashcards: Omit<CreateFlashcardDto, "generation_id">[];
@@ -33,132 +11,238 @@ export interface AIGeneratedData {
 }
 
 /**
- * Generates flashcards using OpenRouter.ai API
- * @param text Text to generate flashcards from
- * @returns Generated flashcards and model info
+ * Wykrywa prawdopodobny język tekstu na podstawie prostych heurystyk
+ * @param text Tekst do analizy
+ * @returns Kod języka ('pl' dla polskiego, 'en' dla angielskiego, inne dla nieznanych)
  */
-export async function generateFlashcardsWithAI(text: string): Promise<AIGeneratedData> {
-  // Check if we should use the mock API for development/testing
+function detectLanguage(text: string): string {
+  // Próbka tekstu do analizy (pierwsze 500 znaków)
+  const sample = text.substring(0, 500).toLowerCase();
+
+  // Charakterystyczne polskie znaki
+  const polishChars = ["ą", "ć", "ę", "ł", "ń", "ó", "ś", "ź", "ż"];
+  const polishWords = ["jest", "nie", "to", "się", "oraz", "dla", "przez", "jako", "były"];
+
+  // Charakterystyczne angielskie słowa
+  const englishWords = ["the", "is", "are", "and", "for", "with", "this", "that", "have"];
+
+  // Liczenie wystąpień
+  let polishScore = 0;
+  let englishScore = 0;
+
+  // Sprawdź polskie znaki
+  polishChars.forEach((char) => {
+    if (sample.includes(char)) polishScore += 2;
+  });
+
+  // Sprawdź polskie słowa
+  polishWords.forEach((word) => {
+    if (sample.includes(" " + word + " ")) polishScore += 1;
+  });
+
+  // Sprawdź angielskie słowa
+  englishWords.forEach((word) => {
+    if (sample.includes(" " + word + " ")) englishScore += 1;
+  });
+
+  logger.debug(`Wykrywanie języka - wynik: polski=${polishScore}, angielski=${englishScore}`);
+
+  // Decyzja na podstawie wyników
+  if (polishScore > englishScore) return "pl";
+  return "en";
+}
+
+/**
+ * Generates flashcards using OpenRouter.ai API or mock based on env config
+ * @param text Text to generate flashcards from
+ * @param language Optional language code ('pl', 'en') - auto-detected if not provided
+ */
+export async function generateFlashcardsWithAI(text: string, language?: string): Promise<AIGeneratedData> {
+  // Use mock if specified
   if (import.meta.env.USE_AI_MOCK === "true") {
     return generateMockFlashcards(text);
   }
 
-  // Select the model to use
-  const model = "anthropic/claude-3-haiku-20240307";
+  // Wykryj język, jeśli nie został podany
+  const detectedLanguage = language || detectLanguage(text);
+  logger.debug(`Używam języka: ${detectedLanguage}`);
 
-  // Create the system prompt
-  const systemPrompt = `You are an AI assistant specialized in creating educational flashcards from text. Your task is to:
-1. Analyze the provided text and identify key concepts, terms, facts, and relationships.
-2. Create concise and effective flashcards with a clear front (question/concept) and back (answer/explanation).
-3. Format your response as a valid JSON array of flashcard objects with "front" and "back" properties.
-4. Create between 5-20 flashcards depending on the content density.
-5. Ensure each flashcard focuses on a single concept for effective learning.
-6. Aim for clarity, precision, and educational value.
-
-Example response format:
-[
-  {
-    "front": "What is photosynthesis?",
-    "back": "The process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water."
-  },
-  {
-    "front": "What are the primary reactants in photosynthesis?",
-    "back": "Carbon dioxide (CO2) and water (H2O)"
-  }
-]`;
-
-  // Prepare the request to OpenRouter.ai
   const apiKey = import.meta.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    throw new Error("OpenRouter API key is not configured");
+    throw new Error("OPENROUTER_API_KEY is not set in environment");
   }
 
-  const requestData: OpenRouterRequest = {
-    model,
-    messages: [
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ],
-    max_tokens: 4000,
-  };
-
   try {
-    // Call the OpenRouter.ai API
+    logger.debug("Wysyłam zapytanie bezpośrednio do API OpenRouter");
+
+    // Dostosuj instrukcję systemu w zależności od języka
+    let systemInstruction = "";
+
+    if (detectedLanguage === "pl") {
+      systemInstruction =
+        "Twoim zadaniem jest wygenerowanie 5 fiszek w formacie JSON. " +
+        "Zwróć WYŁĄCZNIE tablicę JSON obiektów bez żadnego dodatkowego tekstu przed lub po. " +
+        "Każdy obiekt musi zawierać pola: 'front' (pytanie), 'back' (odpowiedź), 'hint' (podpowiedź), " +
+        "'difficulty' (jedna z wartości: 'easy', 'medium', 'hard') oraz 'tags' (tablica stringów). " +
+        "Wygeneruj 5 różnych fiszek obejmujących różne aspekty tekstu. " +
+        "NIE DODAWAJ żadnych wyjaśnień, znaczników markdown ani bloków kodu przed lub po tablicy JSON. " +
+        "WAŻNE: Pytanie, odpowiedź i podpowiedź muszą być w języku POLSKIM.";
+    } else {
+      systemInstruction =
+        "Your task is to generate 5 flashcards in VALID JSON format. " +
+        "Always return ONLY a JSON ARRAY of flashcard objects with no extra text before or after. " +
+        "Each object must include these fields: 'front' (question), 'back' (answer), 'hint' (helpful tip), " +
+        "'difficulty' (one of: 'easy', 'medium', 'hard'), and 'tags' (array of strings). " +
+        "Generate 5 different flashcards covering different aspects of the text. " +
+        "DO NOT include any explanation text, markdown, or code blocks before or after the JSON array. " +
+        "IMPORTANT: The question, answer, and hint must be in ENGLISH.";
+    }
+
+    // Przygotuj żądanie
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": import.meta.env.PUBLIC_SITE_URL || "https://localhost:4321",
+        "HTTP-Referer": import.meta.env.PUBLIC_SITE_URL || "https://10xcards.app",
       },
-      body: JSON.stringify(requestData),
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout:free",
+        messages: [
+          {
+            role: "system",
+            content: systemInstruction,
+          },
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "FlashcardProposal",
+            strict: true,
+            schema: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  front: { type: "string", description: "The question or prompt on the front of the flashcard" },
+                  back: { type: "string", description: "The answer on the back of the flashcard" },
+                  hint: { type: "string", description: "A helpful hint for the user" },
+                  difficulty: {
+                    type: "string",
+                    enum: ["easy", "medium", "hard"],
+                    description: "The difficulty level of the flashcard",
+                  },
+                  tags: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Tags for categorizing the flashcard",
+                  },
+                },
+                required: ["front", "back", "difficulty", "tags"],
+              },
+            },
+          },
+        },
+      }),
     });
 
+    logger.debug("Status odpowiedzi oferowanego API:", response.status);
+
     if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
+      const errorText = await response.text();
+      logger.error("OpenRouter API error", { status: response.status, errorText });
+      throw new Error(`HTTP error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    const data = (await response.json()) as OpenRouterResponse;
+    const data = await response.json();
+    logger.debug("Otrzymano odpowiedź:", JSON.stringify(data).substring(0, 100) + "...");
 
-    // Extract and parse the response content
+    // Wyciągnij zawartość odpowiedzi
     const content = data.choices[0]?.message?.content;
     if (!content) {
-      throw new Error("No content in AI response");
+      throw new Error("Brak zawartości w odpowiedzi AI");
     }
 
-    // The response should be a JSON array of flashcards
-    const flashcards = extractFlashcardsFromResponse(content);
+    // Parsuj JSON z odpowiedzi, jeśli jest string
+    let flashcardData;
+    if (typeof content === "string") {
+      try {
+        // Szukamy tablicy JSON
+        const jsonMatch = content.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+        if (jsonMatch) {
+          logger.debug("Znaleziono potencjalny blok JSON w odpowiedzi");
+          // Czyścimy potencjalnie problematyczne znaki
+          let jsonString = jsonMatch[0];
+
+          // Debugujemy znalezione dane
+          logger.debug("Surowa treść JSON:", jsonString.substring(0, 50) + "...");
+
+          // Próba parsowania
+          try {
+            flashcardData = JSON.parse(jsonString);
+          } catch (innerError) {
+            logger.error("Błąd podczas parsowania wyodrębnionego JSON:", innerError);
+
+            // Próba uprzątnięcia JSON
+            jsonString = jsonString
+              .replace(/[^\x20-\x7E]/g, "")
+              .replace(/\}\s*,\s*\]/g, "}]")
+              .trim();
+
+            logger.debug("Oczyszczona treść JSON:", jsonString.substring(0, 50) + "...");
+            flashcardData = JSON.parse(jsonString);
+          }
+        } else {
+          logger.error("Nie znaleziono bloku JSON w odpowiedzi:", content.substring(0, 100) + "...");
+          throw new Error("No JSON object found in response");
+        }
+      } catch (e) {
+        logger.error("Error parsing JSON from AI response:", e);
+        logger.error("Odpowiedź zawierała:", content.substring(0, 200) + "...");
+        throw new Error("Failed to parse JSON from AI response");
+      }
+    } else {
+      // Zawartość już jest obiektem JSON
+      flashcardData = content;
+    }
+
+    // Stwórz obiekty fiszek z tablicy
+    const cards: Omit<CreateFlashcardDto, "generation_id">[] = [];
+
+    // Sprawdź czy mamy tablicę fiszek
+    if (Array.isArray(flashcardData)) {
+      // Mapuj każdy element tablicy na fiszkę
+      flashcardData.forEach((item) => {
+        cards.push({
+          front: item.front,
+          back: item.back,
+          source: "ai-full",
+        });
+      });
+      logger.debug(`Wygenerowano ${cards.length} fiszek`);
+    } else {
+      // Jeśli nie jest tablicą, dodaj pojedynczą fiszkę
+      cards.push({
+        front: flashcardData.front,
+        back: flashcardData.back,
+        source: "ai-full",
+      });
+      logger.debug("Wygenerowano 1 fiszkę (nie tablicę)");
+    }
 
     return {
-      flashcards,
-      model: data.model,
+      flashcards: cards,
+      model: data.model || "meta-llama/llama-4-scout:free",
     };
-  } catch {
-    throw new Error("Failed to parse AI-generated flashcards");
-  }
-}
-
-/**
- * Extracts flashcards from AI response text
- * @param responseText Response text from AI
- * @returns Array of flashcard objects
- */
-function extractFlashcardsFromResponse(responseText: string): Omit<CreateFlashcardDto, "generation_id">[] {
-  try {
-    // Try to parse the entire response as JSON
-    const jsonMatch = responseText.match(/\[\s*\{[\s\S]*\}\s*\]/);
-
-    if (jsonMatch) {
-      const parsedData = JSON.parse(jsonMatch[0]);
-
-      // Validate the structure of each flashcard
-      if (Array.isArray(parsedData)) {
-        return parsedData
-          .filter(
-            (card) =>
-              typeof card === "object" &&
-              card !== null &&
-              typeof card.front === "string" &&
-              typeof card.back === "string"
-          )
-          .map((card) => ({
-            front: card.front.trim(),
-            back: card.back.trim(),
-            source: "ai-full" as const,
-          }));
-      }
-    }
-
-    throw new Error("Could not extract valid flashcards from AI response");
-  } catch {
-    throw new Error("Failed to parse AI-generated flashcards");
+  } catch (err) {
+    logger.error("Szczegółowy błąd OpenRouter:", err instanceof Error ? `${err.name}: ${err.message}` : String(err));
+    // Re-throw to preserve message
+    if (err instanceof Error) throw err;
+    throw new Error(String(err));
   }
 }
 
@@ -168,10 +252,8 @@ function extractFlashcardsFromResponse(responseText: string): Omit<CreateFlashca
  * @returns Mock flashcards and model info
  */
 function generateMockFlashcards(text: string): AIGeneratedData {
-  // Create 5 mock flashcards based on text length
   const wordCount = text.split(/\s+/).length;
   const mockFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = [];
-
   for (let i = 1; i <= 5; i++) {
     mockFlashcards.push({
       front: `Mock Flashcard ${i} Front (from text with ${wordCount} words)`,
@@ -179,9 +261,5 @@ function generateMockFlashcards(text: string): AIGeneratedData {
       source: "ai-full" as const,
     });
   }
-
-  return {
-    flashcards: mockFlashcards,
-    model: "mock-model-for-development",
-  };
+  return { flashcards: mockFlashcards, model: "mock-model-for-development" };
 }

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import type { GenerationWithFlashcardsResponseDto, CreateFlashcardDto } from "../../types";
-import { generateFlashcardsWithAI } from "./ai-mock.service";
+import { generateFlashcardsWithAI } from "./ai.service";
 import { createFlashcardsService } from "./flashcard.service";
 import crypto from "crypto";
 
@@ -20,12 +20,14 @@ function stringifyError(err: unknown): string {
  * @param supabase Supabase client instance
  * @param userId User ID for whom to generate flashcards
  * @param text Text to generate flashcards from
+ * @param language Optional language code (e.g. 'pl', 'en')
  * @returns Generated flashcards and generation metadata
  */
 export async function generateFlashcards(
   supabase: SupabaseClient<Database>,
   userId: string,
-  text: string
+  text: string,
+  language?: string
 ): Promise<GenerationWithFlashcardsResponseDto> {
   //   console.log("Starting flashcards generation...");
 
@@ -60,9 +62,9 @@ export async function generateFlashcards(
   //   console.log("Generation record created:", generation);
 
   try {
-    // 3. Generate flashcards using mock AI service
+    // 3. Generate flashcards using AI service
     // console.log("Generating flashcards with AI...");
-    const { flashcards, model } = await generateFlashcardsWithAI(text);
+    const { flashcards, model } = await generateFlashcardsWithAI(text, language);
     const generationDuration = Date.now() - startTime;
     // console.log("Flashcards generated:", flashcards);
 
@@ -117,8 +119,7 @@ export async function generateFlashcards(
     // Log the error for generation
     await supabase.from("generation_error_logs").insert({
       user_id: userId,
-      generation_id: generation.id,
-      model: "unknown", // Will be updated if known
+      model: "unknown",
       error_code: error instanceof Error ? error.name : "UNKNOWN_ERROR",
       error_message: error instanceof Error ? error.message : stringifyError(error),
       source_text_hash: sourceTextHash,
