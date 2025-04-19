@@ -12,6 +12,7 @@ const generateFlashcardsSchema = z.object({
     .string()
     .min(1000, "Tekst jest zbyt krótki. Minimum to 1000 znaków.")
     .max(10000, "Tekst jest zbyt długi. Maksimum to 10000 znaków."),
+  language: z.string().optional(),
 });
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -44,7 +45,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Process the generation request
     // console.log("Starting flashcards generation...");
-    const response = await generateFlashcards(locals.supabase, userId, result.data.text);
+    const response = await generateFlashcards(locals.supabase, userId, result.data.text, result.data.language);
     // console.log("Generation completed:", response);
 
     return new Response(JSON.stringify(response), {

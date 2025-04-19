@@ -40,6 +40,7 @@ export interface FlashcardListResponseDto {
 // Generation Request DTO
 export interface GenerateFlashcardsRequestDto {
   text: string;
+  language?: string; // Optional language code (e.g. 'pl', 'en')
 }
 
 // Basic Generation Response DTO (subset of fields)
