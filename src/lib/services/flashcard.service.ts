@@ -25,87 +25,46 @@ export async function getFlashcardsService(
   // Default values
   const page = params.page || 1;
   const pageSize = params.page_size || 20;
-  const sortBy = params.sort_by || "created_at";
+  const sortBy = params.sortBy || "created_at";
+  const sortOrder = params.sortOrder || "desc";
 
   // Calculate range for pagination
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
   // Dodatkowe logi dla diagnostyki
-  console.log("Fetching flashcards for user:", userId);
-  console.log("Params:", params);
-  console.log("Pagination:", { page, pageSize, from, to });
-
-  // Log typu klienta Supabase dla diagnostyki
-  console.log("Supabase client type:", typeof supabase);
-  console.log("Supabase client methods:", Object.keys(supabase));
+  console.log("FLASHCARD SERVICE - Otrzymane parametry:", JSON.stringify(params, null, 2));
+  console.log("FLASHCARD SERVICE - Używam zoptymalizowanych parametrów:", {
+    pagination: { page, pageSize, from, to },
+    sorting: { sortBy, sortOrder },
+    filters: {
+      generationId: params.generationId || params.generation_id,
+      source: params.source,
+      searchText: params.searchText,
+    },
+  });
 
   try {
-    // Start building the query
-    let query = supabase
-      .from("flashcards")
-      .select("id, front, back, source, created_at, updated_at, generation_id", { count: "exact" })
-      .eq("user_id", userId)
-      .range(from, to);
+    // Inicjalizacja zapytania bazowego
+    let query = initializeQuery(supabase, userId, from, to);
 
-    console.log("Query initialized successfully");
+    // Dodajemy filtry
+    query = applyFilters(query, params);
 
-    // Ustaw sortowanie z opcjonalnym kierunkiem
-    if (params.sortOrder === "asc") {
-      query = query.order(sortBy, { ascending: true });
-    } else {
-      query = query.order(sortBy, { ascending: false });
-    }
+    // Dodajemy sortowanie
+    query = applySorting(query, sortBy, sortOrder);
 
-    console.log("Sorting applied successfully");
-
-    // Apply optional filters if provided
-    if (params.generation_id) {
-      query = query.eq("generation_id", params.generation_id);
-    }
-
-    if (params.source) {
-      query = query.eq("source", params.source);
-    }
-
-    // Dodaj filtr wyszukiwania tekstowego, jeśli istnieje
-    if (params.searchText) {
-      // Proste wyszukiwanie w kolumnach front i back
-      query = query.or(`front.ilike.%${params.searchText}%,back.ilike.%${params.searchText}%`);
-    }
-
-    // Wyświetl informacje o zapytaniu dla debugowania
-    console.log("Query params ready");
-    console.log("Query object type:", Object.prototype.toString.call(query));
-
-    // Log dostępnych metod na obiekcie query
-    console.log("Query methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(query)));
-
-    // Execute the query
+    // Wykonujemy zapytanie
+    console.log("FLASHCARD SERVICE - Executing query");
     const { data, count, error } = await query;
 
     if (error) {
-      console.error("Error fetching flashcards:", error);
-      // Szczegółowe informacje o błędzie dla debugowania RLS
-      console.error("Error details - code:", error.code);
-      console.error("Error details - message:", error.message);
-      console.error("Error details - hint:", error.hint);
-      console.error("Error details - details:", error.details);
-      console.error("Error object keys:", Object.keys(error));
-      console.error("Error stack:", error.stack);
-
-      // Obsługa wygaśniętego tokenu JWT - przekieruj logikę do middleware
-      if (error.code === "PGRST301" && error.message === "JWT expired") {
-        console.log("Token JWT wygasł - należy się zalogować ponownie");
-        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
-      }
-
+      console.error("FLASHCARD SERVICE - Error fetching flashcards:", error);
       throw error;
     }
 
     // Logi wyników
-    console.log("Fetched flashcards count:", count);
-    console.log("First flashcard (if exists):", data?.length > 0 ? data[0] : "No flashcards found");
+    console.log("FLASHCARD SERVICE - Fetched flashcards count:", count);
 
     return {
       flashcards: data as FlashcardDto[],
@@ -115,7 +74,6 @@ export async function getFlashcardsService(
     // Log ogólny błąd, który może wystąpić poza głównym kodem
     console.error("Unexpected error in getFlashcardsService:", err);
     console.error("Error type:", typeof err);
-    console.error("Error is instance of Error:", err instanceof Error);
     if (err instanceof Error) {
       console.error("Error name:", err.name);
       console.error("Error message:", err.message);
@@ -125,6 +83,60 @@ export async function getFlashcardsService(
     }
     throw err;
   }
+}
+
+/**
+ * Inicjalizuje podstawowe zapytanie
+ */
+function initializeQuery(supabase: SupabaseClient<Database>, userId: string, from: number, to: number) {
+  return supabase
+    .from("flashcards")
+    .select("id, front, back, source, created_at, updated_at, generation_id", { count: "exact" })
+    .eq("user_id", userId)
+    .range(from, to);
+}
+
+/**
+ * Stosuje filtry do zapytania
+ */
+function applyFilters(
+  query: ReturnType<typeof initializeQuery>,
+  params: FlashcardFilterParams
+): ReturnType<typeof initializeQuery> {
+  // Filtr generacji (używamy camelCase lub snake_case jako fallback)
+  const generationId = params.generationId || params.generation_id;
+  if (generationId) {
+    query = query.eq("generation_id", generationId);
+    console.log("FLASHCARD SERVICE - Added generation_id filter:", generationId);
+  }
+
+  // Filtr źródła
+  if (params.source) {
+    query = query.eq("source", params.source);
+    console.log("FLASHCARD SERVICE - Added source filter:", params.source);
+  }
+
+  // Filtr wyszukiwania tekstowego
+  if (params.searchText && params.searchText.trim() !== "") {
+    const searchPattern = `%${params.searchText.trim()}%`;
+    query = query.or(`front.ilike.${searchPattern},back.ilike.${searchPattern}`);
+    console.log("FLASHCARD SERVICE - Added search filter with pattern:", searchPattern);
+  }
+
+  return query;
+}
+
+/**
+ * Stosuje sortowanie do zapytania
+ */
+function applySorting(
+  query: ReturnType<typeof initializeQuery>,
+  sortBy: string,
+  sortOrder: "asc" | "desc"
+): ReturnType<typeof initializeQuery> {
+  const ascending = sortOrder === "asc";
+  console.log(`FLASHCARD SERVICE - Sorting by ${sortBy} in ${sortOrder} order`);
+  return query.order(sortBy, { ascending });
 }
 
 /**

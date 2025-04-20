@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect, useCallback, memo } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,19 +18,37 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
 
   // Aktualizacja filtrów przy zmianie wyszukiwanego tekstu
   useEffect(() => {
+    // Dodaję logi diagnostyczne
+    console.log("Search text changed:", {
+      debouncedSearchText,
+      currentFilterSearchText: filters.searchText,
+    });
+
     if (debouncedSearchText !== filters.searchText) {
-      onFilterChange({ searchText: debouncedSearchText });
+      console.log("Updating search text filter:", debouncedSearchText);
+      onFilterChange({ searchText: debouncedSearchText || "" });
     }
   }, [debouncedSearchText, filters.searchText, onFilterChange]);
 
   // Obsługa zmiany sortowania
   const handleSortChange = useCallback(
     (value: string) => {
+      console.log("Sort change triggered with value:", value);
+
       const [sort_by, sortOrder] = value.split(":");
+      console.log("Parsed sort params:", { sort_by, sortOrder });
+
+      if (!sort_by || !sortOrder) {
+        console.error("Invalid sort value:", value);
+        return;
+      }
+
       onFilterChange({
         sort_by: sort_by as "back" | "created_at" | "front" | "id" | "updated_at",
         sortOrder: sortOrder as "asc" | "desc",
       });
+
+      console.log("Sort filter updated");
     },
     [onFilterChange]
   );

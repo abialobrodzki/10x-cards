@@ -21,7 +21,7 @@ export function useFlashcardsManager(userId: string) {
   const [filters, setFilters] = useState<FlashcardFilters>({
     page: 1,
     page_size: 20,
-    sort_by: "created_at",
+    sortBy: "created_at",
     sortOrder: "desc",
   });
 
@@ -61,25 +61,36 @@ export function useFlashcardsManager(userId: string) {
       if (currentFilters.page) params.append("page", currentFilters.page.toString());
       if (currentFilters.page_size) params.append("page_size", currentFilters.page_size.toString());
 
-      // Dodaj parametry sortowania
-      if (currentFilters.sort_by) {
-        params.append("sort_by", currentFilters.sort_by.toString());
-        // Sortowanie może wymagać dodatkowego parametru w API - załóżmy że może być wysyłane jako np. sort_order
-        params.append("sort_order", currentFilters.sortOrder);
+      // Dodaj parametry sortowania - używamy camelCase
+      if (currentFilters.sortBy) {
+        params.append("sortBy", currentFilters.sortBy.toString());
+        params.append("sortOrder", currentFilters.sortOrder || "desc");
+        console.log(`Dodaję sortowanie: sortBy=${currentFilters.sortBy}, sortOrder=${currentFilters.sortOrder}`);
       }
 
       // Dodaj pozostałe filtry
-      if (currentFilters.generation_id) params.append("generation_id", currentFilters.generation_id.toString());
-      if (currentFilters.source) params.append("source", currentFilters.source);
+      if (currentFilters.generationId) {
+        params.append("generationId", currentFilters.generationId.toString());
+        console.log(`Dodaję filtr generationId: ${currentFilters.generationId}`);
+      }
 
-      // Dodaj wyszukiwanie tekstowe - zakładamy, że API obsługuje parametr "search"
-      if (currentFilters.searchText) params.append("search", currentFilters.searchText);
+      if (currentFilters.source) {
+        params.append("source", currentFilters.source);
+        console.log(`Dodaję filtr source: ${currentFilters.source}`);
+      }
+
+      // Dodaj wyszukiwanie tekstowe
+      if (currentFilters.searchText && currentFilters.searchText.trim() !== "") {
+        params.append("searchText", currentFilters.searchText.trim());
+        console.log(`Dodaję filtr wyszukiwania tekstu: "${currentFilters.searchText.trim()}"`);
+      }
 
       const url = `/api/flashcards?${params}`;
-      console.log("fetchFlashcards - wysyłam zapytanie do:", url);
+      console.log("URL zapytania API:", url);
+      console.log("Wszystkie parametry:", Object.fromEntries(params.entries()));
 
       const response = await fetch(url);
-      console.log("fetchFlashcards - status odpowiedzi:", response.status);
+      console.log("Status odpowiedzi API:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -88,7 +99,7 @@ export function useFlashcardsManager(userId: string) {
       }
 
       const data = (await response.json()) as FlashcardListResponseDto;
-      console.log("fetchFlashcards - pobrano dane:", data);
+      console.log("Pobrano fiszki:", data.flashcards.length, "z", data.total);
 
       setFlashcards(data.flashcards);
       setTotalCount(data.total);
