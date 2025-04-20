@@ -1,5 +1,6 @@
 ---
 import Layout from "./Layout.astro";
+import { LogoutButton } from "../components/LogoutButton";
 
 interface Props {
   title?: string;
@@ -7,14 +8,10 @@ interface Props {
 
 const { title = "10x Cards" } = Astro.props;
 
-// Sprawdzanie czy użytkownik jest zalogowany
-// W pełnej implementacji, to będzie korzystać z Astro.locals.session lub podobnego mechanizmu
-// Dla teraz używamy prostego sprawdzania ścieżki
-const isAuthPage = Astro.url.pathname.startsWith("/auth/");
-const isLoggedIn = !isAuthPage; // Tymczasowe - w rzeczywistej implementacji będzie to sprawdzenie sesji
-
-// Mock dla nazwy użytkownika - w rzeczywistej implementacji to będzie pobrane z sesji
-const userName = isLoggedIn ? "Użytkownik" : null;
+// Sprawdzanie czy użytkownik jest zalogowany na podstawie Astro.locals.user
+const isLoggedIn = !!Astro.locals.user;
+// Bezpieczne odczytanie emaila użytkownika
+const userName = isLoggedIn && Astro.locals.user ? Astro.locals.user.email : null;
 ---
 
 <Layout title={title}>
@@ -36,9 +33,7 @@ const userName = isLoggedIn ? "Użytkownik" : null;
                   <span class="text-sm text-muted-foreground">
                     Zalogowany: <span class="font-medium">{userName}</span>
                   </span>
-                  <a href="/auth/login" class="hover:text-primary">
-                    Wyloguj
-                  </a>
+                  <LogoutButton client:load />
                 </>
               )
             }
