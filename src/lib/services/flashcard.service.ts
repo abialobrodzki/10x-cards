@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   FlashcardDto,
@@ -17,7 +18,7 @@ import type { Database } from "../../db/database.types";
  * @returns Paginated list of flashcards and total count
  */
 export async function getFlashcardsService(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   userId: string,
   params: FlashcardFilterParams
 ): Promise<FlashcardListResponseDto> {
@@ -30,36 +31,100 @@ export async function getFlashcardsService(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  // Start building the query
-  let query = supabase
-    .from("flashcards")
-    .select("id, front, back, source, created_at, updated_at, generation_id", { count: "exact" })
-    .eq("user_id", userId)
-    .range(from, to)
-    .order(sortBy, { ascending: false });
+  // Dodatkowe logi dla diagnostyki
+  console.log("Fetching flashcards for user:", userId);
+  console.log("Params:", params);
+  console.log("Pagination:", { page, pageSize, from, to });
 
-  // Apply optional filters if provided
-  if (params.generation_id) {
-    query = query.eq("generation_id", params.generation_id);
+  // Log typu klienta Supabase dla diagnostyki
+  console.log("Supabase client type:", typeof supabase);
+  console.log("Supabase client methods:", Object.keys(supabase));
+
+  try {
+    // Start building the query
+    let query = supabase
+      .from("flashcards")
+      .select("id, front, back, source, created_at, updated_at, generation_id", { count: "exact" })
+      .eq("user_id", userId)
+      .range(from, to);
+
+    console.log("Query initialized successfully");
+
+    // Ustaw sortowanie z opcjonalnym kierunkiem
+    if (params.sortOrder === "asc") {
+      query = query.order(sortBy, { ascending: true });
+    } else {
+      query = query.order(sortBy, { ascending: false });
+    }
+
+    console.log("Sorting applied successfully");
+
+    // Apply optional filters if provided
+    if (params.generation_id) {
+      query = query.eq("generation_id", params.generation_id);
+    }
+
+    if (params.source) {
+      query = query.eq("source", params.source);
+    }
+
+    // Dodaj filtr wyszukiwania tekstowego, jeśli istnieje
+    if (params.searchText) {
+      // Proste wyszukiwanie w kolumnach front i back
+      query = query.or(`front.ilike.%${params.searchText}%,back.ilike.%${params.searchText}%`);
+    }
+
+    // Wyświetl informacje o zapytaniu dla debugowania
+    console.log("Query params ready");
+    console.log("Query object type:", Object.prototype.toString.call(query));
+
+    // Log dostępnych metod na obiekcie query
+    console.log("Query methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(query)));
+
+    // Execute the query
+    const { data, count, error } = await query;
+
+    if (error) {
+      console.error("Error fetching flashcards:", error);
+      // Szczegółowe informacje o błędzie dla debugowania RLS
+      console.error("Error details - code:", error.code);
+      console.error("Error details - message:", error.message);
+      console.error("Error details - hint:", error.hint);
+      console.error("Error details - details:", error.details);
+      console.error("Error object keys:", Object.keys(error));
+      console.error("Error stack:", error.stack);
+
+      // Obsługa wygaśniętego tokenu JWT - przekieruj logikę do middleware
+      if (error.code === "PGRST301" && error.message === "JWT expired") {
+        console.log("Token JWT wygasł - należy się zalogować ponownie");
+        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+      }
+
+      throw error;
+    }
+
+    // Logi wyników
+    console.log("Fetched flashcards count:", count);
+    console.log("First flashcard (if exists):", data?.length > 0 ? data[0] : "No flashcards found");
+
+    return {
+      flashcards: data as FlashcardDto[],
+      total: count || 0,
+    };
+  } catch (err) {
+    // Log ogólny błąd, który może wystąpić poza głównym kodem
+    console.error("Unexpected error in getFlashcardsService:", err);
+    console.error("Error type:", typeof err);
+    console.error("Error is instance of Error:", err instanceof Error);
+    if (err instanceof Error) {
+      console.error("Error name:", err.name);
+      console.error("Error message:", err.message);
+      console.error("Error stack:", err.stack);
+    } else {
+      console.error("Full error object:", err);
+    }
+    throw err;
   }
-
-  if (params.source) {
-    query = query.eq("source", params.source);
-  }
-
-  // Execute the query
-  const { data, count, error } = await query;
-
-  if (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching flashcards:", error);
-    throw error;
-  }
-
-  return {
-    flashcards: data as FlashcardDto[],
-    total: count || 0,
-  };
 }
 
 /**
@@ -86,7 +151,7 @@ export async function getFlashcardByIdService(
       // Record not found error from PostgREST
       return null;
     }
-    // eslint-disable-next-line no-console
+
     console.error("Error fetching flashcard:", error);
     throw error;
   }
@@ -130,7 +195,6 @@ export async function updateFlashcardService(
     .single();
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error("Error updating flashcard:", error);
     throw error;
   }
@@ -166,7 +230,6 @@ export async function deleteFlashcardService(
   const { error } = await supabase.from("flashcards").delete().eq("user_id", userId).eq("id", flashcardId);
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error("Error deleting flashcard:", error);
     throw error;
   }
@@ -200,7 +263,6 @@ export async function createFlashcardService(
     .single();
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error("Error creating flashcard:", error);
     throw error;
   }
@@ -233,7 +295,6 @@ export async function createFlashcardsService(
     .select("id, front, back, source, created_at, updated_at, generation_id");
 
   if (error) {
-    // eslint-disable-next-line no-console
     console.error("Error creating flashcards:", error);
     throw error;
   }

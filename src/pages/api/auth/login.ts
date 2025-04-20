@@ -26,6 +26,8 @@ export async function POST({ request, cookies }: APIContext) {
       );
     }
 
+    console.log("Próba logowania dla użytkownika:", validatedData.data.email);
+
     // Utworzenie klienta Supabase dla tego requestu
     const supabase = createSupabaseServerInstance({
       headers: request.headers,
@@ -52,6 +54,16 @@ export async function POST({ request, cookies }: APIContext) {
     // Sprawdzamy, czy mamy sesję
     if (data.session) {
       console.log("Utworzono sesję użytkownika:", data.user?.email);
+
+      // Sprawdź ustawione ciasteczka
+      const cookieHeader = request.headers.get("Cookie") || "";
+      const currentCookies = cookieHeader
+        .split(";")
+        .map((c) => c.trim())
+        .filter((c) => c.startsWith("sb-") || c.startsWith("supabase-"))
+        .map((c) => c.split("=")[0]);
+
+      console.log("Ustawione ciasteczka sesji:", currentCookies);
 
       // Sprawdzmy, czy po zalogowaniu możemy pobrać użytkownika
       const { data: userData, error: userError } = await supabase.auth.getUser();

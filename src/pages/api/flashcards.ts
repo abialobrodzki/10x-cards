@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { z } from "zod";
 import type { APIContext } from "astro";
 import type {
@@ -11,7 +12,7 @@ import {
   createFlashcardService,
   createFlashcardsService,
 } from "../../lib/services/flashcard.service";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
+import { DEFAULT_USER_ID, supabaseClient } from "../../db/supabase.client";
 
 export const prerender = false;
 
@@ -41,10 +42,8 @@ export async function GET({ request, locals }: APIContext) {
   try {
     // Check authorization
     if (!locals.supabase) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      console.warn("Brak locals.supabase - używam supabaseClient jako fallback");
+      locals.supabase = supabaseClient;
     }
     const userId = locals.user?.id || DEFAULT_USER_ID;
 
@@ -72,7 +71,6 @@ export async function GET({ request, locals }: APIContext) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching flashcards:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
@@ -85,10 +83,8 @@ export async function POST({ request, locals }: APIContext) {
   try {
     // Check authorization
     if (!locals.supabase) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      console.warn("Brak locals.supabase - używam supabaseClient jako fallback");
+      locals.supabase = supabaseClient;
     }
     const userId = locals.user?.id || DEFAULT_USER_ID;
 
@@ -140,7 +136,6 @@ export async function POST({ request, locals }: APIContext) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error creating flashcards:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,

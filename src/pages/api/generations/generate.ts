@@ -1,8 +1,8 @@
+/* eslint-disable no-console */
 import { z } from "zod";
 import type { APIRoute } from "astro";
 import type { GenerateFlashcardsRequestDto } from "../../../types";
 import { generateFlashcards } from "../../../lib/services/generation.service";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
 
 export const prerender = false;
 
@@ -17,21 +17,38 @@ const generateFlashcardsSchema = z.object({
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // console.log("Received generation request");
+    console.log("Received generation request");
 
-    // No authentication needed for now, using DEFAULT_USER_ID
-    const userId = DEFAULT_USER_ID;
-    // console.log("Using user ID:", userId);
+    // Sprawdź, czy użytkownik jest zalogowany
+    if (!locals.user?.id) {
+      console.log("Unauthorized access attempt - user not logged in");
+      return new Response(
+        JSON.stringify({
+          error: "Nie jesteś zalogowany. Zaloguj się, aby wygenerować fiszki.",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
+    console.log("Using user ID:", userId);
+
+    // Diagnostyka klienta Supabase
+    console.log("Supabase client from locals:", !!locals.supabase);
+    console.log("Supabase auth available:", !!locals.supabase?.auth);
 
     // Validate the request body
     const body = (await request.json()) as GenerateFlashcardsRequestDto;
-    // console.log("Request body:", body);
+    console.log("Request body text length:", body.text?.length || 0);
 
     const result = generateFlashcardsSchema.safeParse(body);
-    // console.log("Validation result:", result);
+    console.log("Validation result:", result.success ? "Passed" : "Failed");
 
     if (!result.success) {
-      // console.log("Validation failed:", result.error.errors[0].message);
+      console.log("Validation failed:", result.error.errors[0].message);
       return new Response(
         JSON.stringify({
           error: result.error.errors[0].message,
@@ -44,16 +61,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Process the generation request
-    // console.log("Starting flashcards generation...");
+    console.log("Starting flashcards generation with user ID:", userId);
     const response = await generateFlashcards(locals.supabase, userId, result.data.text, result.data.language);
-    // console.log("Generation completed:", response);
+    console.log("Generation completed, cards count:", response.flashcards?.length || 0);
 
     return new Response(JSON.stringify(response), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    // console.error("Error in generate endpoint:", error);
+    console.error("Error in generate endpoint:", error);
+
+    // Diagnostyka błędu
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
 
     return new Response(
       JSON.stringify({

@@ -32,42 +32,45 @@ export function LoginForm() {
     console.log("Rozpoczynam proces logowania...");
 
     try {
+      // Najpierw spróbuj wylogować użytkownika, aby usunąć stare ciasteczka
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include", // Ważne dla ciasteczek
+        });
+        console.log("Wyczyszczono stare ciasteczka sesji");
+      } catch (logoutErr) {
+        console.warn("Nie udało się wyczyścić starych ciasteczek:", logoutErr);
+      }
+
       console.log("Wysyłam zapytanie do /api/auth/login");
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(values),
         credentials: "include", // Ważne dla ciasteczek
       });
 
       console.log("Otrzymałem odpowiedź, status:", response.status);
-      const data = await response.json();
-      console.log("Login response data:", data);
 
-      if (response.ok && data.success) {
-        console.log("Logowanie udane, przekierowuję do:", data.redirectUrl);
+      if (response.ok) {
+        console.log("Logowanie pomyślne, przekierowuję do /generate");
 
-        // Małe opóźnienie, aby upewnić się, że ciasteczka zostały zapisane
+        // Dodajemy opóźnienie, aby upewnić się, że ciasteczka zostały zapisane
         setTimeout(() => {
-          if (data.redirectUrl) {
-            // Przekierowanie do podanego URL
-            window.location.href = data.redirectUrl;
-          } else {
-            // Domyślne przekierowanie, jeśli redirectUrl nie jest dostępny
-            console.log("Brak redirectUrl, przekierowuję do domyślnej ścieżki");
-            window.location.href = "/generate";
-          }
+          window.location.href = "/generate";
         }, 500);
       } else {
-        // Obsługa błędów z API
-        console.error("Błąd podczas logowania:", data.error);
-        setServerError(data.error || "Wystąpił nieznany błąd podczas logowania");
+        const errorData = await response.json();
+        setServerError(errorData.error || "Nieudane logowanie. Sprawdź swoje dane.");
+        console.error("Błąd logowania:", errorData);
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      setServerError("Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.");
+    } catch (error) {
+      console.error("Wystąpił błąd podczas logowania:", error);
+      setServerError("Wystąpił błąd podczas łączenia z serwerem. Spróbuj ponownie później.");
     } finally {
       setIsLoading(false);
     }

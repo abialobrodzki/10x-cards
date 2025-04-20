@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState, useEffect, useCallback } from "react";
 import type { FlashcardDto, FlashcardListResponseDto, CreateFlashcardDto, UpdateFlashcardDto } from "../../../types";
 import type { FlashcardFilters, FlashcardFormValues } from "../types";
@@ -51,6 +52,7 @@ export function useFlashcardsManager() {
   const fetchFlashcards = useCallback(async (currentFilters: FlashcardFilters) => {
     setIsLoadingList(true);
     setError(null);
+    console.log("fetchFlashcards - rozpoczynam pobieranie z filtrami:", currentFilters);
 
     try {
       const params = new URLSearchParams();
@@ -73,19 +75,27 @@ export function useFlashcardsManager() {
       // Dodaj wyszukiwanie tekstowe - zakładamy, że API obsługuje parametr "search"
       if (currentFilters.searchText) params.append("search", currentFilters.searchText);
 
-      const response = await fetch(`/api/flashcards?${params}`);
+      const url = `/api/flashcards?${params}`;
+      console.log("fetchFlashcards - wysyłam zapytanie do:", url);
+
+      const response = await fetch(url);
+      console.log("fetchFlashcards - status odpowiedzi:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("fetchFlashcards - niepoprawna odpowiedź:", errorData);
         throw new Error(errorData.error || `Błąd pobierania fiszek: ${response.status} ${response.statusText}`);
       }
 
       const data = (await response.json()) as FlashcardListResponseDto;
+      console.log("fetchFlashcards - pobrano dane:", data);
 
       setFlashcards(data.flashcards);
       setTotalCount(data.total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Wystąpił nieznany błąd podczas pobierania fiszek");
+      const errorMessage = err instanceof Error ? err.message : "Wystąpił nieznany błąd podczas pobierania fiszek";
+      console.error("fetchFlashcards - wystąpił błąd:", errorMessage, err);
+      setError(errorMessage);
       setFlashcards([]);
       setTotalCount(0);
     } finally {
@@ -182,6 +192,10 @@ export function useFlashcardsManager() {
     try {
       const response = await fetch(`/api/flashcards/${id}`, {
         method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {

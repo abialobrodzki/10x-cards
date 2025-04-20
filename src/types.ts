@@ -135,8 +135,10 @@ export interface PaginationParams {
 // Flashcard Filtering Parameters
 export type FlashcardFilterParams = PaginationParams & {
   sort_by?: keyof FlashcardDto;
+  sortOrder?: "asc" | "desc";
   generation_id?: number;
   source?: FlashcardSourceType;
+  searchText?: string;
 };
 
 // Generation Filtering Parameters

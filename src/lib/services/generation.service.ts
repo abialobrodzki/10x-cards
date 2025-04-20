@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import type { GenerationWithFlashcardsResponseDto, CreateFlashcardDto } from "../../types";
@@ -39,27 +40,46 @@ export async function generateFlashcards(
   const startTime = Date.now();
   //   console.log("Creating initial generation record...");
 
-  const { data: generation, error: generationError } = await supabase
-    .from("generations")
-    .insert({
-      user_id: userId,
-      generated_count: 0,
-      accepted_unedited_count: 0,
-      accepted_edited_count: 0,
-      source_text_hash: sourceTextHash,
-      source_text_length: text.length,
-      generation_duration: 0,
-      model: "", // Will be updated after AI generation
-    })
-    .select()
-    .single();
+  let generation: Database["public"]["Tables"]["generations"]["Row"] | null = null;
+  let generationError: unknown = null;
 
-  if (generationError) {
-    // console.error("Error creating generation record:", generationError);
-    throw new Error("Failed to create generation record: " + stringifyError(generationError));
+  try {
+    const result = await supabase
+      .from("generations")
+      .insert({
+        user_id: userId,
+        generated_count: 0,
+        accepted_unedited_count: 0,
+        accepted_edited_count: 0,
+        source_text_hash: sourceTextHash,
+        source_text_length: text.length,
+        generation_duration: 0,
+        model: "", // Will be updated after AI generation
+      })
+      .select()
+      .single();
+
+    generation = result.data;
+    generationError = result.error;
+  } catch (err) {
+    generationError = err;
   }
 
-  //   console.log("Generation record created:", generation);
+  // Obsługa wygasłego tokenu JWT
+  if (
+    generationError &&
+    typeof generationError === "object" &&
+    generationError !== null &&
+    "code" in generationError &&
+    "message" in generationError &&
+    generationError.code === "PGRST301" &&
+    generationError.message === "JWT expired"
+  ) {
+    console.log("Token JWT wygasł - należy się zalogować ponownie");
+    throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+  } else if (generationError) {
+    throw new Error("Failed to create generation record: " + stringifyError(generationError));
+  }
 
   try {
     // 3. Generate flashcards using AI service
@@ -70,25 +90,48 @@ export async function generateFlashcards(
 
     // 4. Update generation record with results
     // console.log("Updating generation record...");
-    const { data: updatedGeneration, error: updateError } = await supabase
-      .from("generations")
-      .update({
-        generated_count: flashcards.length,
-        model,
-        generation_duration: generationDuration,
-      })
-      .eq("id", generation.id)
-      .select()
-      .single();
+    let updatedGeneration: Database["public"]["Tables"]["generations"]["Row"] | null = null;
+    let updateError: unknown = null;
 
-    if (updateError) {
-      // console.error("Error updating generation record:", updateError);
+    try {
+      const updateResult = await supabase
+        .from("generations")
+        .update({
+          generated_count: flashcards.length,
+          model,
+          generation_duration: generationDuration,
+        })
+        .eq("id", generation?.id || 0)
+        .select()
+        .single();
+
+      updatedGeneration = updateResult.data;
+      updateError = updateResult.error;
+    } catch (err) {
+      updateError = err;
+    }
+
+    // Obsługa wygasłego tokenu JWT dla aktualizacji
+    if (
+      updateError &&
+      typeof updateError === "object" &&
+      updateError !== null &&
+      "code" in updateError &&
+      "message" in updateError &&
+      updateError.code === "PGRST301" &&
+      updateError.message === "JWT expired"
+    ) {
+      console.log("Token JWT wygasł podczas aktualizacji - należy się zalogować ponownie");
+      throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+    } else if (updateError) {
       throw new Error("Failed to update generation record: " + stringifyError(updateError));
     }
 
-    //   console.log("Generation record updated:", updatedGeneration);
-
     // 5. Insert generated flashcards into flashcards table
+    if (!updatedGeneration) {
+      throw new Error("Failed to update generation record: generation data is null");
+    }
+
     const cardsToInsert: CreateFlashcardDto[] = flashcards.map((card: Omit<CreateFlashcardDto, "generation_id">) => ({
       front: card.front,
       back: card.back,
@@ -116,15 +159,21 @@ export async function generateFlashcards(
       flashcards: mappedFlashcards,
     };
   } catch (error) {
-    // Log the error for generation
-    await supabase.from("generation_error_logs").insert({
-      user_id: userId,
-      model: "unknown",
-      error_code: error instanceof Error ? error.name : "UNKNOWN_ERROR",
-      error_message: error instanceof Error ? error.message : stringifyError(error),
-      source_text_hash: sourceTextHash,
-      source_text_length: text.length,
-    });
+    // Log the error for generation - użyj klienta serwisowego w razie potrzeby
+    try {
+      await supabase.from("generation_error_logs").insert({
+        user_id: userId,
+        model: "unknown",
+        error_code: error instanceof Error ? error.name : "UNKNOWN_ERROR",
+        error_message: error instanceof Error ? error.message : stringifyError(error),
+        source_text_hash: sourceTextHash,
+        source_text_length: text.length,
+      });
+    } catch (logError: unknown) {
+      // Jeśli wystąpił błąd podczas logowania - prawdopodobnie wygasł token
+      console.error("Błąd podczas zapisywania logu błędu:", logError);
+      // Nie rzucamy tego błędu dalej, nie jest to krytyczne
+    }
 
     throw new Error(error instanceof Error ? error.message : stringifyError(error));
   }

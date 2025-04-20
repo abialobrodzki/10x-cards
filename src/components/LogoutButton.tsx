@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState } from "react";
 import { Button } from "./ui/button";
 
@@ -12,16 +13,42 @@ export function LogoutButton() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
+        credentials: "include", // Ważne dla ciasteczek
       });
 
-      // Jeśli serwer przekierował lub operacja się powiodła, odświeżamy stronę
-      if (response.ok || response.redirected) {
-        window.location.href = response.redirected ? response.url : "/";
+      console.log("Odpowiedź wylogowania:", response.status);
+
+      if (response.ok) {
+        try {
+          const data = await response.json();
+          console.log("Dane wylogowania:", data);
+
+          if (data.redirectUrl) {
+            // Przekierowanie do strony logowania
+            window.location.href = data.redirectUrl;
+          } else {
+            // Domyślne przekierowanie do strony logowania
+            window.location.href = "/auth/login";
+          }
+        } catch (e) {
+          console.error("Błąd parsowania odpowiedzi:", e);
+          // Domyślne przekierowanie
+          window.location.href = "/auth/login";
+        }
+      } else if (response.redirected) {
+        // Bezpośrednie przekierowanie
+        window.location.href = response.url;
+      } else {
+        // W przypadku błędu, także przekieruj do logowania
+        console.error("Błąd wylogowywania, przekierowuję do strony logowania");
+        window.location.href = "/auth/login";
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Błąd podczas wylogowywania:", error);
+      // W przypadku wyjątku, przekieruj do logowania
+      window.location.href = "/auth/login";
     } finally {
       setIsLoading(false);
     }
