@@ -30,7 +30,7 @@ const FlashcardSchema = z.object({
   front: z.string().min(3).max(500),
   back: z.string().min(3).max(500),
   source: z.enum(["ai-full", "ai-edited", "manual"]),
-  generation_id: z.number().positive().optional(),
+  generation_id: z.union([z.number().positive(), z.null()]).optional(),
 });
 
 // Schema for validating multiple flashcards creation
@@ -90,18 +90,21 @@ export async function POST({ request, locals }: APIContext) {
 
     // Parse request body
     const body = await request.json();
+    console.log("Otrzymano dane do POST /flashcards:", JSON.stringify(body));
 
     // Check if it's a single flashcard or multiple flashcards
     let response;
 
-    if (Array.isArray(body.flashcards)) {
-      // Validate multiple flashcards
+    if (body.flashcards && Array.isArray(body.flashcards)) {
+      // Jest tablica fiszek - waliduj jako multiple flashcards
+      console.log("Przetwarzam tablicę fiszek:", body.flashcards.length);
       const validationResult = FlashcardsSchema.safeParse(body);
 
       if (!validationResult.success) {
         const errorResponse: ValidationErrorResponseDto = {
           error: "Invalid flashcards data",
         };
+        console.error("Błąd walidacji tablicy fiszek:", validationResult.error);
         return new Response(JSON.stringify(errorResponse), {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -112,13 +115,15 @@ export async function POST({ request, locals }: APIContext) {
       const flashcardsDto: CreateFlashcardsDto = validationResult.data;
       response = await createFlashcardsService(locals.supabase, userId, flashcardsDto);
     } else {
-      // Validate single flashcard
+      // Pojedyncza fiszka - waliduj jako single flashcard
+      console.log("Przetwarzam pojedynczą fiszkę");
       const validationResult = FlashcardSchema.safeParse(body);
 
       if (!validationResult.success) {
         const errorResponse: ValidationErrorResponseDto = {
           error: "Invalid flashcard data",
         };
+        console.error("Błąd walidacji pojedynczej fiszki:", validationResult.error);
         return new Response(JSON.stringify(errorResponse), {
           status: 400,
           headers: { "Content-Type": "application/json" },
@@ -127,6 +132,7 @@ export async function POST({ request, locals }: APIContext) {
 
       // Create single flashcard
       const flashcardDto: CreateFlashcardDto = validationResult.data;
+      console.log("Tworzę fiszkę:", JSON.stringify(flashcardDto));
       response = await createFlashcardService(locals.supabase, userId, flashcardDto);
     }
 
@@ -137,6 +143,15 @@ export async function POST({ request, locals }: APIContext) {
     });
   } catch (error) {
     console.error("Error creating flashcards:", error);
+
+    // Więcej szczegółów o błędzie
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

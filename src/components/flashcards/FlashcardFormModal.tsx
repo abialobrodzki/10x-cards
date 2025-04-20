@@ -82,6 +82,16 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
     setSubmitError(null);
     try {
       await onSubmit(values as FlashcardFormValues);
+
+      // Po pomyślnym utworzeniu nowej fiszki, resetuj formularz
+      if (!isEditing) {
+        form.reset({
+          front: "",
+          back: "",
+          source: "manual",
+          generation_id: null,
+        });
+      }
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : "Wystąpił błąd podczas zapisywania fiszki. Spróbuj ponownie."
