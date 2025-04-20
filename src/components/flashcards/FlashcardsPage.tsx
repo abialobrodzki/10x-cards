@@ -9,7 +9,11 @@ import FlashcardsViewToggle from "./FlashcardsViewToggle";
 import FlashcardExportButton from "./FlashcardExportButton";
 import { useFlashcardsManager } from "./hooks/useFlashcardsManager";
 
-const FlashcardsPage = () => {
+interface FlashcardsPageProps {
+  userId: string;
+}
+
+const FlashcardsPage = memo(({ userId }: FlashcardsPageProps) => {
   const {
     flashcards,
     totalCount,
@@ -36,7 +40,7 @@ const FlashcardsPage = () => {
     updateFlashcard,
     deleteFlashcard,
     fetchFlashcards,
-  } = useFlashcardsManager();
+  } = useFlashcardsManager(userId);
 
   // Znajdujemy edytowaną fiszkę (jeśli istnieje)
   const editingFlashcard =
@@ -149,6 +153,8 @@ const FlashcardsPage = () => {
       />
     </div>
   );
-};
+});
 
-export default memo(FlashcardsPage);
+FlashcardsPage.displayName = "FlashcardsPage";
+
+export default FlashcardsPage;

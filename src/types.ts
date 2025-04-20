@@ -75,6 +75,7 @@ export interface GenerationDetailResponseDto {
 // Accept Flashcards Request DTO
 export interface AcceptFlashcardsRequestDto {
   flashcards: CreateFlashcardDto[];
+  isSaveAll?: boolean; // opcjonalna flaga dla opcji "Zapisz wszystkie"
 }
 
 // Generation Update after Accept DTO

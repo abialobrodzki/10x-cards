@@ -4,7 +4,7 @@ import type { FlashcardDto, FlashcardListResponseDto, CreateFlashcardDto, Update
 import type { FlashcardFilters, FlashcardFormValues } from "../types";
 import type { ViewMode } from "../FlashcardsViewToggle";
 
-export function useFlashcardsManager() {
+export function useFlashcardsManager(userId: string) {
   // Stan fiszek
   const [flashcards, setFlashcards] = useState<FlashcardDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -103,10 +103,12 @@ export function useFlashcardsManager() {
     }
   }, []);
 
-  // Efekt pobierający fiszki przy zmianie filtrów
+  // Efekt pobierający fiszki przy zmianie filtrów lub użytkownika
   useEffect(() => {
-    fetchFlashcards(filters);
-  }, [fetchFlashcards, filters]);
+    if (userId) {
+      fetchFlashcards(filters);
+    }
+  }, [fetchFlashcards, filters, userId]);
 
   // Tworzenie fiszki
   const createFlashcard = async (flashcard: FlashcardFormValues) => {

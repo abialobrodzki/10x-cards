@@ -9,10 +9,13 @@ export const prerender = false;
 if (!Astro.locals.user) {
   return Astro.redirect("/auth/login");
 }
+
+// Get user ID
+const userId = Astro.locals.user.id;
 ---
 
 <MainLayout title="Zarządzanie fiszkami | 10x Cards">
   <div class="bg-gray-50 min-h-screen">
-    <FlashcardsPage client:load />
+    <FlashcardsPage client:load userId={userId} />
   </div>
 </MainLayout>

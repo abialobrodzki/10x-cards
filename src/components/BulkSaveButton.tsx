@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import type { FlashcardViewModel } from "../types/viewModels";
 
@@ -17,11 +17,37 @@ const BulkSaveButton: React.FC<BulkSaveButtonProps> = ({
   onSaveAll,
   onSaveSelected,
 }) => {
+  // Add local cooldown state to prevent double-clicks
+  const [cooldown, setCooldown] = useState(false);
+  const COOLDOWN_PERIOD = 3000; // 3 seconds
+
+  // Reset cooldown when isSaving changes from true to false
+  useEffect(() => {
+    if (!isSaving && cooldown) {
+      const timer = setTimeout(() => setCooldown(false), COOLDOWN_PERIOD);
+      return () => clearTimeout(timer);
+    }
+  }, [isSaving, cooldown]);
+
   const acceptedCount = flashcards.filter((f) => f.isAccepted).length;
   const totalCount = flashcards.length;
 
-  const canSaveSelected = !isSaving && acceptedCount > 0 && generationId !== null;
-  const canSaveAll = !isSaving && totalCount > 0 && generationId !== null;
+  const canSaveSelected = !isSaving && !cooldown && acceptedCount > 0 && generationId !== null;
+  const canSaveAll = !isSaving && !cooldown && totalCount > 0 && generationId !== null;
+
+  const handleSaveSelected = async () => {
+    if (canSaveSelected) {
+      setCooldown(true);
+      await onSaveSelected();
+    }
+  };
+
+  const handleSaveAll = async () => {
+    if (canSaveAll) {
+      setCooldown(true);
+      await onSaveAll();
+    }
+  };
 
   return (
     <div className="sticky bottom-4 flex justify-center mt-8">
@@ -32,12 +58,17 @@ const BulkSaveButton: React.FC<BulkSaveButtonProps> = ({
         </div>
 
         <div className="flex gap-3">
-          <Button variant="outline" onClick={onSaveSelected} disabled={!canSaveSelected} className="whitespace-nowrap">
-            {isSaving ? "Zapisywanie..." : "Zapisz wybrane"}
+          <Button
+            variant="outline"
+            onClick={handleSaveSelected}
+            disabled={!canSaveSelected}
+            className="whitespace-nowrap"
+          >
+            {isSaving ? "Zapisywanie..." : cooldown && !isSaving ? "Zapisano" : "Zapisz wybrane"}
           </Button>
 
-          <Button onClick={onSaveAll} disabled={!canSaveAll} className="whitespace-nowrap">
-            {isSaving ? "Zapisywanie..." : "Zapisz wszystkie"}
+          <Button onClick={handleSaveAll} disabled={!canSaveAll} className="whitespace-nowrap">
+            {isSaving ? "Zapisywanie..." : cooldown && !isSaving ? "Zapisano" : "Zapisz wszystkie"}
           </Button>
         </div>
       </div>

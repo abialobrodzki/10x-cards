@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import type { AcceptFlashcardsRequestDto, AcceptFlashcardsResponseDto } from "../../../../types";
+import type { AcceptFlashcardsRequestDto, AcceptFlashcardsResponseDto, CreateFlashcardDto } from "../../../../types";
 import { createFlashcardsService } from "../../../../lib/services/flashcard.service";
 
 export const prerender = false;
@@ -16,11 +16,28 @@ const flashcardSchema = z.object({
 
 const requestSchema = z.object({
   flashcards: z.array(flashcardSchema).min(1, "Musisz podać przynajmniej jedną fiszkę"),
+  isSaveAll: z.boolean().optional(),
 });
+
+// Cache to prevent double submissions within a short time window
+const recentSubmissions = new Map<string, number>();
+const CACHE_EXPIRY_MS = 10000; // 10 seconds
+
+// Clean expired cache entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of recentSubmissions.entries()) {
+    if (now - timestamp > CACHE_EXPIRY_MS) {
+      recentSubmissions.delete(key);
+    }
+  }
+}, 30000); // Check every 30 seconds
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
   try {
+    const requestId = Date.now().toString(36) + Math.random().toString(36).substring(2);
     console.log("Accept flashcards request received");
+    console.log("API Request ID:", requestId);
 
     // Sprawdź, czy użytkownik jest zalogowany
     if (!locals.user?.id) {
@@ -62,6 +79,30 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     // Parse and validate request body
     const body = (await request.json()) as AcceptFlashcardsRequestDto;
     console.log("Request body flashcards count:", body.flashcards?.length || 0);
+    console.log("isSaveAll flag:", body.isSaveAll);
+
+    // Check for recent identical submission
+    const cacheKey = `${userId}-${generationId}-${body.flashcards.length}`;
+    if (recentSubmissions.has(cacheKey)) {
+      const timeSinceLastSubmission = Date.now() - (recentSubmissions.get(cacheKey) || 0);
+      if (timeSinceLastSubmission < CACHE_EXPIRY_MS) {
+        console.warn(`Potential duplicate submission detected (${timeSinceLastSubmission}ms since last request)`);
+        console.warn("Cache key:", cacheKey);
+        return new Response(
+          JSON.stringify({
+            warning: "Duplicate submission detected. Previous request is already being processed.",
+            requestId: requestId,
+          }),
+          {
+            status: 429, // Too Many Requests
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+
+    // Mark this submission in the cache
+    recentSubmissions.set(cacheKey, Date.now());
 
     const validationResult = requestSchema.safeParse(body);
     console.log("Validation result:", validationResult.success ? "Passed" : "Failed");
@@ -79,16 +120,26 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       );
     }
 
-    // Przygotuj fiszki do zapisania z określonym generation_id
-    const flashcardsToSave = body.flashcards.map((f) => ({
-      ...f,
-      generation_id: generationId,
-    }));
+    // Try to save flashcards
+    const flashcards: CreateFlashcardDto[] = body.flashcards.map((f) => {
+      return {
+        ...f,
+        generation_id: generationId,
+      };
+    });
 
-    console.log("Saving flashcards to database...");
-    // Zapisz fiszki przy użyciu serwisu
-    const createdFlashcards = await createFlashcardsService(locals.supabase, userId, { flashcards: flashcardsToSave });
-    console.log("Flashcards saved successfully, count:", createdFlashcards.length);
+    console.log("Creating flashcards...");
+    console.log("Using isSaveAll:", body.isSaveAll || false);
+
+    // Save the flashcards
+    const createdFlashcards = await createFlashcardsService(
+      locals.supabase,
+      userId,
+      {
+        flashcards,
+      },
+      body.isSaveAll || false
+    );
 
     // Count edited and non-edited flashcards
     const aiFullCount = body.flashcards.filter((f) => f.source === "ai-full").length;
@@ -104,6 +155,9 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       },
       flashcards: createdFlashcards,
     };
+
+    // After successful operation, remove from cache
+    recentSubmissions.delete(cacheKey);
 
     return new Response(JSON.stringify(response), {
       status: 200,
