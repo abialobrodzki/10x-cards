@@ -6,6 +6,15 @@ interface Props {
 }
 
 const { title = "10x Cards" } = Astro.props;
+
+// Sprawdzanie czy użytkownik jest zalogowany
+// W pełnej implementacji, to będzie korzystać z Astro.locals.session lub podobnego mechanizmu
+// Dla teraz używamy prostego sprawdzania ścieżki
+const isAuthPage = Astro.url.pathname.startsWith("/auth/");
+const isLoggedIn = !isAuthPage; // Tymczasowe - w rzeczywistej implementacji będzie to sprawdzenie sesji
+
+// Mock dla nazwy użytkownika - w rzeczywistej implementacji to będzie pobrane z sesji
+const userName = isLoggedIn ? "Użytkownik" : null;
 ---
 
 <Layout title={title}>
@@ -14,9 +23,25 @@ const { title = "10x Cards" } = Astro.props;
       <header class="border-b bg-card">
         <div class="container flex h-16 items-center px-4 sm:px-6">
           <a href="/" class="font-bold text-xl">10x Cards</a>
-          <nav class="ml-auto flex gap-4">
-            <a href="/flashcards" class="hover:text-primary">Fiszki</a>
-            <a href="/generate" class="hover:text-primary">Generowanie</a>
+          <nav class="ml-auto flex items-center gap-4">
+            {
+              isLoggedIn && (
+                <>
+                  <a href="/flashcards" class="hover:text-primary">
+                    Fiszki
+                  </a>
+                  <a href="/generate" class="hover:text-primary">
+                    Generowanie
+                  </a>
+                  <span class="text-sm text-muted-foreground">
+                    Zalogowany: <span class="font-medium">{userName}</span>
+                  </span>
+                  <a href="/auth/login" class="hover:text-primary">
+                    Wyloguj
+                  </a>
+                </>
+              )
+            }
           </nav>
         </div>
       </header>
