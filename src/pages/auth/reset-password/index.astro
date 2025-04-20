@@ -1,0 +1,20 @@
+---
+import MainLayout from "../../../layouts/MainLayout.astro";
+import { ResetPasswordForm } from "../../../components/auth/ResetPasswordForm";
+// Extract token from query parameters
+const token = Astro.url.searchParams.get("token");
+if (!token) {
+  return Astro.redirect("/auth/forgot-password");
+}
+
+// Force client-side rendering for this page
+export const prerender = false;
+---
+
+<MainLayout title="10x Cards - Resetowanie hasła">
+  <div class="container max-w-md mx-auto px-4 py-8">
+    <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+      <ResetPasswordForm client:load token={token} />
+    </div>
+  </div>
+</MainLayout>

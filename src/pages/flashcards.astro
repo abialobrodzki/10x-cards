@@ -1,6 +1,14 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import FlashcardsPage from "../components/flashcards/FlashcardsPage";
+
+// Force server-side rendering
+export const prerender = false;
+
+// Zabezpieczenie dostępu - tylko dla zalogowanych
+if (!Astro.locals.user) {
+  return Astro.redirect("/auth/login");
+}
 ---
 
 <MainLayout title="Zarządzanie fiszkami | 10x Cards">
