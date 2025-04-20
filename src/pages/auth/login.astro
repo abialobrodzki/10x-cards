@@ -1,0 +1,15 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+import { LoginForm } from "../../components/auth/LoginForm";
+
+// Force client-side rendering for this page
+export const prerender = false;
+---
+
+<MainLayout title="10x Cards - Logowanie">
+  <div class="container max-w-md mx-auto px-4 py-8">
+    <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+      <LoginForm client:load />
+    </div>
+  </div>
+</MainLayout>
