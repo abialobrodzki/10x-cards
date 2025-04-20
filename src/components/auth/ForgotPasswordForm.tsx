@@ -54,7 +54,7 @@ export function ForgotPasswordForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Resetowanie hasła</h1>
+        <h1 className="text-2xl font-bold">Odzyskiwanie hasła</h1>
         <p className="text-sm text-muted-foreground">Podaj adres email, na który wyślemy link do zresetowania hasła</p>
       </div>
 

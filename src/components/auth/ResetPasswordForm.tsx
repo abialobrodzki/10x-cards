@@ -8,12 +8,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const resetPasswordSchema = z
   .object({
-    newPassword: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
-    confirmNewPassword: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
+    password: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
+    confirmPassword: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
   })
-  .refine((data) => data.newPassword === data.confirmNewPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: "Hasła nie pasują",
-    path: ["confirmNewPassword"],
+    path: ["confirmPassword"],
   });
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
@@ -30,8 +30,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      newPassword: "",
-      confirmNewPassword: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -86,7 +86,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="newPassword"
+              name="password"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nowe hasło</FormLabel>
@@ -100,7 +100,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
             <FormField
               control={form.control}
-              name="confirmNewPassword"
+              name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Potwierdź nowe hasło</FormLabel>
