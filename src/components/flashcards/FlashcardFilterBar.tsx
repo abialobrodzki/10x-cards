@@ -33,22 +33,12 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
   // Obsługa zmiany sortowania
   const handleSortChange = useCallback(
     (value: string) => {
-      console.log("Sort change triggered with value:", value);
-
-      const [sort_by, sortOrder] = value.split(":");
-      console.log("Parsed sort params:", { sort_by, sortOrder });
-
-      if (!sort_by || !sortOrder) {
-        console.error("Invalid sort value:", value);
-        return;
-      }
-
+      const [sortField, order] = value.split(":");
+      if (!sortField || !order) return;
       onFilterChange({
-        sort_by: sort_by as "back" | "created_at" | "front" | "id" | "updated_at",
-        sortOrder: sortOrder as "asc" | "desc",
+        sortBy: sortField as "back" | "created_at" | "front" | "id" | "updated_at",
+        sortOrder: order as "asc" | "desc",
       });
-
-      console.log("Sort filter updated");
     },
     [onFilterChange]
   );
@@ -69,14 +59,14 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
     onFilterChange({
       searchText: "",
       source: undefined,
-      sort_by: "created_at",
+      sortBy: "created_at",
       sortOrder: "desc",
     });
   }, [onFilterChange]);
 
   // Sprawdzenie, czy są aktywne filtry
   const hasFilters =
-    filters.searchText || filters.source || filters.sort_by !== "created_at" || filters.sortOrder !== "desc";
+    filters.searchText || filters.source || filters.sortBy !== "created_at" || filters.sortOrder !== "desc";
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
@@ -101,7 +91,7 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Select value={`${filters.sort_by}:${filters.sortOrder}`} onValueChange={handleSortChange}>
+        <Select value={`${filters.sortBy}:${filters.sortOrder}`} onValueChange={handleSortChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sortuj według" />
           </SelectTrigger>
