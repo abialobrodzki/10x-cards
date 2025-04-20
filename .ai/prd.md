@@ -94,7 +94,10 @@ Kryteria akceptacji:
 
 - Lista wygenerowanych fiszek jest wyświetlana pod formularzem generowania.
 - Przy każdej fiszce znajduje się przycisk pozwalający na jej zatwierdzenie, edycję lub odrzucenie.
-- Po zatwierdzeniu wybranych fiszek użytkownik może kliknąć przycisk zapisu i dodać je do bazy danych.
+- Uzytkownik dokonuje oceny propozycji wszystkich fiszek (zatwierdzenie, edycja lub odrzucenie)
+- Uzytkownik moze tez zapisac wybrane 'Zapisz wybrane' - jednak wymagana jest ocena wszystkich fiszek.
+- Alternatywnie uzytkownik moze zapisac wszystkie fiszki - przycisk 'Zapisz wszystkie' (wszystkie sa zatwierdzane)
+- Zatwierdzenie fiszek poprzez klikniecie w przycisk zapisu, co powoduje dodanie ich do bazy danych.
 
 ID: US-005
 Tytuł: Edycja fiszek utworzonych ręcznie i generowanych przez AI
