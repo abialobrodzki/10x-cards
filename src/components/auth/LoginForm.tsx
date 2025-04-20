@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,29 +26,52 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(values: LoginFormValues) {
+  const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     setServerError(null);
+    console.log("Rozpoczynam proces logowania...");
 
     try {
-      // Frontend implementation only - no actual API call yet
-      // eslint-disable-next-line no-console
-      console.log("Login form values:", values);
-      // In a real implementation, we would call the API endpoint here
+      console.log("Wysyłam zapytanie do /api/auth/login");
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+        credentials: "include", // Ważne dla ciasteczek
+      });
 
-      // Simulate API call timing
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Otrzymałem odpowiedź, status:", response.status);
+      const data = await response.json();
+      console.log("Login response data:", data);
 
-      // eslint-disable-next-line no-console
-      console.log("Login successful");
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Login error:", error);
-      setServerError("Nieprawidłowe dane logowania");
+      if (response.ok && data.success) {
+        console.log("Logowanie udane, przekierowuję do:", data.redirectUrl);
+
+        // Małe opóźnienie, aby upewnić się, że ciasteczka zostały zapisane
+        setTimeout(() => {
+          if (data.redirectUrl) {
+            // Przekierowanie do podanego URL
+            window.location.href = data.redirectUrl;
+          } else {
+            // Domyślne przekierowanie, jeśli redirectUrl nie jest dostępny
+            console.log("Brak redirectUrl, przekierowuję do domyślnej ścieżki");
+            window.location.href = "/generate";
+          }
+        }, 500);
+      } else {
+        // Obsługa błędów z API
+        console.error("Błąd podczas logowania:", data.error);
+        setServerError(data.error || "Wystąpił nieznany błąd podczas logowania");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setServerError("Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.");
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">

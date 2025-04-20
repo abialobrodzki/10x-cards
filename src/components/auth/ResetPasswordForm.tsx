@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 const resetPasswordSchema = z
   .object({
     password: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
-    confirmPassword: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
+    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Hasła nie pasują",
@@ -17,15 +17,14 @@ const resetPasswordSchema = z
   });
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
-
 interface ResetPasswordFormProps {
   token: string;
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -41,21 +40,27 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     setIsSuccess(false);
 
     try {
-      // Frontend implementation only - no actual API call yet
-      // eslint-disable-next-line no-console
-      console.log("Reset password form values:", { ...values, token });
-      // In a real implementation, we would call the API endpoint here
+      // Wywołanie endpointu API resetowania hasła
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, ...values }),
+      });
 
-      // Simulate API call timing
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // eslint-disable-next-line no-console
-      console.log("Password reset successful");
+      if (!response.ok) {
+        setServerError(data.error || "Wystąpił błąd podczas resetowania hasła");
+        return;
+      }
+
+      // Wyświetlenie komunikatu o sukcesie
       setIsSuccess(true);
+      form.reset();
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Reset password error:", error);
-      setServerError("Link resetujący hasło jest nieprawidłowy lub wygasł.");
+      /* eslint-disable no-console */
+      console.error("Błąd podczas resetowania hasła:", error);
+      setServerError("Nie można połączyć się z serwerem. Spróbuj ponownie później.");
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +69,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Ustaw nowe hasło</h1>
-        <p className="text-sm text-muted-foreground">Wprowadź i potwierdź swoje nowe hasło</p>
+        <h1 className="text-2xl font-bold">Resetowanie hasła</h1>
+        <p className="text-sm text-muted-foreground">Wprowadź nowe hasło</p>
       </div>
 
       {serverError && <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{serverError}</div>}
@@ -73,10 +78,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       {isSuccess ? (
         <div className="space-y-4">
           <div className="rounded-md bg-green-50 p-4 text-sm text-green-600">
-            <p>Twoje hasło zostało pomyślnie zresetowane.</p>
-            <p className="mt-2">Możesz teraz zalogować się używając nowego hasła.</p>
+            <p>Hasło zostało pomyślnie zmienione!</p>
           </div>
-
           <Button className="w-full" asChild>
             <a href="/auth/login">Przejdź do logowania</a>
           </Button>
@@ -113,7 +116,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             />
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Przetwarzanie..." : "Resetuj hasło"}
+              {isLoading ? "Resetowanie..." : "Zresetuj hasło"}
             </Button>
           </form>
         </Form>
