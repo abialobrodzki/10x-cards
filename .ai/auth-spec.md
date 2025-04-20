@@ -135,15 +135,13 @@ Każdy endpoint:
 ### 3.1 Konfiguracja klienta
 
 - `src/db/supabase.client.ts`:
+
   ```ts
-  import { createClient } from '@supabase/supabase-js';
-  import type { Database } from '../db/database.types';
+  import { createClient } from "@supabase/supabase-js";
+  import type { Database } from "../db/database.types";
 
   // Używamy zmiennych środowiskowych SUPABASE_URL i SUPABASE_KEY zgodnie z wytycznymi
-  export const supabase = createClient<Database>(
-    import.meta.env.SUPABASE_URL,
-    import.meta.env.SUPABASE_KEY
-  );
+  export const supabase = createClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY);
   ```
 
 ### 3.2 Rejestracja i logowanie
