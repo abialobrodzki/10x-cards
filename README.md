@@ -114,6 +114,27 @@ skrzynka mailowa (lokalnie):
 http://localhost:54324
 ```
 
+## Test - przekazywanie informacji o projekcie do AI
+
+**przekazanie repo**
+
+```link
+https://gitingest.com/
+(alternatywa: https://repomix.com/)
+```
+
+**Google AI (free) - szeroki kontekst (lepiej przez Cursora)**
+
+```link
+https://aistudio.google.com/
+```
+
+**Antrophic - poprawianie promptów (konieczne doładowanie)**
+
+```link
+https://console.anthropic.com/
+```
+
 ## Test - API - manual
 
 **SQL Query - Supabase**
