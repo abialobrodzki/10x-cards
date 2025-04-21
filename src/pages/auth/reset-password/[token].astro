@@ -14,9 +14,11 @@ if (!token) {
 ---
 
 <MainLayout title="10x Cards - Resetowanie hasła">
-  <div class="container max-w-md mx-auto px-4 py-8">
-    <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
-      <ResetPasswordForm token={token} client:load />
+  <div class="bg-gray-50">
+    <div class="container max-w-md mx-auto px-4 py-8">
+      <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <ResetPasswordForm token={token} client:load />
+      </div>
     </div>
   </div>
 </MainLayout>

@@ -58,7 +58,7 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Wklej tutaj tekst z którego chcesz wygenerować fiszki..."
-            className={`w-full min-h-[200px] p-4 border rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary ${
+            className={`w-full min-h-[200px] p-4 border bg-white rounded-md shadow-sm focus:ring-2 focus:ring-primary focus:border-primary ${
               textError ? "border-red-500" : "border-gray-300"
             }`}
             disabled={isGenerating}
