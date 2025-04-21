@@ -106,6 +106,14 @@ Please follow the AI guidelines and coding practices defined in the AI configura
 
 This project is licensed under the **MIT License**.
 
+## Test - reset hasla / rejestracja uzytkownika
+
+skrzynka mailowa (lokalnie):
+
+```link
+http://localhost:54324
+```
+
 ## Test - API - manual
 
 **SQL Query - Supabase**
