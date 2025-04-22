@@ -132,7 +132,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>
-          <DialogTitle>Edycja fiszki</DialogTitle>
+          <DialogTitle>Edytuj fiszkę</DialogTitle>
           <DialogDescription>Zmodyfikuj zawartość fiszki poniżej.</DialogDescription>
         </DialogHeader>
 
@@ -141,7 +141,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
             <div className="flex justify-between items-center">
               <Label htmlFor="front">Przód fiszki</Label>
               <span className={`text-xs ${frontCharsCount > MAX_CHARS ? "text-red-600" : "text-muted-foreground"}`}>
-                {frontCharsCount} / {MAX_CHARS}
+                {frontCharsCount} / {MAX_CHARS} znaków
               </span>
             </div>
             <div className="relative">
@@ -184,7 +184,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
             <div className="flex justify-between items-center">
               <Label htmlFor="back">Tył fiszki</Label>
               <span className={`text-xs ${backCharsCount > MAX_CHARS ? "text-red-600" : "text-muted-foreground"}`}>
-                {backCharsCount} / {MAX_CHARS}
+                {backCharsCount} / {MAX_CHARS} znaków
               </span>
             </div>
             <div className="relative">
@@ -228,7 +228,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
               Anuluj
             </Button>
             <Button type="submit" disabled={!!frontError || !!backError}>
-              Zapisz zmiany
+              Zapisz
             </Button>
           </DialogFooter>
         </form>
