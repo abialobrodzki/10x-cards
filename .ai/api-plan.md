@@ -3,19 +3,11 @@
 ## 1. Resources
 
 - **Users**: Represents the system users (managed via auth.users in Supabase). Although authentication is handled externally, user identification is critical for resource access.
-- **Flashcards**: Corresponds to the flashcards table. Contains fields such as id, front, back, source, created_at, updated_at, generation_id, and user_id. Enforced validations ensure that front and back are non-null strings with a length between 100 and 500 characters. Additionally, the source field represents the flashcard source type and must be one of: 'ai-full', 'ai-edited', or 'manual'.
+- **Flashcards**: Corresponds to the flashcards table. Contains fields such as id, front, back, source, created_at, updated_at, generation_id, and user_id. Enforced validations ensure that front and back are non-null strings with a length between 3 and 500 characters. Additionally, the source field represents the flashcard source type and must be one of: 'ai-full', 'ai-edited', or 'manual'.
 - **Generations**: Maps to the generations table. Stores metadata regarding auto-generated flashcards including model details (stored internally, not selectable by users), generation counts, source text metrics, and timestamps.
 - **Generation Error Logs**: Relates to the generation_error_logs table. Records any errors that occur during the flashcard generation process, including error codes and messages.
 
 ## 2. Endpoints
-
-### 2.1. Authentication Note
-
-**Authentication will be implemented in a later phase of the project.**
-
-For the initial MVP implementation, all endpoints will operate without requiring user authentication. This allows for faster development and testing of core functionalities. In future iterations, authentication will be added using Supabase's auth system.
-
-For endpoints that reference user-specific data, a temporary system-assigned user ID will be used to maintain data separation during development.
 
 ### 2.2. Flashcards Endpoints
 
@@ -206,19 +198,17 @@ These endpoints support the spaced repetition learning algorithm integration as 
 
 ## 3. Authorization
 
-**Authorization mechanisms will be implemented in a later phase of the project.**
+Authentication and authorization are implemented using the following mechanisms:
 
-For the initial MVP implementation, the system will operate without user-specific access controls. In future iterations, the following will be implemented:
-
-- JWT-based authentication integrated with Supabase's auth system
-- Row Level Security (RLS) at the database level
-- Rate limiting for API endpoints, especially those interfacing with LLM services
+- **JWT-based Authentication**: Integrated with Supabase's auth system. User sessions are managed via HTTP-only cookies containing JWT tokens, verified by Astro middleware.
+- **Row Level Security (RLS)**: Implemented at the database level (Supabase PostgreSQL) to ensure users can only access and modify their own resources (flashcards, generations, etc.) based on their `user_id` matching `auth.uid()`.
+- **Rate Limiting**: Rate limiting should be considered for API endpoints, especially those interfacing with LLM services, to prevent abuse.
 
 ## 4. Validation and Business Logic
 
 - **Input Validation**:
 
-  - Flashcards: Ensure `front` and `back` are non-null strings with a length between 100 and 500 characters, and `source` is a non-null string whose value is restricted to one of the allowed types: 'ai-full', 'ai-edited', or 'manual'.
+  - Flashcards: Ensure `front` and `back` are non-null strings with a length between 3 and 500 characters, and `source` is a non-null string whose value is restricted to one of the allowed types: 'ai-full', 'ai-edited', or 'manual'.
   - Generation: Validate that the provided text is within the 1000 to 10000 character range.
   - Study Session Review: The quality rating must be an integer between 0 and 5.
 

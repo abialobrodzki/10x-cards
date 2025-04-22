@@ -178,8 +178,7 @@ GenerateView
 - **Główne elementy**: Formularz z polami dla frontu i tyłu fiszki, przyciski zapisu i anulowania.
 - **Obsługiwane interakcje**: Edycja tekstu, zapisanie zmian, anulowanie edycji.
 - **Obsługiwana walidacja**:
-  - Pola nie mogą być puste
-  - Maksymalna długość pól
+  - Pola nie mogą być puste oraz muszą mieć długość od 3 do 500 znaków
 - **Typy**: Wykorzystuje FlashcardBaseData.
 - **Propsy**:
   ```tsx
@@ -193,12 +192,12 @@ GenerateView
 
 ### BulkSaveButton
 
-- **Opis komponentu**: Komponent zawierający przyciski umożliwiające zbiorczy zapis wszystkich wygenerowanych fiszek lub tylko tych, które zostały zaakceptowane.
+- **Opis komponentu**: Komponent zawierający przyciski umożliwiające zbiorczy zapis wszystkich wygenerowanych fiszek lub tylko tych, które zostały zaakceptowane (po uprzednim przejrzeniu wszystkich propozycji).
 - **Główne elementy**: Dwa przyciski - "Zapisz wszystkie" oraz "Zapisz wybrane".
 - **Obsługiwane interakcje**: Kliknięcie przycisku "Zapisz wszystkie" lub "Zapisz wybrane", które wywołują odpowiednie funkcje wysyłające żądanie do API.
 - **Obsługiwana walidacja**:
   - Przycisk "Zapisz wszystkie" jest aktywny tylko gdy istnieją wygenerowane fiszki
-  - Przycisk "Zapisz wybrane" jest aktywny tylko gdy istnieje przynajmniej jedna zaakceptowana fiszka
+  - Przycisk "Zapisz wybrane" jest aktywny tylko gdy istnieje przynajmniej jedna zaakceptowana fiszka **oraz wszystkie wygenerowane fiszki zostały ocenione (zaakceptowane, edytowane lub odrzucone)**
 - **Typy**: Wykorzystuje AcceptFlashcardsRequestDto.
 - **Propsy**:
   ```tsx
@@ -206,6 +205,7 @@ GenerateView
     flashcards: FlashcardViewModel[];
     generationId: number | null;
     isSaving: boolean;
+    allReviewed: boolean; // Nowy prop wskazujący, czy wszystkie fiszki zostały ocenione
     onSaveAll: () => Promise<void>;
     onSaveSelected: () => Promise<void>;
   }
@@ -315,6 +315,7 @@ function useGenerateFlashcardsView() {
     saveError: null,
     canSave: false,
     canSaveAll: false,
+    allReviewed: false, // Dodano stan śledzenia oceny wszystkich fiszek
     saveSuccess: false,
     saveSuccessMessage: null,
   });
@@ -435,11 +436,14 @@ function useGenerateFlashcardsView() {
     setSavingState((prev) => {
       // Sprawdzenie czy istnieje przynajmniej jedna zaakceptowana fiszka
       const hasAccepted = flashcardsState.some((f) => f.isAccepted);
+      // Sprawdzenie czy wszystkie fiszki zostały ocenione
+      const allReviewed = flashcardsState.every((f) => f.isAccepted || f.isRejected || f.isEdited);
 
       return {
         ...prev,
-        canSave: hasAccepted,
+        canSave: hasAccepted && allReviewed, // Zapis możliwy tylko jeśli są zaakceptowane ORAZ wszystkie ocenione
         canSaveAll: flashcardsState.length > 0,
+        allReviewed: allReviewed, // Aktualizacja stanu allReviewed
         saveSuccess: false,
         saveSuccessMessage: null,
       };
@@ -448,7 +452,14 @@ function useGenerateFlashcardsView() {
 
   // Funkcja do zapisywania zaakceptowanych fiszek
   const saveSelectedFlashcards = async () => {
-    if (!generationState.generationResult?.generation.id) {
+    if (!generationState.generationResult?.generation.id || !savingState.allReviewed) {
+      // Dodano sprawdzenie czy wszystkie fiszki zostały ocenione
+      console.warn("Cannot save selected flashcards: Not all flashcards have been reviewed.");
+      setSavingState((prev) => ({
+        ...prev,
+        saveError:
+          "Wszystkie wygenerowane fiszki muszą zostać ocenione (zaakceptowane, edytowane lub odrzucone) przed zapisaniem wybranych.",
+      }));
       return;
     }
 
@@ -677,11 +688,11 @@ function useGenerateFlashcardsView() {
 
 4. **Zapisywanie fiszek**:
    - Użytkownik ma dwie opcje zapisu:
-     - "Zapisz wszystkie" - zapisuje wszystkie wygenerowane fiszki
-     - "Zapisz wybrane" - zapisuje tylko zaakceptowane fiszki
-   - System weryfikuje czy są fiszki do zapisania
-   - Wyświetlany jest wskaźnik ładowania podczas zapisywania
-   - W przypadku błędu wyświetlany jest komunikat błędu (ErrorNotification)
+     - "Zapisz wszystkie" - zapisuje wszystkie wygenerowane fiszki (wszystkie są automatycznie akceptowane).
+     - "Zapisz wybrane" - zapisuje tylko zaakceptowane fiszki, **pod warunkiem, że wszystkie wygenerowane fiszki zostały wcześniej ocenione (zaakceptowane, edytowane lub odrzucone)**.
+   - System weryfikuje czy są fiszki do zapisania i czy warunek oceny został spełniony.
+   - Wyświetlany jest wskaźnik ładowania podczas zapisywania.
+   - W przypadku błędu wyświetlany jest komunikat błędu (ErrorNotification).
    - Po pomyślnym zapisie wyświetlany jest komunikat sukcesu (SuccessNotification) z informacją o liczbie zapisanych fiszek
 
 ## 9. Warunki i walidacja
@@ -695,17 +706,17 @@ function useGenerateFlashcardsView() {
 
 ### Walidacja edycji fiszki
 
-- **Warunek**: Pola frontu i tyłu fiszki nie mogą być puste
+- **Warunek**: Pola frontu i tyłu fiszki nie mogą być puste oraz muszą mieć długość od 3 do 500 znaków.
 - **Komponenty**: EditFlashcardModal
-- **Wpływ na interfejs**: Przycisk zapisywania zmian jest nieaktywny, gdy którekolwiek z pól jest puste
-- **Komunikaty**: "Pole nie może być puste"
+- **Wpływ na interfejs**: Przycisk zapisywania zmian jest nieaktywny, gdy którekolwiek z pól jest puste lub nie spełnia wymagań długości.
+- **Komunikaty**: "Pole nie może być puste", "Pole musi mieć od 3 do 500 znaków."
 
 ### Walidacja zapisywania zaakceptowanych fiszek
 
-- **Warunek**: Musi być przynajmniej jedna zaakceptowana fiszka
+- **Warunek**: Musi być przynajmniej jedna zaakceptowana fiszka **oraz wszystkie wygenerowane fiszki muszą zostać ocenione (zaakceptowane, edytowane lub odrzucone)**.
 - **Komponenty**: BulkSaveButton (przycisk "Zapisz wybrane")
-- **Wpływ na interfejs**: Przycisk "Zapisz wybrane" jest nieaktywny, gdy nie ma zaakceptowanych fiszek
-- **Komunikaty**: "Brak zaakceptowanych fiszek do zapisania"
+- **Wpływ na interfejs**: Przycisk "Zapisz wybrane" jest nieaktywny, gdy nie ma zaakceptowanych fiszek lub gdy nie wszystkie fiszki zostały ocenione.
+- **Komunikaty**: "Brak zaakceptowanych fiszek do zapisania" lub "Najpierw oceń wszystkie wygenerowane fiszki (zaakceptuj, edytuj lub odrzuć)".
 
 ### Walidacja zapisywania wszystkich fiszek
 
