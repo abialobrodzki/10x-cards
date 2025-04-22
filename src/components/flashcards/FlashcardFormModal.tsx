@@ -22,12 +22,14 @@ import { AlertCircle } from "lucide-react";
 const flashcardFormSchema = z.object({
   front: z
     .string()
-    .min(3, "Przód fiszki musi mieć co najmniej 3 znaki")
-    .max(500, "Przód fiszki może mieć maksymalnie 500 znaków"),
+    .min(1, "Pole przodu fiszki nie może być puste")
+    .min(3, "Tekst jest za krótki. Minimum to 3 znaki.")
+    .max(500, "Tekst jest zbyt długi. Maksimum to 500 znaków."),
   back: z
     .string()
-    .min(3, "Tył fiszki musi mieć co najmniej 3 znaki")
-    .max(500, "Tył fiszki może mieć maksymalnie 500 znaków"),
+    .min(1, "Pole tyłu fiszki nie może być puste")
+    .min(3, "Tekst jest za krótki. Minimum to 3 znaki.")
+    .max(500, "Tekst jest zbyt długi. Maksimum to 500 znaków."),
   source: z.enum(["manual", "ai-full", "ai-edited"]),
   generation_id: z.number().nullable().optional(),
 });
@@ -47,6 +49,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
       source: "manual",
       generation_id: null,
     },
+    mode: "onBlur",
   });
 
   // Aktualizacja wartości formularza gdy flashcard się zmienia

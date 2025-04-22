@@ -17,6 +17,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
   const [frontCharsCount, setFrontCharsCount] = useState(0);
   const [backCharsCount, setBackCharsCount] = useState(0);
 
+  const MIN_CHARS = 3; // Minimalna ilość znaków
   const MAX_CHARS = 500; // Maksymalna ilość znaków w polu
 
   useEffect(() => {
@@ -36,6 +37,9 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
     if (!front.trim()) {
       setFrontError("Pole przodu fiszki nie może być puste");
       isValid = false;
+    } else if (front.length < MIN_CHARS) {
+      setFrontError(`Tekst jest za krótki. Minimum to ${MIN_CHARS} znaki.`);
+      isValid = false;
     } else if (front.length > MAX_CHARS) {
       setFrontError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
       isValid = false;
@@ -45,6 +49,9 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
 
     if (!back.trim()) {
       setBackError("Pole tyłu fiszki nie może być puste");
+      isValid = false;
+    } else if (back.length < MIN_CHARS) {
+      setBackError(`Tekst jest za krótki. Minimum to ${MIN_CHARS} znaki.`);
       isValid = false;
     } else if (back.length > MAX_CHARS) {
       setBackError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
@@ -64,6 +71,8 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
       setFrontError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
     } else if (!text.trim()) {
       setFrontError("Pole przodu fiszki nie może być puste");
+    } else if (text.length < MIN_CHARS) {
+      setFrontError(`Tekst jest za krótki. Minimum to ${MIN_CHARS} znaki.`);
     } else {
       setFrontError(null);
     }
@@ -77,6 +86,8 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
       setBackError(`Tekst jest zbyt długi. Maksimum to ${MAX_CHARS} znaków.`);
     } else if (!text.trim()) {
       setBackError("Pole tyłu fiszki nie może być puste");
+    } else if (text.length < MIN_CHARS) {
+      setBackError(`Tekst jest za krótki. Minimum to ${MIN_CHARS} znaki.`);
     } else {
       setBackError(null);
     }
