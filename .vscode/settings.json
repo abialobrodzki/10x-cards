@@ -3,5 +3,19 @@
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "astro"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
-  }
+  },
+  "cSpell.words": [
+    "backendem",
+    "commitem",
+    "helpery",
+    "Interesariusze",
+    "interesariuszy",
+    "mockowania",
+    "modale",
+    "obsługiwalne",
+    "prio",
+    "stagingowe",
+    "stagingowym",
+    "Storybooka"
+  ]
 }
