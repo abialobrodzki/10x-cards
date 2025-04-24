@@ -116,7 +116,7 @@ export function LoginForm() {
           />
 
           <div className="text-right text-sm">
-            <a href="/auth/forgot-password" className="text-primary hover:underline">
+            <a href="/auth/forgot-password" className="text-primary underline underline-offset-2">
               Zapomniałeś hasła?
             </a>
           </div>
@@ -129,7 +129,7 @@ export function LoginForm() {
 
       <div className="text-center text-sm">
         Nie masz jeszcze konta?{" "}
-        <a href="/auth/register" className="text-primary hover:underline">
+        <a href="/auth/register" className="text-primary underline underline-offset-2">
           Zarejestruj się
         </a>
       </div>

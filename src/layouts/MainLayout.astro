@@ -1,5 +1,5 @@
 ---
-import Layout from "./Layout.astro";
+import "../styles/global.css";
 import { LogoutButton } from "../components/LogoutButton";
 
 interface Props {
@@ -14,42 +14,61 @@ const isLoggedIn = !!Astro.locals.user;
 const userName = isLoggedIn && Astro.locals.user ? Astro.locals.user.email : null;
 ---
 
-<Layout title={title}>
-  <main class="min-h-screen bg-background">
-    <div class="flex flex-col min-h-screen">
-      <header class="border-b bg-card">
-        <div class="container flex h-16 items-center px-4 sm:px-6">
-          <a href={isLoggedIn ? "/flashcards" : "/auth/login"} class="font-bold text-xl">10xCards</a>
-          <nav class="ml-auto flex items-center gap-4">
-            {
-              isLoggedIn && (
-                <>
-                  <a href="/flashcards" class="hover:text-primary">
-                    Fiszki
-                  </a>
-                  <a href="/generate" class="hover:text-primary">
-                    Generowanie
-                  </a>
-                  <span class="text-sm text-muted-foreground">
-                    Zalogowany: <span class="font-medium">{userName}</span>
-                  </span>
-                  <LogoutButton client:load />
-                </>
-              )
-            }
-          </nav>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <main class="min-h-screen bg-background">
+      <div class="flex flex-col min-h-screen">
+        <header class="border-b bg-card">
+          <div class="container flex h-16 items-center px-4 sm:px-6">
+            <a href={isLoggedIn ? "/flashcards" : "/auth/login"} class="font-bold text-xl no-underline">10xCards</a>
+            <nav class="ml-auto flex items-center gap-4">
+              {
+                isLoggedIn && (
+                  <>
+                    <a href="/flashcards" class="hover:text-primary no-underline">
+                      Fiszki
+                    </a>
+                    <a href="/generate" class="hover:text-primary no-underline">
+                      Generowanie
+                    </a>
+                    <span class="text-sm text-muted-foreground">
+                      Zalogowany: <span class="font-medium">{userName}</span>
+                    </span>
+                    <LogoutButton client:load />
+                  </>
+                )
+              }
+            </nav>
+          </div>
+        </header>
+        <div class="flex-1 bg-gray-50">
+          <slot />
         </div>
-      </header>
-      <div class="flex-1 bg-gray-50">
-        <slot />
+        <footer class="border-t py-4 bg-card">
+          <div class="container flex flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 md:flex-row">
+            <p class="text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} 10xCards. Wszystkie prawa zastrzeżone.
+            </p>
+          </div>
+        </footer>
       </div>
-      <footer class="border-t py-4 bg-card">
-        <div class="container flex flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 md:flex-row">
-          <p class="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} 10xCards. Wszystkie prawa zastrzeżone.
-          </p>
-        </div>
-      </footer>
-    </div>
-  </main>
-</Layout>
+    </main>
+  </body>
+</html>
+
+<style>
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
