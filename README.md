@@ -112,6 +112,79 @@ Please follow the AI guidelines and coding practices defined in the AI configura
 
 This project is licensed under the **MIT License**.
 
+------------------------------------------------------------------------------------------
+
+# Komponenty widoku generowania fiszek
+
+Ten katalog zawiera komponenty używane w widoku generowania fiszek z tekstu edukacyjnego przy pomocy AI.
+
+## Struktura komponentów
+
+```
+GenerateView (główny komponent widoku)
+│
+├── TextInputForm (formularz wprowadzania tekstu)
+│
+├── LoadingIndicator (wskaźnik ładowania)
+│
+├── SkeletonLoader (placeholder podczas ładowania)
+│
+├── ErrorNotification (komunikaty o błędach)
+│
+├── SuccessNotification (komunikaty o sukcesie)
+│
+├── FlashcardList (lista wygenerowanych fiszek)
+│   └── FlashcardItem (pojedyncza fiszka)
+│
+├── EditFlashcardModal (modal edycji fiszki)
+│
+└── BulkSaveButton (przyciski zapisu fiszek)
+```
+
+## Komponenty UI
+
+Wszystkie podstawowe komponenty UI pochodzą z biblioteki Shadcn/ui i znajdują się w `src/components/ui`.
+
+## Typy i modele
+
+Typy wykorzystywane przez komponenty widoku generowania fiszek znajdują się w `src/types/viewModels.ts`.
+
+## Zarządzanie stanem
+
+Stan aplikacji jest zarządzany przez custom hook `useGenerateFlashcardsView` znajdujący się w `src/components/hooks/useGenerateFlashcardsView.tsx`.
+
+## Endpointy API
+
+Widok korzysta z następujących endpointów API:
+
+- `POST /api/generations/generate` - Generowanie fiszek z tekstu
+- `POST /api/generations/:id/accept-flashcards` - Zapisywanie zaakceptowanych fiszek
+
+## Przepływ danych
+
+1. Użytkownik wprowadza tekst edukacyjny w komponencie `TextInputForm`
+2. Po kliknięciu "Generuj fiszki" wysyłane jest żądanie do API
+3. Podczas generowania wyświetlany jest `LoadingIndicator` i `SkeletonLoader`
+4. Po wygenerowaniu fiszek wyświetlana jest lista w komponencie `FlashcardList`
+5. Użytkownik może akceptować, edytować lub odrzucać poszczególne fiszki
+6. Po zakończeniu użytkownik może zapisać wszystkie lub tylko zaakceptowane fiszki
+7. Wyniki zapisywania są wyświetlane w komunikacie sukcesu lub błędu
+
+## Wykorzystanie
+
+Komponent `GenerateView` jest używany na stronie `/generate` i nie wymaga przekazania żadnych propsów:
+
+```tsx
+// W pliku src/pages/generate.astro
+import GenerateView from "../components/GenerateView";
+
+// ...
+
+<GenerateView client:load />;
+```
+
+------------------------------------------------------------------------------------------
+
 ## Test - reset hasla / rejestracja uzytkownika
 
 skrzynka mailowa (lokalnie):
@@ -172,3 +245,99 @@ pull flashcards - GET:
 ```bash
 curl --location 'http://localhost:3000/api/flashcards'
 ```
+
+------------------------------------------------------------------------------------------
+
+
+# 10xCards Testing Setup
+
+This document outlines the testing infrastructure and practices for the 10xCards project.
+
+## Testing Tools
+
+### Unit and Integration Testing
+
+- **Vitest**: Fast Vite-based testing framework
+- **React Testing Library**: Component testing utilities
+- **MSW (Mock Service Worker)**: API mocking
+- **@testing-library/jest-dom**: DOM testing utilities
+
+### End-to-End Testing
+
+- **Playwright**: Cross-browser testing framework
+- **Axe-core**: Accessibility testing
+
+## Testing Structure
+
+- `src/test/unit/`: Unit and integration tests
+- `src/test/e2e/`: End-to-end tests
+- `src/test/setup.ts`: Global test setup for Vitest
+
+## Running Tests
+
+### Unit Tests
+
+```bash
+# Run all unit tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Open UI for interactive testing
+npm run test:ui
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### E2E Tests
+
+```bash
+# Run all E2E tests
+npm run test:e2e
+
+# Open UI for interactive E2E testing
+npm run test:e2e:ui
+
+# Debug mode with step-by-step execution
+npm run test:e2e:debug
+
+# Update screenshot baselines
+npm run test:e2e -- --update-snapshots
+```
+
+## Testing Guidelines
+
+### Unit Testing Best Practices
+
+- Use `test.each` for parameterized tests
+- Mock external dependencies
+- Focus on testing behavior, not implementation
+- Use the smallest possible rendering scope
+- Keep tests isolated from each other
+
+### E2E Testing Best Practices
+
+- Use the Page Object Model pattern for maintainable tests
+- Use locators for resilient element selection
+- Implement visual comparison with `expect(page).toHaveScreenshot()`
+- Use trace viewer for debugging test failures
+- Test accessibility with axe-core
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Port conflicts**: If you encounter port conflicts running E2E tests while the dev server is running, kill the dev server first or modify the port in `playwright.config.ts`.
+
+2. **Accessibility issues**: The E2E tests check for accessibility violations using axe-core. Currently, there are two issues detected:
+
+   - Missing main landmark: Add a `<main>` tag to the page
+   - Content not contained in landmarks: Ensure all content is within proper semantic HTML landmarks
+
+3. **Screenshot tests**: Before running screenshot tests, you need to generate baseline screenshots with:
+   ```bash
+   npm run test:e2e -- --update-snapshots
+   ```
+   Then remove the `.skip` from the screenshot test.

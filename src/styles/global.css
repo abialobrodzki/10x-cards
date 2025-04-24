@@ -117,4 +117,8 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Poprawa dostępności linków */
+  a:not(.no-underline) {
+    @apply underline-offset-2 hover:underline focus-visible:underline;
+  }
 }
