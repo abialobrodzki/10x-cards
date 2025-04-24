@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## Testing
+
+### Guidelines for Unit Testing
+
+#### Vitest
+
+- Use Vitest for faster testing in Vite-based projects
+- Leverage the vi object for mocks and spies
+- Implement the test.each pattern for parameterized tests
+- Use the setup files for global test configuration
+- Leverage the inline snapshot feature for small snapshots
+- Implement coverage reporting with c8 integration
+- Use the watch mode for development
+- Leverage the UI mode for interactive test exploration
+- Implement mocking for modules and dependencies
+- Use happy-dom or jsdom for DOM testing environment
+
+

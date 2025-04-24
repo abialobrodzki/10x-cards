@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## Testing
+
+### Guidelines for End-to-End Testing
+
+#### Playwright
+
+- Use browser contexts for isolating test environments
+- Implement the Page Object Model for maintainable tests
+- Use locators for resilient element selection
+- Leverage API testing for backend validation
+- Implement visual comparison with expect(page).toHaveScreenshot()
+- Use the codegen tool for test recording
+- Leverage trace viewer for debugging test failures
+- Implement test hooks for setup and teardown
+- Use expect assertions with specific matchers
+- Leverage parallel execution for faster test runs
+
+
