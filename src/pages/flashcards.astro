@@ -14,7 +14,7 @@ if (!Astro.locals.user) {
 const userId = Astro.locals.user.id;
 ---
 
-<MainLayout title="Zarządzanie fiszkami | 10x Cards">
+<MainLayout title="Zarządzanie fiszkami | 10xCards">
   <div class="bg-gray-50 min-h-screen">
     <FlashcardsPage client:load userId={userId} />
   </div>

@@ -183,7 +183,7 @@ otp_expiry = 3600
 
 # Customize the reset-password email template to use your frontend path
 [auth.email.template.reset_password]
-subject = "10x Cards – Resetowanie hasła"
+subject = "10xCards – Resetowanie hasła"
 content_path = "./supabase/templates/reset_password.html"
 
 [auth.sms]
