@@ -21,6 +21,12 @@
 - [React](https://react.dev/) v19.0.0 - UI library for building interactive components
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+- **Testing:**
+  - [Vitest](https://vitest.dev/) - Unit and integration testing framework with UI for debugging
+  - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) - Testing React components
+  - [Playwright](https://playwright.dev/) - End-to-end testing with cross-browser support
+  - [MSW (Mock Service Worker)](https://mswjs.io/) - API mocking for tests
+  - [ts-jest](https://kulshekhar.github.io/ts-jest/) - TypeScript integration for tests
 
 ## Prerequisites
 

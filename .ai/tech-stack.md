@@ -18,7 +18,22 @@ AI - Komunikacja z modelami przez usługę Openrouter.ai:
 - Dostęp do szerokiej gamy modeli (OpenAI, Anthropic, Google i wiele innych), które pozwolą nam znaleźć rozwiązanie zapewniające wysoką efektywność i niskie koszta
 - Pozwala na ustawianie limitów finansowych na klucze API
 
+Testy - Narzędzia do testowania aplikacji:
+
+- Testy jednostkowe i integracyjne:
+
+  - Vitest - Framework do testów z interfejsem UI dla łatwego debugowania
+  - ts-jest - Integracja TypeScript dla testów
+  - React Testing Library - Biblioteka do testowania komponentów React
+  - @testing-library/astro - Biblioteka do testowania komponentów Astro
+  - MSW (Mock Service Worker) - Narzędzie do mockowania API
+  - supabase-js-mock - Narzędzie do mockowania interakcji z Supabase
+
+- Testy End-to-End (E2E):
+  - Playwright - Framework do testów E2E z lepszą obsługą przeglądarek i wsparciem dla testów mobilnych
+  - axe-core - Narzędzie do testowania dostępności (WCAG)
+
 CI/CD i Hosting:
 
-- Github Actions do tworzenia pipeline’ów CI/CD
+- Github Actions do tworzenia pipeline'ów CI/CD
 - DigitalOcean do hostowania aplikacji za pośrednictwem obrazu docker
