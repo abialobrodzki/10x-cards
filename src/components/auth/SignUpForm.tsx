@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,13 +36,22 @@ export function SignUpForm() {
   });
 
   async function onSubmit(values: SignUpFormValues) {
+    console.log("[onSubmit] Start");
     setIsLoading(true);
     setServerError(null);
     setRegistrationSuccess(false);
     setRequiresEmailConfirmation(false);
 
+    // Force the aria-busy attribute to update immediately
+    setTimeout(() => {
+      const submitButton = document.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.setAttribute("aria-busy", "true");
+      }
+    }, 0);
+
     try {
-      // Wywołanie endpointu API rejestracji
+      console.log("[onSubmit] Before fetch");
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -49,31 +59,47 @@ export function SignUpForm() {
         },
         body: JSON.stringify(values),
       });
+      console.log("[onSubmit] After fetch", {
+        ok: response.ok,
+        status: response.status,
+        redirected: response.redirected,
+        url: response.url,
+      });
 
-      // Odświeżamy stronę w przypadku sukcesu (przekierowanie jest po stronie serwera)
       if (response.redirected) {
+        console.log("[onSubmit] Redirecting to:", response.url);
+        // Use both methods to handle redirects for test compatibility
+        window.location.assign(response.url);
         window.location.href = response.url;
+        console.log("[onSubmit] Redirect href assigned");
         return;
       }
 
+      console.log("[onSubmit] Before response.json()");
       const data = await response.json();
+      console.log("[onSubmit] After response.json()", data);
 
       if (!response.ok) {
-        // Obsługa błędów z API
+        console.log("[onSubmit] Handling !response.ok", data);
         setServerError(data.error || "Wystąpił błąd podczas rejestracji");
+        form.clearErrors();
       } else if (data.success) {
-        // Obsługa pomyślnej rejestracji, która może wymagać weryfikacji emaila
+        console.log("[onSubmit] Handling data.success", data);
         setRegistrationSuccess(true);
         if (data.requiresEmailConfirmation) {
+          console.log("[onSubmit] Setting requiresEmailConfirmation");
           setRequiresEmailConfirmation(true);
         }
+        console.log("[onSubmit] Before form.reset()");
         form.reset();
+        console.log("[onSubmit] After form.reset()");
       }
     } catch (error) {
       /* eslint-disable no-console */
-      console.error("Błąd podczas rejestracji:", error);
+      console.error("[onSubmit] CATCH BLOCK ERROR:", error);
       setServerError("Nie można połączyć się z serwerem. Spróbuj ponownie później.");
     } finally {
+      console.log("[onSubmit] Finally block");
       setIsLoading(false);
     }
   }
@@ -92,10 +118,17 @@ export function SignUpForm() {
           <p className="font-medium">Rejestracja zakończona pomyślnie!</p>
           {requiresEmailConfirmation && (
             <p className="mt-2">
-              Na Twój adres email został wysłany link aktywacyjny. Sprawdź swoją skrzynkę pocztową i kliknij link, aby
-              aktywować konto.
+              Na Twój adres email został wysłany <span>link aktywacyjny</span>. Sprawdź swoją skrzynkę pocztową i
+              kliknij link, aby aktywować konto.
             </p>
           )}
+          {requiresEmailConfirmation ? (
+            <p className="mt-2 text-center">
+              <a href="/auth/login" className="text-primary hover:underline">
+                Przejdź do strony logowania
+              </a>
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -144,7 +177,7 @@ export function SignUpForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
               {isLoading ? "Rejestracja..." : "Zarejestruj się"}
             </Button>
           </form>
@@ -157,14 +190,6 @@ export function SignUpForm() {
           <a href="/auth/login" className="text-primary hover:underline">
             Zaloguj się
           </a>
-        </div>
-      )}
-
-      {registrationSuccess && requiresEmailConfirmation && (
-        <div className="text-center">
-          <Button asChild variant="outline" className="mt-4">
-            <a href="/auth/login">Przejdź do strony logowania</a>
-          </Button>
         </div>
       )}
     </div>
