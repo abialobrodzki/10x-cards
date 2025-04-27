@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import FlashcardsViewToggle, { type ViewMode } from "../../components/flashcards/FlashcardsViewToggle";
+import FlashcardsViewToggle, { type ViewMode } from "../../../components/flashcards/FlashcardsViewToggle";
 
 describe("FlashcardsViewToggle", () => {
   const mockOnViewChange = vi.fn();

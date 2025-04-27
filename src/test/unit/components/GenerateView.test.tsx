@@ -1,12 +1,12 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import GenerateView from "../../components/GenerateView";
-import { useGenerateFlashcardsView } from "../../components/hooks/useGenerateFlashcardsView";
-import type { FlashcardViewModel, GenerationViewModel } from "../../types/viewModels";
-import type { BasicGenerationDto, CreateFlashcardDto } from "../../types";
+import GenerateView from "../../../components/GenerateView";
+import { useGenerateFlashcardsView } from "../../../components/hooks/useGenerateFlashcardsView";
+import type { FlashcardViewModel, GenerationViewModel } from "../../../types/viewModels";
+import type { BasicGenerationDto, CreateFlashcardDto } from "../../../types";
 
 // Mock the custom hook with correct relative path
-vi.mock("../../components/hooks/useGenerateFlashcardsView");
+vi.mock("../../../components/hooks/useGenerateFlashcardsView");
 
 // Define mock types for props
 interface MockGenerateFormData {
@@ -57,7 +57,7 @@ interface MockBulkSaveButtonProps {
 }
 
 // Mock child components with correct relative paths
-vi.mock("../../components/TextInputForm", () => ({
+vi.mock("../../../components/TextInputForm", () => ({
   default: ({ onSubmit, isGenerating }: MockTextInputFormProps) => (
     <form
       data-testid="text-input-form"
@@ -76,23 +76,23 @@ vi.mock("../../components/TextInputForm", () => ({
     </form>
   ),
 }));
-vi.mock("../../components/ui/LoadingIndicator", () => ({
+vi.mock("../../../components/ui/LoadingIndicator", () => ({
   default: ({ isVisible }: MockLoadingIndicatorProps) =>
     isVisible ? <div data-testid="loading-indicator">Loading...</div> : null,
 }));
-vi.mock("../../components/ui/SkeletonLoader", () => ({
+vi.mock("../../../components/ui/SkeletonLoader", () => ({
   default: ({ isVisible }: MockSkeletonLoaderProps) =>
     isVisible ? <div data-testid="skeleton-loader">Skeleton</div> : null,
 }));
-vi.mock("../../components/ui/ErrorNotification", () => ({
+vi.mock("../../../components/ui/ErrorNotification", () => ({
   default: ({ message, isVisible }: MockErrorNotificationProps) =>
     isVisible ? <div data-testid="error-notification">{message}</div> : null,
 }));
-vi.mock("../../components/ui/SuccessNotification", () => ({
+vi.mock("../../../components/ui/SuccessNotification", () => ({
   default: ({ message, isVisible }: MockSuccessNotificationProps) =>
     isVisible ? <div data-testid="success-notification">{message}</div> : null,
 }));
-vi.mock("../../components/FlashcardList", () => ({
+vi.mock("../../../components/FlashcardList", () => ({
   default: ({ flashcards, onAccept, onEdit, onReject }: MockFlashcardListProps) => (
     <div data-testid="flashcard-list">
       {flashcards.map((fc: FlashcardViewModel, index: number) => (
@@ -106,7 +106,7 @@ vi.mock("../../components/FlashcardList", () => ({
     </div>
   ),
 }));
-vi.mock("../../components/EditFlashcardModal", () => ({
+vi.mock("../../../components/EditFlashcardModal", () => ({
   default: ({ isOpen, flashcard, onClose, onSave }: MockEditFlashcardModalProps) =>
     isOpen ? (
       <div data-testid="edit-modal">
@@ -117,7 +117,7 @@ vi.mock("../../components/EditFlashcardModal", () => ({
       </div>
     ) : null,
 }));
-vi.mock("../../components/BulkSaveButton", () => ({
+vi.mock("../../../components/BulkSaveButton", () => ({
   default: ({ isSaving, onSaveAll, onSaveSelected }: MockBulkSaveButtonProps) => (
     <div data-testid="bulk-save-button">
       <button onClick={onSaveAll} disabled={isSaving}>

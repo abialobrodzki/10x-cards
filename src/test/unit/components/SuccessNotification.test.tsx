@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import SuccessNotification from "../../components/ui/SuccessNotification";
+import SuccessNotification from "../../../components/ui/SuccessNotification";
 
 describe("SuccessNotification", () => {
   const mockOnClose = vi.fn();

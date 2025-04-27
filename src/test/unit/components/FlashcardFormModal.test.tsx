@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import FlashcardFormModal from "../../components/flashcards/FlashcardFormModal";
-import type { FlashcardDto } from "../../types";
+import FlashcardFormModal from "../../../components/flashcards/FlashcardFormModal";
+import type { FlashcardDto } from "../../../types";
 
 // ----- Mock funkcji onSubmit -----
 const mockOnSubmit = vi.fn();

@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import FlashcardFilterBar from "../../components/flashcards/FlashcardFilterBar";
-import type { FlashcardFilters } from "../../components/flashcards/types";
+import FlashcardFilterBar from "../../../components/flashcards/FlashcardFilterBar";
+import type { FlashcardFilters } from "../../../components/flashcards/types";
 
 // ----- Mockowanie useDebounce -----
 // Chcemy kontrolować debounce w testach, więc mockujemy hooka
 // Założenie: hook zwraca wartość natychmiast, jeśli nie ma timera
-vi.mock("../../components/flashcards/hooks/useDebounce", () => ({
+vi.mock("../../../components/flashcards/hooks/useDebounce", () => ({
   useDebounce: (value: string) => value,
 }));
 

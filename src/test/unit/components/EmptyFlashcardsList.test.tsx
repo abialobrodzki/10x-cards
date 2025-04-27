@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import EmptyFlashcardsList from "../../components/flashcards/EmptyFlashcardsList";
+import EmptyFlashcardsList from "../../../components/flashcards/EmptyFlashcardsList";
 
 describe("EmptyFlashcardsList", () => {
   const mockOnCreateNewClick = vi.fn();

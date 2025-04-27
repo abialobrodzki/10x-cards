@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, vi } from "vitest";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import TextInputForm from "../../components/TextInputForm";
+import TextInputForm from "../../../components/TextInputForm";
 
 describe("TextInputForm", () => {
   const MIN_CHARS = 1000;

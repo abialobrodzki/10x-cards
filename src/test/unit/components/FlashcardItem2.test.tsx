@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import FlashcardItem from "../../components/FlashcardItem";
-import type { FlashcardViewModel } from "../../types/viewModels";
+import FlashcardItem from "../../../components/FlashcardItem";
+import type { FlashcardViewModel } from "../../../types/viewModels";
 
 // Mock data
 const mockFlashcardBase: FlashcardViewModel = {

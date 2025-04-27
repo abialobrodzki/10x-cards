@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { RegisterForm } from "../../components/auth/RegisterForm";
+import { RegisterForm } from "../../../components/auth/RegisterForm";
 
 // ----- Mockowanie globalnego fetch -----
 // Remove global fetch mock - we will use vi.spyOn per test

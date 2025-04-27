@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { LoginForm } from "../../components/auth/LoginForm";
+import { LoginForm } from "../../../components/auth/LoginForm";
 
 // ----- Mockowanie globalnego fetch -----
 const mockFetch = vi.fn();

@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import FlashcardItem from "../../components/flashcards/FlashcardItem";
-import type { FlashcardDto } from "../../types";
+import FlashcardItem from "../../../components/flashcards/FlashcardItem";
+import type { FlashcardDto } from "../../../types";
 
 // Mock formatDate, ponieważ nie chcemy testować jego implementacji tutaj
-vi.mock("../../components/flashcards/utils/formatDate", () => ({
+vi.mock("../../../components/flashcards/utils/formatDate", () => ({
   formatDate: vi.fn((dateString) => new Date(dateString).toLocaleDateString()),
 }));
 

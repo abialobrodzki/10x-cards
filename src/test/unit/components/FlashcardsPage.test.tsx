@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import FlashcardsPage from "../../components/flashcards/FlashcardsPage";
-import * as FlashcardsManagerModule from "../../components/flashcards/hooks/useFlashcardsManager";
-import type { FlashcardDto } from "../../types";
+import FlashcardsPage from "../../../components/flashcards/FlashcardsPage";
+import * as FlashcardsManagerModule from "../../../components/flashcards/hooks/useFlashcardsManager";
+import type { FlashcardDto } from "../../../types";
 
 // Definiujemy typ dla sortBy
 type SortByField = "id" | "front" | "back" | "created_at" | "updated_at" | "source" | "generation_id";
@@ -11,7 +11,7 @@ type SortByField = "id" | "front" | "back" | "created_at" | "updated_at" | "sour
 type ViewMode = "grid" | "list";
 
 // Mock dla hooka useFlashcardsManager
-vi.mock("../../components/flashcards/hooks/useFlashcardsManager", () => ({
+vi.mock("../../../components/flashcards/hooks/useFlashcardsManager", () => ({
   useFlashcardsManager: vi.fn(),
 }));
 

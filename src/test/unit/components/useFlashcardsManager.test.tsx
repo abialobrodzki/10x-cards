@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
-import { useFlashcardsManager } from "../../components/flashcards/hooks/useFlashcardsManager";
-import type { FlashcardDto, FlashcardListResponseDto } from "../../types";
-import type { FlashcardFormValues } from "../../components/flashcards/types";
-import { server } from "../setup";
+import { useFlashcardsManager } from "../../../components/flashcards/hooks/useFlashcardsManager";
+import type { FlashcardDto, FlashcardListResponseDto } from "../../../types";
+import type { FlashcardFormValues } from "../../../components/flashcards/types";
+import { server } from "../../setup";
 
 const localStorageMock = {
   getItem: vi.fn(),

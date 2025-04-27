@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import DeleteConfirmationDialog from "../../components/flashcards/DeleteConfirmationDialog";
+import DeleteConfirmationDialog from "../../../components/flashcards/DeleteConfirmationDialog";
 
 describe("DeleteConfirmationDialog", () => {
   const mockOnClose = vi.fn();

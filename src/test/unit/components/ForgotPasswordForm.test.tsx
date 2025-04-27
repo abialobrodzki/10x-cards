@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event"; // Import user-event
 import { describe, it, expect } from "vitest";
 // Importy MSW
 import { http, HttpResponse } from "msw";
-import { server } from "../../mocks/server"; // Upewnij się, że ścieżka jest poprawna
-import { ForgotPasswordForm } from "../../components/auth/ForgotPasswordForm";
+import { server } from "../../../mocks/server"; // Upewnij się, że ścieżka jest poprawna
+import { ForgotPasswordForm } from "../../../components/auth/ForgotPasswordForm";
 
 // Nie potrzebujemy już globalnego mocka fetch
 // const mockFetch = vi.fn();

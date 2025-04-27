@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import FlashcardFormModal from "../../components/flashcards/FlashcardFormModal"; // Adjusted import path
+import FlashcardFormModal from "../../../components/flashcards/FlashcardFormModal"; // Adjusted import path
 // import type { Flashcard } from "@/db/types"; // Usuwam problematyczny import
 import React from "react"; // Import React
 

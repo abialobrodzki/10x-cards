@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
-import { ResetPasswordForm } from "../../components/auth/ResetPasswordForm";
+import { ResetPasswordForm } from "../../../components/auth/ResetPasswordForm";
 // Import MSW server and handlers directly for this test suite
-import { server } from "../../mocks/server";
+import { server } from "../../../mocks/server";
 // import { http, HttpResponse } from "msw"; // Removed unused imports
 
 // ----- Remove vi.fn() fetch mocking -----

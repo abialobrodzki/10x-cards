@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useGenerateFlashcardsView } from "../../components/hooks/useGenerateFlashcardsView";
-import type { GenerationWithFlashcardsResponseDto } from "../../types";
+import { useGenerateFlashcardsView } from "../../../components/hooks/useGenerateFlashcardsView";
+import type { GenerationWithFlashcardsResponseDto } from "../../../types";
 
 // ----- Mock fetch using vi.stubGlobal -----
 const mockFetch = vi.fn();

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { LogoutButton } from "../../components/LogoutButton";
+import { LogoutButton } from "../../../components/LogoutButton";
 
 // Mock fetch API - using a more robust mock structure
 const mockFetch = vi.fn();

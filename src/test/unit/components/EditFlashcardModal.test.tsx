@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import EditFlashcardModal from "../../components/EditFlashcardModal";
-import type { FlashcardViewModel } from "../../types/viewModels";
+import EditFlashcardModal from "../../../components/EditFlashcardModal";
+import type { FlashcardViewModel } from "../../../types/viewModels";
 
 // ----- Mock funkcji onSave -----
 const mockOnSave = vi.fn();

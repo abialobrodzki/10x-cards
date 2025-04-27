@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import FlashcardList from "../../components/FlashcardList"; // Corrected path based on project structure
-import type { FlashcardViewModel } from "../../types/viewModels"; // Changed import to FlashcardViewModel
+import FlashcardList from "../../../components/FlashcardList"; // Corrected path based on project structure
+import type { FlashcardViewModel } from "../../../types/viewModels"; // Changed import to FlashcardViewModel
 
 // Mock data based on scenarios in README.md and FlashcardViewModel structure
 const mockFlashcards: FlashcardViewModel[] = [

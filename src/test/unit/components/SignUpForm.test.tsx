@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SignUpForm } from "../../components/auth/SignUpForm";
+import { SignUpForm } from "../../../components/auth/SignUpForm";
 
 // ----- Mockowanie zależności -----
 const mockFetch = vi.fn();

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import CreateFlashcardButton from "../../components/flashcards/CreateFlashcardButton";
+import CreateFlashcardButton from "../../../components/flashcards/CreateFlashcardButton";
 
 describe("CreateFlashcardButton", () => {
   it("should render the button with icon and text", () => {

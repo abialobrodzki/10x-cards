@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import FlashcardExportButton from "../../components/flashcards/FlashcardExportButton";
-import type { FlashcardDto } from "../../types";
+import FlashcardExportButton from "../../../components/flashcards/FlashcardExportButton";
+import type { FlashcardDto } from "../../../types";
 
 // ----- Mockowanie funkcji DOM i URL -----
 // Remove unused global mockLink

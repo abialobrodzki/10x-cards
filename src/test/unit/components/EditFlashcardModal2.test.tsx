@@ -2,8 +2,8 @@ import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import EditFlashcardModal from "../../components/EditFlashcardModal";
-import type { FlashcardViewModel } from "../../types/viewModels";
+import EditFlashcardModal from "../../../components/EditFlashcardModal";
+import type { FlashcardViewModel } from "../../../types/viewModels";
 
 // Mock Shadcn UI components to avoid actual rendering complexity
 /* eslint-disable react/prop-types */
