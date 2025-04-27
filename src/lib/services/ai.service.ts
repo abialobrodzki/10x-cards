@@ -10,12 +10,18 @@ export interface AIGeneratedData {
   model: string;
 }
 
+export interface AIServiceConfig {
+  useMock: boolean;
+  apiKey: string;
+  siteUrl: string;
+}
+
 /**
  * Wykrywa prawdopodobny język tekstu na podstawie prostych heurystyk
  * @param text Tekst do analizy
  * @returns Kod języka ('pl' dla polskiego, 'en' dla angielskiego, inne dla nieznanych)
  */
-function detectLanguage(text: string): string {
+export function detectLanguage(text: string): string {
   // Próbka tekstu do analizy (pierwsze 500 znaków)
   const sample = text.substring(0, 500).toLowerCase();
 
@@ -53,13 +59,26 @@ function detectLanguage(text: string): string {
 }
 
 /**
- * Generates flashcards using OpenRouter.ai API or mock based on env config
+ * Generates flashcards using OpenRouter.ai API or mock based on config
  * @param text Text to generate flashcards from
  * @param language Optional language code ('pl', 'en') - auto-detected if not provided
+ * @param config Optional service configuration (apiKey, useMock, siteUrl)
  */
-export async function generateFlashcardsWithAI(text: string, language?: string): Promise<AIGeneratedData> {
+export async function generateFlashcardsWithAI(
+  text: string,
+  language?: string,
+  config?: AIServiceConfig
+): Promise<AIGeneratedData> {
+  // Default config from environment if not provided
+  const effectiveConfig: AIServiceConfig = config || {
+    useMock: import.meta.env.USE_AI_MOCK === "true",
+    apiKey: import.meta.env.OPENROUTER_API_KEY,
+    siteUrl: import.meta.env.PUBLIC_SITE_URL || "https://10xcards.app",
+  };
+
   // Use mock if specified
-  if (import.meta.env.USE_AI_MOCK === "true") {
+  if (effectiveConfig.useMock) {
+    logger.debug("Using mock AI response based on config.");
     return generateMockFlashcards(text);
   }
 
@@ -67,8 +86,7 @@ export async function generateFlashcardsWithAI(text: string, language?: string):
   const detectedLanguage = language || detectLanguage(text);
   logger.debug(`Używam języka: ${detectedLanguage}`);
 
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
+  if (!effectiveConfig.apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set in environment");
   }
 
@@ -103,8 +121,8 @@ export async function generateFlashcardsWithAI(text: string, language?: string):
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": import.meta.env.PUBLIC_SITE_URL || "https://10xcards.app",
+        Authorization: `Bearer ${effectiveConfig.apiKey}`,
+        "HTTP-Referer": effectiveConfig.siteUrl,
       },
       body: JSON.stringify({
         model: "meta-llama/llama-4-scout:free",
@@ -251,7 +269,7 @@ export async function generateFlashcardsWithAI(text: string, language?: string):
  * @param text Text to generate flashcards from
  * @returns Mock flashcards and model info
  */
-function generateMockFlashcards(text: string): AIGeneratedData {
+export function generateMockFlashcards(text: string): AIGeneratedData {
   const wordCount = text.split(/\s+/).length;
   const mockFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = [];
   for (let i = 1; i <= 5; i++) {
