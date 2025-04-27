@@ -11,7 +11,9 @@ const EmptyFlashcardsList = ({ hasFilters, onCreateNewClick }: EmptyFlashcardsLi
   return (
     <div className="text-center py-16 border rounded-lg bg-card flex flex-col items-center">
       <div className="mb-4 p-4 bg-muted rounded-full">
-        <SearchX className="h-12 w-12 text-muted-foreground" />
+        <div data-testid="search-x-icon">
+          <SearchX className="h-12 w-12 text-muted-foreground" />
+        </div>
       </div>
 
       <h3 className="font-medium text-xl mb-2">{hasFilters ? "Brak pasujących fiszek" : "Brak fiszek"}</h3>

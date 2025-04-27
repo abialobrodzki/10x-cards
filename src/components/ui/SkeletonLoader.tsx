@@ -12,7 +12,12 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ isVisible, count = 3, c
   return (
     <div className={`space-y-4 ${className}`}>
       {[...Array(count)].map((_, index) => (
-        <div key={index} className="border rounded-lg shadow-sm p-4 animate-pulse">
+        <div
+          key={index}
+          className="border rounded-lg shadow-sm p-4 animate-pulse"
+          role="generic"
+          aria-label="skeleton item"
+        >
           <div className="flex flex-col md:flex-row md:gap-6">
             <div className="flex-1 space-y-4">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>

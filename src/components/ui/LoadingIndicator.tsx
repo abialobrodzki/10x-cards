@@ -10,7 +10,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ isVisible, message 
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
-      <div className="relative w-12 h-12">
+      <div className="relative w-12 h-12" data-testid="loading-spinner-container">
         <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
         <div className="absolute top-0 left-0 w-full h-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
       </div>
