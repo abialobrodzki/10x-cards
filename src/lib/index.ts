@@ -37,6 +37,3 @@ export {
 
 // Export logger
 export { logger, LogLevel } from "./openrouter.logger";
-
-// Export example usage
-export { runExamples } from "./openrouter.example";
