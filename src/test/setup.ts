@@ -34,10 +34,10 @@ if (typeof global.URL !== "undefined") {
 }
 // ------------------------
 
-// Konfiguracja baseURL dla happy-dom
+// Replace direct navigation with history.pushState to avoid jsdom navigation errors
 if (typeof window !== "undefined") {
-  // Ustaw bazowy URL dla środowiska testowego
-  window.location.href = "http://localhost:3000";
+  // Stub history.pushState to prevent jsdom navigation errors
+  window.history.pushState = vi.fn();
 }
 
 // Clean up after each test

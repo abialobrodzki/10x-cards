@@ -24,6 +24,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "astro:middleware": fileURLToPath(new URL("./src/test/mocks/astro-middleware.ts", import.meta.url)),
     },
   },
 });
