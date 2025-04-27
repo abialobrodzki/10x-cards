@@ -27,3 +27,6 @@ pnpm-debug.log*
 test-results/
 src/test/e2e/**/*.spec.ts-snapshots/
 playwright-report/
+
+# Coverage report
+.coverage/
