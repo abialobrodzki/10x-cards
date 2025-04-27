@@ -55,4 +55,11 @@ afterEach(() => {
 beforeAll(() => server.listen({ onUnhandledRequest: "warn" }));
 afterAll(() => server.close());
 
+// Setup fake environment variables for Supabase
+const env = import.meta.env as unknown as Record<string, string>;
+env.SUPABASE_URL = "http://localhost";
+env.SUPABASE_KEY = "test-key";
+env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+env.DEFAULT_USER_ID = "default-user-id";
+
 export { server };
