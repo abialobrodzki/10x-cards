@@ -112,7 +112,7 @@ Please follow the AI guidelines and coding practices defined in the AI configura
 
 This project is licensed under the **MIT License**.
 
-------------------------------------------------------------------------------------------
+---
 
 # Komponenty widoku generowania fiszek
 
@@ -183,7 +183,7 @@ import GenerateView from "../components/GenerateView";
 <GenerateView client:load />;
 ```
 
-------------------------------------------------------------------------------------------
+---
 
 ## Test - reset hasla / rejestracja uzytkownika
 
@@ -246,8 +246,7 @@ pull flashcards - GET:
 curl --location 'http://localhost:3000/api/flashcards'
 ```
 
-------------------------------------------------------------------------------------------
-
+---
 
 # 10xCards Testing Setup
 
@@ -341,3 +340,36 @@ npm run test:e2e -- --update-snapshots
    npm run test:e2e -- --update-snapshots
    ```
    Then remove the `.skip` from the screenshot test.
+
+<!--
+TO DO:
+Uwaga: Zauważyłem potencjalne duplikaty nazw plików (FlashcardItem.tsx, FlashcardList.tsx) na różnych poziomach zagnieżdżenia. Warto sprawdzić, czy to celowe, czy może pozostałość po refaktoryzacji.
+
+-Komponenty React (./src/components)
+Funkcje pomocnicze i serwisy (./src/lib)
+Logika endpointów API (./src/pages/api)
+Logika Middleware (./src/middleware/index.ts)
+Logika bazodanowa (src/db)
+Prostsze komponenty Astro (./src/components, src/layouts, ./src/pages)
+
+Podsumowując: Największą wartość przyniosą testy jednostkowe dla komponentów React i logiki w ./src/lib. Testowanie logiki API i middleware również jest bardzo wskazane.
+
+PROMPT:
+mozesz sprawdzic obecne testy w ./test/unit/ i zaproponowac elementy do pokrycia w ./src/components do przygotowania zestaw testów jednostkowych z uwzględnieniem kluczowych reguł biznesowych i warunków brzegowych @vitest-unit-testing.mdc
+
+---
+
+Przygotuj zestaw testów jednostkowych dla `RulesBuilderService.generateRulesContent()` z uwzględnieniem kluczowych reguł biznesowych i warunków brzegowych @vitest-unit-testing.mdc
+
+---
+
+mozesz sprawdzic i uruchomic testy w
+
+---
+
+Na podstawie porównania plików w src/components i jego podkatalogach z plikami w src/test/unit, brakuje testów jednostkowych dla następujących komponentów React:
+
+API Endpoints (src/pages/api)
+Many API endpoint files have 0% coverage, for example:
+generations/[id]/accept-flashcards.ts
+-->

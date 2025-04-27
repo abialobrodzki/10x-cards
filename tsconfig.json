@@ -9,6 +9,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vitest", "@testing-library/jest-dom", "@testing-library/user-event"]
+    "types": ["vitest/globals", "vitest", "@testing-library/jest-dom", "@testing-library/user-event"]
   }
 }
