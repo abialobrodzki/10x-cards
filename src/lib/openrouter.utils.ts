@@ -42,17 +42,18 @@ export function truncateChatHistory(
     const message = messages[i];
     const messageTokens = estimateTokens(message.content);
 
-    // If adding this message would exceed the limit, stop
-    if (tokenCount + messageTokens > maxTokens) {
-      break;
+    // If adding this message would exceed the limit, skip it and continue
+    if (tokenCount + messageTokens <= maxTokens) {
+      // Add message to the beginning (to maintain chronological order)
+      result.unshift(message);
+      tokenCount += messageTokens;
+    } else {
+      // If the current message doesn't fit, log a debug message and continue
+      logger.debug(`Skipping message due to token limit: ${message.role}: ${message.content.substring(0, 50)}...`);
     }
-
-    // Add message to the beginning (to maintain chronological order)
-    result.unshift(message);
-    tokenCount += messageTokens;
   }
 
-  logger.debug(`Truncated chat history: ${messages.length} -> ${result.length} messages`);
+  logger.debug(`Truncated chat history: ${messages.length} -> ${result.length} messages, total tokens: ${tokenCount}`);
   return result;
 }
 
@@ -65,7 +66,7 @@ export function sanitizeInput(input: string): string {
   // Basic sanitization - remove potential script tags and dangerous patterns
   return input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // Remove script tags
-    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/href=["']javascript:[^"']*["']/gi, 'href=""') // Replace javascript: protocol in href attributes
     .trim();
 }
 
@@ -91,7 +92,7 @@ export function createSystemMessage(type: "general" | "json" | "coding" | "creat
  * Combines multiple chat messages into a single context message
  * Useful for summarizing a conversation or creating a compact history
  */
-export function combineMessages(messages: ChatMessage[], prefix = "Previous conversation: "): ChatMessage {
+export function combineMessages(messages: ChatMessage[], prefix = "Previous conversation:"): ChatMessage {
   const combinedContent = messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n");
 
   return {

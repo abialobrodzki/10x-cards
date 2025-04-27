@@ -43,7 +43,7 @@ export class OpenRouterService {
   private requestTimeout: number;
   private retryCount: number;
   private maxTokens: number;
-  private responseCache = new Map<string, CacheItem>();
+  private responseCache: Record<string, CacheItem> = {};
   private cacheExpiryTimeMs: number;
 
   /**
@@ -127,7 +127,8 @@ export class OpenRouterService {
    * Clears the entire response cache
    */
   public clearCache(): void {
-    this.responseCache.clear();
+    // Clear the object-based cache
+    this.responseCache = {};
     logger.debug("Response cache cleared");
   }
 
@@ -143,6 +144,13 @@ export class OpenRouterService {
    * Generate a cache key based on the request parameters
    */
   private generateCacheKey(messages: ChatMessage[], model: string, params: ModelParameters): string {
+    // --- Simplified Cache Key for Debugging ---
+    // Use only the content of the last message and model name
+    // const lastMessageContent = messages.length > 0 ? messages[messages.length - 1].content : "";
+    // const simplifiedKey = `${lastMessageContent}_${model}`;
+    // // logger.debug("Generated Simplified Cache Key:", simplifiedKey);
+    // return simplifiedKey;
+    // --- Original Cache Key Logic ---
     const messagesJson = JSON.stringify(messages);
     const paramsJson = JSON.stringify(params);
     return `${messagesJson}_${model}_${paramsJson}`;
@@ -197,7 +205,7 @@ export class OpenRouterService {
         this.modelParams
       );
 
-      const cachedResponse = this.responseCache.get(cacheKey);
+      const cachedResponse = this.responseCache[cacheKey];
       if (cachedResponse && this.isCacheValid(cachedResponse)) {
         logger.info("Using cached flashcard proposal");
         // Explicitly cast and validate
@@ -225,10 +233,10 @@ export class OpenRouterService {
       const validatedFlashcard = flashcardProposalDtoSchema.parse(flashcardData);
 
       // Cache the response
-      this.responseCache.set(cacheKey, {
+      this.responseCache[cacheKey] = {
         response: parsedResponse,
         timestamp: Date.now(),
-      });
+      };
 
       return validatedFlashcard;
     } catch (error) {
@@ -244,89 +252,96 @@ export class OpenRouterService {
    * Sends a chat message to the OpenRouter API
    */
   public async sendChatMessage(userMessage?: string): Promise<ResponsePayload> {
+    let responsePayload: ResponsePayload | null = null;
+    let finalUserMessage = ""; // Store the message for history update
     try {
-      // Use provided message or the stored one
       const message = userMessage ? sanitizeInput(userMessage) : this.userMessage;
-
       if (!message) {
-        throw new OpenRouterError("User message is required");
+        throw new OpenRouterError("User message cannot be empty.");
       }
+      finalUserMessage = message; // Assign for later history update
 
-      // Build chat messages array
-      const chatMessages: ChatMessage[] = [];
-
-      // Add system message if exists
+      // Build message history for payload
+      const historyForPayload: ChatMessage[] = [];
       if (this.systemMessage) {
-        chatMessages.push({ role: "system", content: this.systemMessage });
+        historyForPayload.push({ role: "system", content: this.systemMessage });
       }
+      historyForPayload.push(...truncateChatHistory(this.chatHistory, this.maxTokens));
 
-      // Add history messages, truncating if necessary to stay within token limits
-      if (this.chatHistory.length > 0) {
-        const truncatedHistory = truncateChatHistory(this.chatHistory, this.maxTokens);
-        chatMessages.push(...truncatedHistory);
+      // Add current user message AFTER history for the final payload
+      const messagesForPayload: ChatMessage[] = [...historyForPayload, { role: "user", content: message }];
+
+      // --- Caching Logic Start ---
+      const cacheKey = this.generateCacheKey(messagesForPayload, this.modelName, this.modelParams);
+      const cachedItem = this.responseCache[cacheKey];
+
+      // Add detailed logging for cache check
+      // logger.debug("Checking cache", {
+      //     cacheKey,
+      //     hasItem: this.responseCache.has(cacheKey),
+      //     isItemValid: cachedItem ? this.isCacheValid(cachedItem) : false,
+      //     cacheContent: this.responseCache // Log entire cache map content
+      // });
+
+      if (cachedItem && this.isCacheValid(cachedItem)) {
+        logger.info("Using cached chat response");
+        // Assign cached response to be processed AFTER the try-catch block
+        responsePayload = cachedItem.response;
+        // Skip API call and parsing
+      } else {
+        // --- Caching Logic End ---
+
+        // Build payload
+        const payload = this.buildRequestPayload(
+          messagesForPayload,
+          this.responseFormat,
+          this.modelName,
+          this.modelParams
+        );
+
+        // Execute request
+        const response = await this.executeRequest(payload);
+
+        // Parse response
+        const parsedResponse = this.parseResponse(response);
+
+        // Cache the new response
+        this.responseCache[cacheKey] = {
+          response: parsedResponse,
+          timestamp: Date.now(),
+        };
+
+        // Assign parsed response to be processed AFTER the try-catch block
+        responsePayload = parsedResponse;
       }
-
-      // Add current user message
-      chatMessages.push({ role: "user", content: message });
-
-      logger.debug("Sending chat message", { message });
-
-      // Check cache first
-      const cacheKey = this.generateCacheKey(chatMessages, this.modelName, this.modelParams);
-      const cachedResponse = this.responseCache.get(cacheKey);
-
-      if (cachedResponse && this.isCacheValid(cachedResponse)) {
-        logger.info("Using cached response");
-
-        // Still update chat history
-        this.chatHistory.push({ role: "user", content: message });
-
-        if (cachedResponse.response.message) {
-          this.chatHistory.push({
-            role: "assistant",
-            content:
-              typeof cachedResponse.response.message === "string"
-                ? cachedResponse.response.message
-                : JSON.stringify(cachedResponse.response.message),
-          });
-        }
-
-        return cachedResponse.response;
+    } catch (error) {
+      this.handleInternalError(error as Error);
+      throw error; // Re-throw after handling
+    } finally {
+      // --- Unified History Update --- //
+      // Always add the user message that was actually processed
+      if (finalUserMessage) {
+        this.chatHistory.push({ role: "user", content: finalUserMessage });
       }
-
-      // Build request payload
-      const payload = this.buildRequestPayload(chatMessages, this.responseFormat, this.modelName, this.modelParams);
-
-      // Execute the request
-      const response = await this.executeRequest(payload);
-
-      // Parse and validate response
-      const parsedResponse = this.parseResponse(response);
-
-      // Cache the response
-      this.responseCache.set(cacheKey, {
-        response: parsedResponse,
-        timestamp: Date.now(),
-      });
-
-      // Update chat history with user message and assistant response
-      this.chatHistory.push({ role: "user", content: message });
-
-      if (parsedResponse.message) {
+      // Add assistant response if one was successfully obtained (from cache or API)
+      if (responsePayload && responsePayload.message) {
         this.chatHistory.push({
           role: "assistant",
           content:
-            typeof parsedResponse.message === "string"
-              ? parsedResponse.message
-              : JSON.stringify(parsedResponse.message),
+            typeof responsePayload.message === "string"
+              ? responsePayload.message
+              : JSON.stringify(responsePayload.message),
         });
       }
-
-      return parsedResponse;
-    } catch (error) {
-      this.handleInternalError(error as Error);
-      throw error;
     }
+
+    // Ensure we always return a valid payload or throw before this point
+    if (!responsePayload) {
+      // This should technically not be reachable if error handling is correct
+      throw new OpenRouterError("Failed to obtain a response payload.");
+    }
+
+    return responsePayload;
   }
 
   /**
@@ -420,9 +435,9 @@ export class OpenRouterService {
       } catch (error) {
         lastError = error as Error;
 
-        // Don't retry on authentication errors
-        if (error instanceof AuthenticationError) {
-          logger.error("Authentication error", error);
+        // Don't retry on authentication or format errors
+        if (error instanceof AuthenticationError || error instanceof ResponseFormatError) {
+          logger.error(`Non-retryable error encountered: ${error.name}`, error);
           throw error;
         }
 
@@ -444,6 +459,8 @@ export class OpenRouterService {
    * Parses and validates the API response
    */
   private parseResponse(rawResponse: OpenRouterResponse): ResponsePayload {
+    // Log the responseFormat at the time of parsing
+    // logger.debug("Parsing response with format:", this.responseFormat);
     try {
       // Check if response has the expected structure
       if (
