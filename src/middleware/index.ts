@@ -16,7 +16,7 @@ const PUBLIC_PATHS = [
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   // Strona główna
-  "/",
+  // ... existing code ...
 ];
 
 // Nazwy ciasteczek używane przez Supabase
