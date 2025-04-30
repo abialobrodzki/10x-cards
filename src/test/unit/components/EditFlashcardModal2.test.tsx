@@ -302,8 +302,8 @@ describe("EditFlashcardModal", () => {
 
   it("should apply error styles when validation fails", async () => {
     renderComponent();
-    const frontInput = screen.getByTestId("front"); // Use data-testid added in mock
-    const backInput = screen.getByTestId("back"); // Use data-testid added in mock
+    const frontInput = screen.getByTestId("edit-flashcard-front-textarea"); // Use data-testid added in mock
+    const backInput = screen.getByTestId("edit-flashcard-back-textarea"); // Use data-testid added in mock
     const saveButton = screen.getByRole("button", { name: /zapisz/i });
 
     // Initially no error styles
