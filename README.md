@@ -341,8 +341,7 @@ npm run test:e2e -- --update-snapshots
    ```
    Then remove the `.skip` from the screenshot test.
 
-
-<!-- 
+<!--
 TO DO:
-Uwaga: Zauważyłem potencjalne duplikaty nazw plików (FlashcardItem.tsx, FlashcardList.tsx) na różnych poziomach zagnieżdżenia. Warto sprawdzić, czy to celowe, czy może pozostałość po refaktoryzacji. 
+Uwaga: Zauważyłem potencjalne duplikaty nazw plików (FlashcardItem.tsx, FlashcardList.tsx) na różnych poziomach zagnieżdżenia. Warto sprawdzić, czy to celowe, czy może pozostałość po refaktoryzacji.
 -->
