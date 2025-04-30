@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
-import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
+import { createServerClient, type CookieOptionsWithName, type CookieOptions } from "@supabase/ssr";
 import type { AstroCookies } from "astro";
 import type { Database } from "./database.types";
 
@@ -20,7 +20,7 @@ export const cookieOptions: CookieOptionsWithName = {
 const AUTH_COOKIE_NAMES = ["sb-access-token", "sb-refresh-token", "supabase-auth-token", "sb-127-auth-token"];
 
 // Funkcja do dekodowania tokenu JWT
-function decodeJWT(token: string) {
+export function decodeJWT(token: string) {
   try {
     const base64Url = token.split(".")[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -40,7 +40,7 @@ function decodeJWT(token: string) {
 }
 
 // Funkcja do wyodrębnienia tokenu JWT z formatu base64
-function extractTokenFromBase64Format(base64Value: string): string | undefined {
+export function extractTokenFromBase64Format(base64Value: string): string | undefined {
   try {
     if (base64Value && base64Value.startsWith("base64-")) {
       const tokenData = base64Value.substring(7); // Usunięcie prefiksu "base64-"
@@ -55,7 +55,7 @@ function extractTokenFromBase64Format(base64Value: string): string | undefined {
 }
 
 // Poprawiona funkcja parsowania nagłówka Cookie
-function parseCookieHeader(cookieHeader: string): { name: string; value: string }[] {
+export function parseCookieHeader(cookieHeader: string): { name: string; value: string }[] {
   if (!cookieHeader) return [];
 
   const cookies = cookieHeader.split(";").map((cookie) => {
@@ -76,6 +76,7 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
 }
 
 export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
+  // Parse cookies from the incoming request
   const cookieHeader = context.headers.get("Cookie") || "";
   const cookies = parseCookieHeader(cookieHeader);
 
@@ -102,27 +103,32 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
     }
   }
 
-  // Przygotuj nagłówki autoryzacji
+  // Determine Supabase URL and keys from runtime import.meta.env stubbed by Vitest
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const runtimeEnv = (globalThis as any)["import.meta.env"] as Record<string, string> | undefined;
+  const url = runtimeEnv?.SUPABASE_URL ?? supabaseUrl;
+  const anonKey = runtimeEnv?.SUPABASE_KEY ?? supabaseKey;
+  const serviceRoleKey = runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY;
+  const authKey = serviceRoleKey ?? anonKey;
   const authHeaders: Record<string, string> = {};
   if (accessToken) {
     authHeaders.Authorization = `Bearer ${accessToken}`;
     console.log("Dodano nagłówek autoryzacji z tokenem JWT");
   } else {
-    // Gdy token JWT nie jest dostępny, użyj klucza serwisowego
-    authHeaders.apikey = supabaseKey;
-    authHeaders.Authorization = `Bearer ${supabaseKey}`;
+    authHeaders.apikey = authKey;
+    authHeaders.Authorization = `Bearer ${authKey}`;
     console.log("Dodano nagłówek autoryzacji z kluczem serwisowym");
   }
 
-  // Tworzymy klienta Supabase z prawidłowymi opcjami ciasteczek
-  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+  // Create Supabase client with runtime URL and anon key
+  const supabase = createServerClient<Database>(url, anonKey, {
     cookieOptions,
     cookies: {
       getAll() {
         return cookies;
       },
-      setAll(cookiesToSet) {
-        console.log("Ustawianie ciasteczek sesji:", cookiesToSet.map((c) => c.name).join(", "));
+      setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]): void {
+        console.log("Ustawianie ciasteczek sesji:", cookiesToSet.map((cookie) => cookie.name).join(", "));
         cookiesToSet.forEach(({ name, value, options }) => {
           context.cookies.set(name, value, {
             ...options,
