@@ -20,21 +20,24 @@ export default defineConfig({
       reporter: ["text", "json", "html"],
       exclude: [
         "node_modules/",
-        "src/test/setup.ts",
-        "src/test/e2e/**/*",
-        "astro.config.*",
-        "eslint.config.js",
-        "playwright.config.ts",
-        "vitest.config.ts",
-        ".astro/**/*",
-        "dist/**/*",
-        "public/**/*",
-        "src/types.ts",
-        "src/types/**/*.ts",
-        "src/pages/**/*.astro",
-        "src/layouts/**/*.astro",
-        "src/test/mocks/**/*.ts",
-        "src/lib/index.ts",
+        "astro.config.*", // Astro (mjs/cjs)
+        ".astro/**/*", // build Astro
+        "eslint.config.js", // ESLint
+        "playwright.config.ts", // Playwright
+        "vitest.config.ts", // Vitest
+        "dist/**/*", // build output
+        "public/**/*", // public assets
+        "supabase/**/*", // supabase folder
+        ".windsurfrules", // Windsurf AI rules
+        ".cursor/**/*", // Cursor AI rules
+        "src/layouts/**/*.astro", // Astro layouts
+        "src/lib/index.ts", // główny bundler usług
+        "src/types.ts", // wspólne typy
+        "src/types/**/*.ts", // inne typy
+        "src/pages/**/*.astro", // Astro strony
+        "src/test/setup.ts", // plik setup Vitest
+        "src/test/e2e/**/*", // e2e testy
+        "src/test/mocks/**/*.ts", // mocki do testów
       ],
     },
   },
