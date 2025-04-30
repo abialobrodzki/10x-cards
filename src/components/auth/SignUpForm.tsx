@@ -37,18 +37,14 @@ export function SignUpForm() {
 
   async function onSubmit(values: SignUpFormValues) {
     console.log("[onSubmit] Start");
+    if (isLoading) {
+      console.log("[onSubmit] Already loading, preventing second submission.");
+      return;
+    }
     setIsLoading(true);
     setServerError(null);
     setRegistrationSuccess(false);
     setRequiresEmailConfirmation(false);
-
-    // Force the aria-busy attribute to update immediately
-    setTimeout(() => {
-      const submitButton = document.querySelector('button[type="submit"]');
-      if (submitButton) {
-        submitButton.setAttribute("aria-busy", "true");
-      }
-    }, 0);
 
     try {
       console.log("[onSubmit] Before fetch");

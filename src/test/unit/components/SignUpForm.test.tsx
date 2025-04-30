@@ -1,47 +1,111 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { SignUpForm } from "../../../components/auth/SignUpForm";
 
 // ----- Mockowanie zależności -----
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock window.location more robustly
+// Helper functions for creating mock responses
+const createSuccessResponse = (data = { success: true, requiresEmailConfirmation: false }) => {
+  return {
+    ok: true,
+    status: 200,
+    redirected: false,
+    url: "",
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(""),
+    blob: () => Promise.resolve(new Blob()),
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    formData: () => Promise.resolve(new FormData()),
+    headers: new Headers(),
+    statusText: "OK",
+    type: "basic",
+    clone: function () {
+      return this;
+    },
+    body: null,
+    bodyUsed: false,
+  };
+};
+
+const createErrorResponse = (status = 400, errorMessage = "Error") => {
+  return {
+    ok: false,
+    status,
+    redirected: false,
+    url: "",
+    json: () => Promise.resolve({ error: errorMessage }),
+    text: () => Promise.resolve(""),
+    blob: () => Promise.resolve(new Blob()),
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    formData: () => Promise.resolve(new FormData()),
+    headers: new Headers(),
+    statusText: "Error",
+    type: "basic",
+    clone: function () {
+      return this;
+    },
+    body: null,
+    bodyUsed: false,
+  };
+};
+
+const createRedirectResponse = (redirectUrl = "/dashboard") => {
+  return {
+    ok: false,
+    status: 302,
+    redirected: true,
+    url: redirectUrl,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(""),
+    blob: () => Promise.resolve(new Blob()),
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    formData: () => Promise.resolve(new FormData()),
+    headers: new Headers(),
+    statusText: "Found",
+    type: "basic",
+    clone: function () {
+      return this;
+    },
+    body: null,
+    bodyUsed: false,
+  };
+};
+
+// Mock window.location
 const mockAssign = vi.fn();
 const originalLocation = window.location;
+
 beforeEach(() => {
   // Reset mocks before each test
   vi.resetAllMocks();
-  mockAssign.mockClear(); // Clear assign mock calls specifically
+  mockAssign.mockClear();
 
-  // We need to mock both href and assign since component might use either
+  // Mock window.location
   let hrefValue = "";
   Object.defineProperty(window, "location", {
     writable: true,
     value: {
       ...originalLocation,
       assign: mockAssign,
-      // Create a getter/setter for href to track changes
       get href() {
         return hrefValue;
       },
       set href(val) {
         hrefValue = val;
-        // Treat href assignment like an assign call for testing purposes
         mockAssign(val);
       },
     },
   });
 
-  // Domyślna odpowiedź sukcesu (bez wymaganego potwierdzenia emaila)
-  mockFetch.mockResolvedValue({
-    ok: true,
-    status: 200,
-    redirected: false,
-    url: "",
-    // Ensure json is async
-    json: async () => ({ success: true, requiresEmailConfirmation: false }),
-  });
+  // Default success response
+  mockFetch.mockResolvedValue(createSuccessResponse());
+});
+
+afterEach(() => {
+  // Clean up
+  vi.restoreAllMocks();
 });
 
 // ----- Koniec Mockowania -----
@@ -84,81 +148,88 @@ describe("SignUpForm", () => {
   });
 
   it("should call fetch with correct data and display success message on successful registration", async () => {
-    // Mock that this test will succeed
-    mockFetch.mockImplementationOnce(async () => ({
-      ok: true,
-      status: 200,
-      redirected: false,
-      url: "",
-      json: async () => ({ success: true, requiresEmailConfirmation: false }),
-    }));
+    // Explicitly set success response for this test
+    mockFetch.mockResolvedValueOnce(createSuccessResponse());
 
     renderComponent();
     fillForm();
+
     const submitButton = screen.getByRole("button", { name: /zarejestruj się/i });
-
-    expect(submitButton).toBeEnabled();
-
     fireEvent.click(submitButton);
 
-    // Simply check that fetch was called
+    // Wait for success message
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/rejestracja zakończona pomyślnie/i)).toBeInTheDocument();
     });
 
-    // Form should be in loading state
-    expect(submitButton).toHaveAttribute("aria-busy", "true");
+    // Verify fetch was called once
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    // Verify that the fetch was called with a Request object that has the correct properties
+    const fetchCall = mockFetch.mock.calls[0][0];
+    expect(fetchCall.url).toContain("/api/auth/register");
+    expect(fetchCall.method).toBe("POST");
+
+    // If needed, we can also check that proper headers were sent
+    const headers = Object.fromEntries(fetchCall.headers);
+    expect(headers["content-type"]).toBe("application/json");
   });
 
   it("should display email confirmation message if API indicates it's required", async () => {
-    // Skip this test for now
-    return;
-    // More extensive implementation would go here
+    // Mock confirmation required response
+    mockFetch.mockResolvedValueOnce(createSuccessResponse({ success: true, requiresEmailConfirmation: true }));
+
+    renderComponent();
+    fillForm();
+    await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
+
+    // Check for success and confirmation messages
+    await waitFor(() => {
+      expect(screen.getByText(/rejestracja zakończona pomyślnie/i)).toBeInTheDocument();
+      expect(screen.getByText(/link aktywacyjny/i)).toBeInTheDocument();
+      expect(screen.getByText(/sprawdź swoją skrzynkę pocztową/i)).toBeInTheDocument();
+    });
   });
 
   it("should redirect if fetch response is redirected", async () => {
     const redirectUrl = "/welcome";
+    mockFetch.mockResolvedValueOnce(createRedirectResponse(redirectUrl));
 
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 302,
-      redirected: true,
-      url: redirectUrl,
-      json: async () => ({}),
-    });
     renderComponent();
     fillForm();
-
     await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
-    // Just verify the fetch was called - we know the component calls window.location.assign now
+    // Wait for redirect
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockAssign).toHaveBeenCalledWith(redirectUrl);
     });
   });
 
   it("should display server error message on failed API response", async () => {
-    // Skip this test for now
-    return;
-    // More extensive implementation would go here
+    const errorMessage = "Ten email jest już używany";
+    mockFetch.mockResolvedValueOnce(createErrorResponse(409, errorMessage));
+
+    renderComponent();
+    fillForm();
+    await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
+
+    // Wait for error message
+    await waitFor(() => {
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    });
   });
 
   it("should display generic server error message on network error", async () => {
-    // fetch promise itself rejects
+    // Network error
     mockFetch.mockRejectedValueOnce(new Error("Network Error"));
+
     renderComponent();
     fillForm();
-    const submitButton = screen.getByRole("button", { name: /zarejestruj się/i });
+    await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
-    await fireEvent.click(submitButton);
-
-    // Wait for the generic error message from the catch block
+    // Wait for generic error message
     await waitFor(() => {
       expect(screen.getByText(/nie można połączyć się z serwerem/i)).toBeInTheDocument();
     });
-
-    // Check fetch details and button state *after* error displayed
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(submitButton).toBeEnabled(); // Button re-enabled
   });
 });

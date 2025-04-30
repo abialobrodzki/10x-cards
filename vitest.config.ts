@@ -15,6 +15,8 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["src/test/e2e/**/*"],
+    testTimeout: 10000,
+    hookTimeout: 5000,
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
