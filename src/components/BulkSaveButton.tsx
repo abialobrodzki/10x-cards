@@ -63,11 +63,17 @@ const BulkSaveButton: React.FC<BulkSaveButtonProps> = ({
             onClick={handleSaveSelected}
             disabled={!canSaveSelected}
             className="whitespace-nowrap"
+            data-testid="save-selected-button"
           >
             {isSaving ? "Zapisywanie..." : cooldown && !isSaving ? "Zapisano" : "Zapisz wybrane"}
           </Button>
 
-          <Button onClick={handleSaveAll} disabled={!canSaveAll} className="whitespace-nowrap">
+          <Button
+            onClick={handleSaveAll}
+            disabled={!canSaveAll}
+            className="whitespace-nowrap"
+            data-testid="save-all-button"
+          >
             {isSaving ? "Zapisywanie..." : cooldown && !isSaving ? "Zapisano" : "Zapisz wszystkie"}
           </Button>
         </div>

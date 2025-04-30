@@ -107,10 +107,14 @@ export function SignUpForm() {
         <p className="text-sm text-muted-foreground">Utwórz nowe konto, aby korzystać z aplikacji</p>
       </div>
 
-      {serverError && <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{serverError}</div>}
+      {serverError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive" data-testid="server-error-message">
+          {serverError}
+        </div>
+      )}
 
       {registrationSuccess && (
-        <div className="rounded-md bg-green-50 p-4 text-sm text-green-800">
+        <div className="rounded-md bg-green-50 p-4 text-sm text-green-800" data-testid="registration-success-message">
           <p className="font-medium">Rejestracja zakończona pomyślnie!</p>
           {requiresEmailConfirmation && (
             <p className="mt-2">
@@ -120,7 +124,7 @@ export function SignUpForm() {
           )}
           {requiresEmailConfirmation ? (
             <p className="mt-2 text-center">
-              <a href="/auth/login" className="text-primary hover:underline">
+              <a href="/auth/login" className="text-primary hover:underline" data-testid="login-link-after-signup">
                 Przejdź do strony logowania
               </a>
             </p>
@@ -138,7 +142,13 @@ export function SignUpForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="nazwa@example.com" type="email" {...field} disabled={isLoading} />
+                    <Input
+                      placeholder="nazwa@example.com"
+                      type="email"
+                      {...field}
+                      disabled={isLoading}
+                      data-testid="email-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,7 +162,13 @@ export function SignUpForm() {
                 <FormItem>
                   <FormLabel>Hasło</FormLabel>
                   <FormControl>
-                    <Input placeholder="********" type="password" {...field} disabled={isLoading} />
+                    <Input
+                      placeholder="********"
+                      type="password"
+                      {...field}
+                      disabled={isLoading}
+                      data-testid="password-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,14 +182,26 @@ export function SignUpForm() {
                 <FormItem>
                   <FormLabel>Potwierdź hasło</FormLabel>
                   <FormControl>
-                    <Input placeholder="********" type="password" {...field} disabled={isLoading} />
+                    <Input
+                      placeholder="********"
+                      type="password"
+                      {...field}
+                      disabled={isLoading}
+                      data-testid="confirm-password-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              aria-busy={isLoading}
+              data-testid="signup-button"
+            >
               {isLoading ? "Rejestracja..." : "Zarejestruj się"}
             </Button>
           </form>
@@ -183,7 +211,7 @@ export function SignUpForm() {
       {!registrationSuccess && (
         <div className="text-center text-sm">
           Masz już konto?{" "}
-          <a href="/auth/login" className="text-primary hover:underline">
+          <a href="/auth/login" className="text-primary hover:underline" data-testid="login-link">
             Zaloguj się
           </a>
         </div>

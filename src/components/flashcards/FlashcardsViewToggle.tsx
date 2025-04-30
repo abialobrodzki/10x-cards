@@ -19,6 +19,7 @@ const FlashcardsViewToggle = ({ currentView, onViewChange }: FlashcardsViewToggl
         onClick={() => onViewChange("grid")}
         aria-label="Widok siatki"
         aria-pressed={currentView === "grid"}
+        data-testid="grid-view-button"
       >
         <LayoutGridIcon className="h-4 w-4 mr-2" />
         <span className="hidden sm:inline">Siatka</span>
@@ -30,6 +31,7 @@ const FlashcardsViewToggle = ({ currentView, onViewChange }: FlashcardsViewToggl
         onClick={() => onViewChange("list")}
         aria-label="Widok listy"
         aria-pressed={currentView === "list"}
+        data-testid="list-view-button"
       >
         <ListIcon className="h-4 w-4 mr-2" />
         <span className="hidden sm:inline">Lista</span>

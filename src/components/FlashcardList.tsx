@@ -15,13 +15,17 @@ const FlashcardList: React.FC<FlashcardListProps> = ({ flashcards, onAccept, onE
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="flashcard-list-container">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Wygenerowane fiszki ({flashcards.length})</h2>
-        <p className="text-sm text-gray-500">Zaakceptowane: {flashcards.filter((f) => f.isAccepted).length}</p>
+        <h2 className="text-xl font-semibold" data-testid="flashcard-count-heading">
+          Wygenerowane fiszki ({flashcards.length})
+        </h2>
+        <p className="text-sm text-gray-500" data-testid="accepted-count">
+          Zaakceptowane: {flashcards.filter((f) => f.isAccepted).length}
+        </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="flashcard-items-container">
         {flashcards.map((flashcard, index) => (
           <FlashcardItem
             key={index}

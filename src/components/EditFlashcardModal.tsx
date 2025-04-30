@@ -130,7 +130,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="sm:max-w-[540px]" data-testid="edit-flashcard-modal">
         <DialogHeader>
           <DialogTitle>Edytuj fiszkę</DialogTitle>
           <DialogDescription>Zmodyfikuj zawartość fiszki poniżej.</DialogDescription>
@@ -152,6 +152,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                 placeholder="Wpisz treść przodu fiszki..."
                 className={`min-h-[100px] ${frontError ? "border-destructive ring-destructive/20 focus-visible:ring-destructive/40" : ""}`}
                 aria-invalid={!!frontError}
+                data-testid="edit-flashcard-front-textarea"
               />
               {front.length > 0 && (
                 <Button
@@ -165,6 +166,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                     setFrontError(null);
                   }}
                   aria-label="Wyczyść pole"
+                  data-testid="clear-front-button"
                 >
                   <span className="sr-only">Wyczyść pole</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -177,7 +179,11 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                 </Button>
               )}
             </div>
-            {frontError && <p className="text-sm text-destructive mt-1">{frontError}</p>}
+            {frontError && (
+              <p className="text-sm text-destructive mt-1" data-testid="front-error-message">
+                {frontError}
+              </p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -195,6 +201,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                 placeholder="Wpisz treść tyłu fiszki..."
                 className={`min-h-[100px] ${backError ? "border-destructive ring-destructive/20 focus-visible:ring-destructive/40" : ""}`}
                 aria-invalid={!!backError}
+                data-testid="edit-flashcard-back-textarea"
               />
               {back.length > 0 && (
                 <Button
@@ -208,6 +215,7 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                     setBackError(null);
                   }}
                   aria-label="Wyczyść pole"
+                  data-testid="clear-back-button"
                 >
                   <span className="sr-only">Wyczyść pole</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -220,14 +228,18 @@ const EditFlashcardModal: React.FC<EditFlashcardModalProps> = ({ isOpen, flashca
                 </Button>
               )}
             </div>
-            {backError && <p className="text-sm text-destructive mt-1">{backError}</p>}
+            {backError && (
+              <p className="text-sm text-destructive mt-1" data-testid="back-error-message">
+                {backError}
+              </p>
+            )}
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} data-testid="cancel-edit-button">
               Anuluj
             </Button>
-            <Button type="submit" disabled={!!frontError || !!backError}>
+            <Button type="submit" disabled={!!frontError || !!backError} data-testid="save-edit-button">
               Zapisz
             </Button>
           </DialogFooter>

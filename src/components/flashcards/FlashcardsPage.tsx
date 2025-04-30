@@ -79,9 +79,11 @@ const FlashcardsPage = memo(({ userId }: FlashcardsPageProps) => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4" data-testid="flashcards-page-container">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold">Zarządzanie fiszkami</h1>
+        <h1 className="text-3xl font-bold" data-testid="page-heading">
+          Zarządzanie fiszkami
+        </h1>
         <div className="flex items-center gap-2">
           <FlashcardExportButton flashcards={flashcards} isDisabled={isLoading} />
         </div>
@@ -96,11 +98,15 @@ const FlashcardsPage = memo(({ userId }: FlashcardsPageProps) => {
       </div>
 
       {error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
+          data-testid="error-message-container"
+        >
           <p>{error}</p>
           <button
             onClick={() => fetchFlashcards(filters)}
             className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            data-testid="retry-button"
           >
             Spróbuj ponownie
           </button>
@@ -114,10 +120,11 @@ const FlashcardsPage = memo(({ userId }: FlashcardsPageProps) => {
             isLoading={isLoadingList}
             viewMode={viewMode}
             hasFilters={hasFilters}
+            data-testid="flashcards-list"
           />
 
           {flashcards.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-6" data-testid="pagination-container">
               <Pagination
                 currentPage={filters.page || 1}
                 pageSize={filters.page_size || 20}

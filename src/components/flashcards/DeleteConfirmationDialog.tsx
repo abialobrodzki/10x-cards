@@ -32,7 +32,7 @@ const DeleteConfirmationDialog = ({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent>
+      <AlertDialogContent data-testid="delete-confirmation-dialog">
         <AlertDialogHeader>
           <AlertDialogTitle>Czy na pewno chcesz usunąć tę fiszkę?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -42,7 +42,9 @@ const DeleteConfirmationDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Anuluj</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting} data-testid="cancel-delete-button">
+            Anuluj
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -50,6 +52,7 @@ const DeleteConfirmationDialog = ({
             }}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            data-testid="confirm-delete-button"
           >
             {isDeleting ? (
               <>

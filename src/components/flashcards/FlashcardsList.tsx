@@ -17,7 +17,7 @@ const FlashcardsList = ({
   if (isLoading) {
     if (viewMode === "grid") {
       return (
-        <Grid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Grid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="loading-grid-skeleton">
           {Array(6)
             .fill(0)
             .map((_, index) => (
@@ -29,7 +29,7 @@ const FlashcardsList = ({
       );
     } else {
       return (
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="loading-list-skeleton">
           {Array(4)
             .fill(0)
             .map((_, index) => (
@@ -55,7 +55,7 @@ const FlashcardsList = ({
 
   if (viewMode === "grid") {
     return (
-      <Grid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Grid className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="flashcards-grid-view">
         {flashcards.map((flashcard) => (
           <FlashcardItem
             key={flashcard.id}
@@ -68,7 +68,7 @@ const FlashcardsList = ({
     );
   } else {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="flashcards-list-view">
         {flashcards.map((flashcard) => (
           <FlashcardItemList
             key={flashcard.id}

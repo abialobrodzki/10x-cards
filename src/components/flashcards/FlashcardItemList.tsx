@@ -41,7 +41,7 @@ const FlashcardItemList = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) 
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full" data-testid={`flashcard-list-item-${flashcard.id}`}>
       <CardContent className="pt-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -49,9 +49,17 @@ const FlashcardItemList = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) 
               <h3 className="font-medium">Przód:</h3>
               <div className="text-xs text-muted-foreground">{formatDate(flashcard.created_at)}</div>
             </div>
-            <p className="whitespace-pre-line">{truncateText(flashcard.front)}</p>
+            <p className="whitespace-pre-line" data-testid={`flashcard-front-text-${flashcard.id}`}>
+              {truncateText(flashcard.front)}
+            </p>
             {frontIsTruncated && (
-              <Button variant="ghost" size="sm" className="mt-1 p-0 h-6" onClick={toggleExpand}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 p-0 h-6"
+                onClick={toggleExpand}
+                data-testid={`flashcard-front-expand-button-${flashcard.id}`}
+              >
                 {isExpanded ? (
                   <>
                     <ChevronUpIcon className="h-4 w-4 mr-1" /> Zwiń
@@ -70,11 +78,19 @@ const FlashcardItemList = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) 
           <div className="flex-1">
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-medium">Tył:</h3>
-              {getSourceBadge()}
+              <div data-testid={`flashcard-source-badge-${flashcard.id}`}>{getSourceBadge()}</div>
             </div>
-            <p className="whitespace-pre-line">{truncateText(flashcard.back)}</p>
+            <p className="whitespace-pre-line" data-testid={`flashcard-back-text-${flashcard.id}`}>
+              {truncateText(flashcard.back)}
+            </p>
             {backIsTruncated && (
-              <Button variant="ghost" size="sm" className="mt-1 p-0 h-6" onClick={toggleExpand}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 p-0 h-6"
+                onClick={toggleExpand}
+                data-testid={`flashcard-back-expand-button-${flashcard.id}`}
+              >
                 {isExpanded ? (
                   <>
                     <ChevronUpIcon className="h-4 w-4 mr-1" /> Zwiń
@@ -99,6 +115,7 @@ const FlashcardItemList = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) 
             onEdit();
           }}
           title="Edytuj fiszkę"
+          data-testid={`flashcard-edit-button-${flashcard.id}`}
         >
           <EditIcon className="h-4 w-4 mr-2" />
           Edytuj
@@ -113,6 +130,7 @@ const FlashcardItemList = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) 
           }}
           title="Usuń fiszkę"
           className="text-destructive hover:text-destructive"
+          data-testid={`flashcard-delete-button-${flashcard.id}`}
         >
           <TrashIcon className="h-4 w-4 mr-2" />
           Usuń

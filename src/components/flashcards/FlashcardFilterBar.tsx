@@ -78,12 +78,14 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
           onChange={(e) => setSearchText(e.target.value)}
           className="pl-8 w-full sm:w-[250px]"
           aria-label="Szukaj fiszek"
+          data-testid="search-input"
         />
         {searchText && (
           <button
             className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
             onClick={() => setSearchText("")}
             aria-label="Wyczyść wyszukiwanie"
+            data-testid="clear-search-button"
           >
             <XIcon className="h-4 w-4" />
           </button>
@@ -92,10 +94,10 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
 
       <div className="flex flex-wrap gap-3">
         <Select value={`${filters.sortBy}:${filters.sortOrder}`} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px]" data-testid="sort-select-trigger">
             <SelectValue placeholder="Sortuj według" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent data-testid="sort-select-content">
             <SelectItem value="created_at:desc">Najnowsze</SelectItem>
             <SelectItem value="created_at:asc">Najstarsze</SelectItem>
             <SelectItem value="front:asc">Przód (A-Z)</SelectItem>
@@ -106,10 +108,10 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
         </Select>
 
         <Select value={filters.source || "all"} onValueChange={handleSourceChange}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px]" data-testid="source-select-trigger">
             <SelectValue placeholder="Rodzaj fiszki" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent data-testid="source-select-content">
             <SelectItem value="all">Wszystkie</SelectItem>
             <SelectItem value="manual">Ręcznie utworzone</SelectItem>
             <SelectItem value="ai-full">AI (niezmienione)</SelectItem>
@@ -118,7 +120,13 @@ const FlashcardFilterBar = ({ filters, onFilterChange }: FlashcardFilterBarProps
         </Select>
 
         {hasFilters && (
-          <Button variant="outline" size="icon" onClick={resetFilters} title="Resetuj filtry">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={resetFilters}
+            title="Resetuj filtry"
+            data-testid="reset-filters-button"
+          >
             <XIcon className="h-4 w-4" />
           </Button>
         )}

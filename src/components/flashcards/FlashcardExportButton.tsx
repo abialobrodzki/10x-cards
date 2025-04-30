@@ -59,6 +59,7 @@ const FlashcardExportButton = ({ flashcards, isDisabled = false }: FlashcardExpo
       disabled={isDisabled || flashcards.length === 0}
       title={flashcards.length === 0 ? "Brak fiszek do eksportu" : "Eksportuj fiszki do CSV"}
       className="gap-2"
+      data-testid="export-csv-button"
     >
       <Download className="h-4 w-4" />
       <span>Eksportuj CSV</span>

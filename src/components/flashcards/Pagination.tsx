@@ -65,10 +65,10 @@ const Pagination = ({ currentPage, pageSize, totalItems, onPageChange, onPageSiz
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">Elementy na stronie:</span>
         <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(Number(value))}>
-          <SelectTrigger className="w-[70px]">
+          <SelectTrigger className="w-[70px]" data-testid="page-size-select-trigger">
             <SelectValue placeholder={pageSize.toString()} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent data-testid="page-size-select-content">
             <SelectItem value="10">10</SelectItem>
             <SelectItem value="20">20</SelectItem>
             <SelectItem value="50">50</SelectItem>
@@ -78,7 +78,9 @@ const Pagination = ({ currentPage, pageSize, totalItems, onPageChange, onPageSiz
       </div>
 
       <div className="flex items-center">
-        <span className="text-sm text-muted-foreground mr-4">{itemsCountDisplay}</span>
+        <span className="text-sm text-muted-foreground mr-4" data-testid="items-count-display">
+          {itemsCountDisplay}
+        </span>
 
         <PaginationRoot>
           <PaginationContent>
@@ -90,6 +92,7 @@ const Pagination = ({ currentPage, pageSize, totalItems, onPageChange, onPageSiz
                   if (currentPage > 1) onPageChange(currentPage - 1);
                 }}
                 className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                data-testid="previous-page-button"
               />
             </PaginationItem>
 
@@ -111,6 +114,7 @@ const Pagination = ({ currentPage, pageSize, totalItems, onPageChange, onPageSiz
                       onPageChange(pageNumber);
                     }}
                     isActive={pageNumber === currentPage}
+                    data-testid={`page-link-${pageNumber}`}
                   >
                     {pageNumber}
                   </PaginationLink>
@@ -126,6 +130,7 @@ const Pagination = ({ currentPage, pageSize, totalItems, onPageChange, onPageSiz
                   if (currentPage < totalPages) onPageChange(currentPage + 1);
                 }}
                 className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                data-testid="next-page-button"
               />
             </PaginationItem>
           </PaginationContent>

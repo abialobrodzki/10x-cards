@@ -10,7 +10,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ isVisible, count = 3, c
   if (!isVisible) return null;
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 ${className}`} data-testid="skeleton-loader-container">
       {[...Array(count)].map((_, index) => (
         <div
           key={index}

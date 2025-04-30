@@ -83,7 +83,11 @@ export function LoginForm() {
         <p className="text-sm text-muted-foreground">Wprowadź swoje dane, aby się zalogować</p>
       </div>
 
-      {serverError && <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{serverError}</div>}
+      {serverError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive" data-testid="server-error-message">
+          {serverError}
+        </div>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -94,7 +98,13 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="nazwa@example.com" type="email" {...field} disabled={isLoading} />
+                  <Input
+                    placeholder="nazwa@example.com"
+                    type="email"
+                    {...field}
+                    disabled={isLoading}
+                    data-testid="email-input"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -108,7 +118,13 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Hasło</FormLabel>
                 <FormControl>
-                  <Input placeholder="********" type="password" {...field} disabled={isLoading} />
+                  <Input
+                    placeholder="********"
+                    type="password"
+                    {...field}
+                    disabled={isLoading}
+                    data-testid="password-input"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -116,12 +132,16 @@ export function LoginForm() {
           />
 
           <div className="text-right text-sm">
-            <a href="/auth/forgot-password" className="text-primary underline underline-offset-2">
+            <a
+              href="/auth/forgot-password"
+              className="text-primary underline underline-offset-2"
+              data-testid="forgot-password-link"
+            >
               Zapomniałeś hasła?
             </a>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading} data-testid="login-button">
             {isLoading ? "Logowanie..." : "Zaloguj się"}
           </Button>
         </form>
@@ -129,7 +149,7 @@ export function LoginForm() {
 
       <div className="text-center text-sm">
         Nie masz jeszcze konta?{" "}
-        <a href="/auth/register" className="text-primary underline underline-offset-2">
+        <a href="/auth/register" className="text-primary underline underline-offset-2" data-testid="register-link">
           Zarejestruj się
         </a>
       </div>

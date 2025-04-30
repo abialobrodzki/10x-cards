@@ -49,24 +49,41 @@ const GenerateView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" data-testid="generate-view-container">
       <TextInputForm onSubmit={generateFlashcards} isGenerating={generationState.isGenerating} />
 
       {generationState.isGenerating && (
-        <div className="mt-8">
+        <div className="mt-8" data-testid="generating-state-indicator">
           <LoadingIndicator isVisible={true} message="Trwa generowanie fiszek..." />
           <SkeletonLoader isVisible={true} count={5} className="mt-6" />
         </div>
       )}
 
       {generationState.generationError && (
-        <ErrorNotification message={generationState.generationError} isVisible={true} type="error" />
+        <ErrorNotification
+          message={generationState.generationError}
+          isVisible={true}
+          type="error"
+          data-testid="generation-error-notification"
+        />
       )}
 
-      {savingState.saveError && <ErrorNotification message={savingState.saveError} isVisible={true} type="error" />}
+      {savingState.saveError && (
+        <ErrorNotification
+          message={savingState.saveError}
+          isVisible={true}
+          type="error"
+          data-testid="save-error-notification"
+        />
+      )}
 
       {savingState.saveSuccess && savingState.saveSuccessMessage && (
-        <SuccessNotification message={savingState.saveSuccessMessage} isVisible={true} autoHideDuration={5000} />
+        <SuccessNotification
+          message={savingState.saveSuccessMessage}
+          isVisible={true}
+          autoHideDuration={5000}
+          data-testid="save-success-notification"
+        />
       )}
 
       {flashcardsState.length > 0 && !generationState.isGenerating && (
@@ -76,6 +93,7 @@ const GenerateView: React.FC = () => {
             onAccept={acceptFlashcard}
             onEdit={handleEditOpen}
             onReject={rejectFlashcard}
+            data-testid="flashcard-list"
           />
 
           <BulkSaveButton

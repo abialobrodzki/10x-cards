@@ -55,7 +55,13 @@ export function LogoutButton() {
   };
 
   return (
-    <Button variant="ghost" onClick={handleLogout} disabled={isLoading} className="hover:text-destructive">
+    <Button
+      variant="ghost"
+      onClick={handleLogout}
+      disabled={isLoading}
+      className="hover:text-destructive"
+      data-testid="logout-button"
+    >
       {isLoading ? "Wylogowywanie..." : "Wyloguj"}
     </Button>
   );

@@ -208,15 +208,21 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         <p className="text-sm text-muted-foreground">Wprowadź nowe hasło</p>
       </div>
 
-      {serverError && <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{serverError}</div>}
+      {serverError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive" data-testid="server-error-message">
+          {serverError}
+        </div>
+      )}
 
       {isSuccess ? (
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="reset-success-message">
           <div className="rounded-md bg-green-50 p-4 text-sm text-green-600">
             <p>Hasło zostało pomyślnie zmienione!</p>
           </div>
           <Button className="w-full" asChild>
-            <a href="/auth/login">Przejdź do logowania</a>
+            <a href="/auth/login" data-testid="go-to-login-button">
+              Przejdź do logowania
+            </a>
           </Button>
         </div>
       ) : (
@@ -229,7 +235,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 <FormItem>
                   <FormLabel>Nowe hasło</FormLabel>
                   <FormControl>
-                    <Input placeholder="********" type="password" {...field} disabled={isLoading} />
+                    <Input
+                      placeholder="********"
+                      type="password"
+                      {...field}
+                      disabled={isLoading}
+                      data-testid="password-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -243,21 +255,32 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 <FormItem>
                   <FormLabel>Potwierdź nowe hasło</FormLabel>
                   <FormControl>
-                    <Input placeholder="********" type="password" {...field} disabled={isLoading} />
+                    <Input
+                      placeholder="********"
+                      type="password"
+                      {...field}
+                      disabled={isLoading}
+                      data-testid="confirm-password-input"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading || !finalToken}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || !finalToken}
+              data-testid="reset-password-button"
+            >
               {isLoading ? "Resetowanie..." : "Zresetuj hasło"}
             </Button>
 
             {!finalToken && (
-              <div className="mt-2 text-sm text-red-500 text-center">
+              <div className="mt-2 text-sm text-red-500 text-center" data-testid="no-token-error-message">
                 Brak tokenu resetowania.{" "}
-                <a href="/auth/forgot-password" className="underline">
+                <a href="/auth/forgot-password" className="underline" data-testid="generate-new-link">
                   Wygeneruj nowy link
                 </a>
               </div>

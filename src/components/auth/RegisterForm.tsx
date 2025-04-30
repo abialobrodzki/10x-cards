@@ -76,6 +76,7 @@ const RegisterForm = () => {
           onChange={(e) => setName(e.target.value)}
           required
           className="w-full mt-1 px-3 py-2 border rounded-md"
+          data-testid="name-input"
         />
       </div>
 
@@ -90,6 +91,7 @@ const RegisterForm = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
           className="w-full mt-1 px-3 py-2 border rounded-md"
+          data-testid="email-input"
         />
       </div>
 
@@ -104,6 +106,7 @@ const RegisterForm = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
           className="w-full mt-1 px-3 py-2 border rounded-md"
+          data-testid="password-input"
         />
       </div>
 
@@ -118,15 +121,21 @@ const RegisterForm = () => {
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           className="w-full mt-1 px-3 py-2 border rounded-md"
+          data-testid="confirm-password-input"
         />
       </div>
 
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {error && (
+        <div className="text-red-500 text-sm" data-testid="error-message">
+          {error}
+        </div>
+      )}
 
       <button
         type="submit"
         disabled={isLoading}
         className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+        data-testid="register-button"
       >
         {isLoading ? "Rejestracja..." : "Zarejestruj się"}
       </button>

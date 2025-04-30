@@ -41,11 +41,11 @@ const FlashcardItem = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col" data-testid={`flashcard-item-${flashcard.id}`}>
       <CardContent className="pt-6 flex-grow">
         <div className="flex justify-between items-start mb-4">
           <div className="text-xs text-muted-foreground">{formatDate(flashcard.created_at)}</div>
-          {getSourceBadge()}
+          <div data-testid={`flashcard-source-badge-${flashcard.id}`}>{getSourceBadge()}</div>
         </div>
 
         <div
@@ -61,16 +61,26 @@ const FlashcardItem = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) => {
           role="button"
           aria-pressed={isFlipped}
           aria-label="Obróć fiszkę"
+          data-testid={`flashcard-flip-area-${flashcard.id}`}
         >
           <div
             className={`absolute inset-0 transition-all duration-300 ease-in-out ${
               isFlipped ? "opacity-0 -rotate-y-180" : "opacity-100 rotate-y-0"
             }`}
+            data-testid={`flashcard-front-side-${flashcard.id}`}
           >
             <h3 className="font-medium">Przód:</h3>
-            <p className="mt-2 text-lg whitespace-pre-line">{truncateText(flashcard.front)}</p>
+            <p className="mt-2 text-lg whitespace-pre-line" data-testid={`flashcard-front-text-${flashcard.id}`}>
+              {truncateText(flashcard.front)}
+            </p>
             {frontIsTruncated && (
-              <Button variant="ghost" size="sm" className="mt-1 p-0 h-6" onClick={toggleExpand}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 p-0 h-6"
+                onClick={toggleExpand}
+                data-testid={`flashcard-front-expand-button-${flashcard.id}`}
+              >
                 {isExpanded ? (
                   <>
                     <ChevronUpIcon className="h-4 w-4 mr-1" /> Zwiń
@@ -88,11 +98,20 @@ const FlashcardItem = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) => {
             className={`absolute inset-0 transition-all duration-300 ease-in-out ${
               isFlipped ? "opacity-100 rotate-y-0" : "opacity-0 rotate-y-180"
             }`}
+            data-testid={`flashcard-back-side-${flashcard.id}`}
           >
             <h3 className="font-medium">Tył:</h3>
-            <p className="mt-2 text-lg whitespace-pre-line">{truncateText(flashcard.back)}</p>
+            <p className="mt-2 text-lg whitespace-pre-line" data-testid={`flashcard-back-text-${flashcard.id}`}>
+              {truncateText(flashcard.back)}
+            </p>
             {backIsTruncated && (
-              <Button variant="ghost" size="sm" className="mt-1 p-0 h-6" onClick={toggleExpand}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 p-0 h-6"
+                onClick={toggleExpand}
+                data-testid={`flashcard-back-expand-button-${flashcard.id}`}
+              >
                 {isExpanded ? (
                   <>
                     <ChevronUpIcon className="h-4 w-4 mr-1" /> Zwiń
@@ -117,6 +136,7 @@ const FlashcardItem = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) => {
             setIsFlipped(!isFlipped);
           }}
           title="Obróć fiszkę"
+          data-testid={`flashcard-flip-button-${flashcard.id}`}
         >
           <RefreshCwIcon className="h-4 w-4" />
         </Button>
@@ -130,6 +150,7 @@ const FlashcardItem = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) => {
               onEdit();
             }}
             title="Edytuj fiszkę"
+            data-testid={`flashcard-edit-button-${flashcard.id}`}
           >
             <EditIcon className="h-4 w-4" />
           </Button>
@@ -142,6 +163,7 @@ const FlashcardItem = ({ flashcard, onEdit, onDelete }: FlashcardItemProps) => {
               onDelete();
             }}
             title="Usuń fiszkę"
+            data-testid={`flashcard-delete-button-${flashcard.id}`}
           >
             <TrashIcon className="h-4 w-4" />
           </Button>

@@ -104,7 +104,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="sm:max-w-[540px]" data-testid="flashcard-form-modal">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edytuj fiszkę" : "Utwórz nową fiszkę"}</DialogTitle>
           <DialogDescription>
@@ -113,7 +113,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
         </DialogHeader>
 
         {submitError && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-4" data-testid="submit-error-alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{submitError}</AlertDescription>
           </Alert>
@@ -132,7 +132,12 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
                   </div>
                   <div className="relative">
                     <FormControl>
-                      <Textarea placeholder="Wpisz treść przodu fiszki..." className="min-h-[100px]" {...field} />
+                      <Textarea
+                        placeholder="Wpisz treść przodu fiszki..."
+                        className="min-h-[100px]"
+                        {...field}
+                        data-testid="front-textarea"
+                      />
                     </FormControl>
                     {field.value && (
                       <Button
@@ -141,6 +146,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
                         size="sm"
                         className="absolute right-2 top-2 h-6 w-6 p-0"
                         onClick={() => field.onChange("")}
+                        data-testid="clear-front-button"
                       >
                         <span className="sr-only">Wyczyść pole</span>
                         <svg
@@ -174,7 +180,12 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
                   </div>
                   <div className="relative">
                     <FormControl>
-                      <Textarea placeholder="Wpisz treść tyłu fiszki..." className="min-h-[100px]" {...field} />
+                      <Textarea
+                        placeholder="Wpisz treść tyłu fiszki..."
+                        className="min-h-[100px]"
+                        {...field}
+                        data-testid="back-textarea"
+                      />
                     </FormControl>
                     {field.value && (
                       <Button
@@ -183,6 +194,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
                         size="sm"
                         className="absolute right-2 top-2 h-6 w-6 p-0"
                         onClick={() => field.onChange("")}
+                        data-testid="clear-back-button"
                       >
                         <span className="sr-only">Wyczyść pole</span>
                         <svg
@@ -206,10 +218,16 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+                data-testid="cancel-button"
+              >
                 Anuluj
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="save-button">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

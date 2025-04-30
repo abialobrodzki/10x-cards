@@ -62,6 +62,7 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
               textError ? "border-red-500" : "border-gray-300"
             }`}
             disabled={isGenerating}
+            data-testid="text-input-textarea"
           />
 
           {text.length > 0 && !isGenerating && (
@@ -72,6 +73,7 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
               className="absolute top-3 right-3 h-6 w-6 p-0"
               onClick={() => setText("")}
               aria-label="Wyczyść tekst"
+              data-testid="clear-text-button"
             >
               <span className="sr-only">Wyczyść tekst</span>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -86,12 +88,19 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
         </div>
 
         <div className="flex justify-between items-center">
-          <div>{textError && <p className="text-sm text-red-600">{textError}</p>}</div>
+          <div>
+            {textError && (
+              <p className="text-sm text-red-600" data-testid="text-input-error-message">
+                {textError}
+              </p>
+            )}
+          </div>
           <div>
             <p
               className={`text-sm ${
                 charactersCount < MIN_CHARS || charactersCount > MAX_CHARS ? "text-red-600" : "text-gray-500"
               }`}
+              data-testid="character-count"
             >
               {charactersCount} / {MAX_CHARS} znaków
             </p>
@@ -100,7 +109,12 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={!!textError || isGenerating || text.length === 0} className="px-6 py-2">
+        <Button
+          type="submit"
+          disabled={!!textError || isGenerating || text.length === 0}
+          className="px-6 py-2"
+          data-testid="generate-button"
+        >
           {isGenerating ? "Generowanie..." : "Generuj fiszki"}
         </Button>
       </div>

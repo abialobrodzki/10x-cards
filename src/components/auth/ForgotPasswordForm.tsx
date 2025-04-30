@@ -67,10 +67,14 @@ export function ForgotPasswordForm() {
         </p>
       </div>
 
-      {serverError && <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{serverError}</div>}
+      {serverError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive" data-testid="server-error-message">
+          {serverError}
+        </div>
+      )}
 
       {isSuccess && (
-        <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-800" data-testid="reset-link-sent-message">
           Link do resetowania hasła został wysłany na podany adres email, jeśli istnieje w naszej bazie.
         </div>
       )}
@@ -84,21 +88,27 @@ export function ForgotPasswordForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="nazwa@example.com" type="email" {...field} disabled={isLoading} />
+                  <Input
+                    placeholder="nazwa@example.com"
+                    type="email"
+                    {...field}
+                    disabled={isLoading}
+                    data-testid="email-input"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading} data-testid="send-reset-link-button">
             {isLoading ? "Wysyłanie..." : "Wyślij link resetujący"}
           </Button>
         </form>
       </Form>
 
       <div className="text-center text-sm">
-        <a href="/auth/login" className="text-primary hover:underline">
+        <a href="/auth/login" className="text-primary hover:underline" data-testid="back-to-login-link">
           Wróć do logowania
         </a>
       </div>
