@@ -5,8 +5,6 @@ import type { AstroCookies } from "astro";
 import type { Database } from "./database.types";
 
 const supabaseUrl = import.meta.env.SUPABASE_URL;
-// Prefer service role key for server-side operations to avoid RLS/401 errors
-const supabaseKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.SUPABASE_KEY;
 const defaultUserId = import.meta.env.DEFAULT_USER_ID;
 
 export const cookieOptions: CookieOptionsWithName = {
@@ -107,20 +105,15 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const runtimeEnv = (globalThis as any)["import.meta.env"] as Record<string, string> | undefined;
   const url = runtimeEnv?.SUPABASE_URL ?? supabaseUrl;
-  const anonKey = runtimeEnv?.SUPABASE_KEY ?? supabaseKey;
-  const serviceRoleKey = runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY;
-  const authKey = serviceRoleKey ?? anonKey;
-  const authHeaders: Record<string, string> = {};
-  if (accessToken) {
-    authHeaders.Authorization = `Bearer ${accessToken}`;
-    console.log("Dodano nagłówek autoryzacji z tokenem JWT");
-  } else {
-    authHeaders.apikey = authKey;
-    authHeaders.Authorization = `Bearer ${authKey}`;
-    console.log("Dodano nagłówek autoryzacji z kluczem serwisowym");
+  // Zawsze używaj publicznego klucza anon z SUPABASE_KEY
+  const anonKey = runtimeEnv?.SUPABASE_KEY ?? import.meta.env.SUPABASE_KEY;
+
+  if (!anonKey) {
+    console.error("BŁĄD KRYTYCZNY: Brak klucza anonimowego Supabase (SUPABASE_KEY)!");
+    throw new Error("Brak konfiguracji klucza anonimowego Supabase.");
   }
 
-  // Create Supabase client with runtime URL and anon key
+  // Create Supabase client with runtime URL and the guaranteed anon key
   const supabase = createServerClient<Database>(url, anonKey, {
     cookieOptions,
     cookies: {
@@ -140,9 +133,6 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
         });
       },
     },
-    global: {
-      headers: authHeaders,
-    },
   });
 
   return supabase;
@@ -156,15 +146,15 @@ export const getUserIdFromToken = (accessToken: string | undefined): string | nu
 };
 
 // Główny klient Supabase dla operacji serwerowych
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseKey, {
+export const supabaseClient = createClient<Database>(supabaseUrl, import.meta.env.SUPABASE_KEY, {
   auth: {
     autoRefreshToken: true,
     persistSession: false,
   },
   global: {
     headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: import.meta.env.SUPABASE_KEY,
+      Authorization: `Bearer ${import.meta.env.SUPABASE_KEY}`,
     },
   },
 });

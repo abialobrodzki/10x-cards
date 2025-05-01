@@ -7,9 +7,14 @@ export class FlashcardsPage {
   readonly errorMessageContainer: Locator;
   readonly retryButton: Locator;
   readonly flashcardsList: Locator;
+  readonly flashcardModal: Locator;
+  readonly flashcardDeleteModal: Locator;
+  readonly flashcardDeleteButton: Locator;
   readonly paginationContainer: Locator;
-  // Add locators for filter bar, create button, view toggle, export button etc. as needed
-  // You might need to add data-testid attributes to those components first.
+  readonly createFlashcardButton: Locator;
+  readonly flashcardFrontInput: Locator;
+  readonly flashcardBackInput: Locator;
+  readonly saveFlashcardButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -17,13 +22,35 @@ export class FlashcardsPage {
     this.heading = page.getByTestId("page-heading");
     this.errorMessageContainer = page.getByTestId("error-message-container");
     this.retryButton = page.getByTestId("retry-button");
-    this.flashcardsList = page.getByTestId("flashcards-list");
+    this.flashcardsList = page.getByTestId("flashcards-grid-view");
+    this.flashcardModal = page.getByTestId("flashcard-form-modal");
+    this.flashcardDeleteModal = page.getByTestId("delete-confirmation-dialog");
+    this.flashcardDeleteButton = page.getByTestId("confirm-delete-button");
     this.paginationContainer = page.getByTestId("pagination-container");
+    this.createFlashcardButton = page.getByTestId("create-flashcard-button");
+    this.flashcardFrontInput = page.getByTestId("front-textarea");
+    this.flashcardBackInput = page.getByTestId("back-textarea");
+    this.saveFlashcardButton = page.getByTestId("save-button");
+  }
+
+  getFlashcardDeleteButton(flashcardId: number): Locator {
+    return this.page.getByTestId(`flashcard-delete-button-${flashcardId}`);
   }
 
   async goto() {
-    await this.page.goto("/flashcards");
+    await this.page.goto("/flashcards", { waitUntil: "networkidle" });
   }
 
-  // Add methods for interacting with the page, e.g., applying filters, clicking create, etc.
+  async addFlashcard(front: string, back: string) {
+    await this.createFlashcardButton.click();
+    await this.flashcardFrontInput.fill(front);
+    await this.flashcardBackInput.fill(back);
+    await this.saveFlashcardButton.click();
+  }
+
+  async deleteFlashcard(flashcardId: number) {
+    const deleteButton = this.getFlashcardDeleteButton(flashcardId);
+    await deleteButton.click();
+    await this.flashcardDeleteButton.click();
+  }
 }
