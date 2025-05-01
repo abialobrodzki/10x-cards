@@ -13,6 +13,9 @@ export default defineConfig({
   server: { port: 3000 },
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      exclude: ["msw/node", "src/mocks"],
+    },
   },
   adapter: node({
     mode: "standalone",
