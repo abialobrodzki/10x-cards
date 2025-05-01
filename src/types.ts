@@ -19,12 +19,16 @@ export interface CreateFlashcardDto {
   back: string;
   source: FlashcardSourceType;
   generation_id?: number | null;
+  user_id: string;
 }
 
 // Multiple Flashcards Creation DTO
 export interface CreateFlashcardsDto {
   flashcards: CreateFlashcardDto[];
 }
+
+// Proposed Flashcard DTO (returned by generation before saving)
+export type ProposedFlashcardDto = CreateFlashcardDto;
 
 // Flashcard Update DTO
 export type UpdateFlashcardDto = Partial<CreateFlashcardDto>;
@@ -52,10 +56,16 @@ export type BasicGenerationDto = Pick<
 // Full Generation DTO without user_id (for responses)
 export type GenerationDto = Omit<GenerationEntity, "user_id">;
 
-// Generation with AI-generated Flashcards Response
+// Generation with AI-generated Flashcards Response (before saving)
+export interface GenerationWithProposedFlashcardsDto {
+  generation: BasicGenerationDto;
+  flashcards: ProposedFlashcardDto[];
+}
+
+// Generation with AI-generated Flashcards Response (after saving)
 export interface GenerationWithFlashcardsResponseDto {
   generation: BasicGenerationDto;
-  flashcards: Omit<CreateFlashcardDto, "generation_id">[];
+  flashcards: FlashcardDto[];
 }
 
 // Generation List Response DTO

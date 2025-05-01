@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { GenerationWithFlashcardsResponseDto, CreateFlashcardDto } from "../../types";
+import type { GenerationWithProposedFlashcardsDto } from "../../types";
 import { generateFlashcardsWithAI } from "./ai.service";
-import { createFlashcardsService } from "./flashcard.service";
 import crypto from "crypto";
 
 function stringifyError(err: unknown): string {
@@ -29,7 +28,7 @@ export async function generateFlashcards(
   userId: string,
   text: string,
   language?: string
-): Promise<GenerationWithFlashcardsResponseDto> {
+): Promise<GenerationWithProposedFlashcardsDto> {
   //   console.log("Starting flashcards generation...");
 
   // 1. Create hash of the source text (using MD5 as requested)
@@ -128,35 +127,21 @@ export async function generateFlashcards(
     }
 
     // 5. Insert generated flashcards into flashcards table
-    // if (!updatedGeneration) {
-    //   throw new Error("Failed to update generation record: generation data is null");
-    // }
-
-    // const cardsToInsert: CreateFlashcardDto[] = flashcards.map((card: Omit<CreateFlashcardDto, "generation_id">) => ({
-    //   front: card.front,
-    //   back: card.back,
-    //   source: "ai-full" as const,
-    //   generation_id: updatedGeneration.id,
-    // }));
-    // const insertedFlashcards = await createFlashcardsService(supabase, userId, { flashcards: cardsToInsert });
-
-    const mappedFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = flashcards.map((card) => ({
-      front: card.front,
-      back: card.back,
-      source: "ai-full" as const,
-    }));
+    if (!updatedGeneration) {
+      throw new Error("Failed to update generation record: generation data is null");
+    }
 
     return {
       generation: {
         id: updatedGeneration.id,
-        generated_count: updatedGeneration.generated_count,
+        generated_count: flashcards.length,
         accepted_unedited_count: updatedGeneration.accepted_unedited_count,
         accepted_edited_count: updatedGeneration.accepted_edited_count,
         created_at: updatedGeneration.created_at,
         updated_at: updatedGeneration.updated_at,
         model: updatedGeneration.model,
       },
-      flashcards: mappedFlashcards,
+      flashcards: flashcards,
     };
   } catch (error) {
     // Log the error for generation - użyj klienta serwisowego w razie potrzeby

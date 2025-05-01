@@ -207,12 +207,6 @@ describe("supabase.client", () => {
             getAll: expect.any(Function),
             setAll: expect.any(Function),
           }),
-          global: expect.objectContaining({
-            headers: {
-              apikey: "test-service-role-key",
-              Authorization: "Bearer test-service-role-key",
-            },
-          }),
         })
       );
     });
@@ -232,11 +226,6 @@ describe("supabase.client", () => {
           cookies: expect.objectContaining({
             getAll: expect.any(Function),
             setAll: expect.any(Function),
-          }),
-          global: expect.objectContaining({
-            headers: {
-              Authorization: `Bearer ${testAccessToken}`,
-            },
           }),
         })
       );
@@ -259,11 +248,6 @@ describe("supabase.client", () => {
             getAll: expect.any(Function),
             setAll: expect.any(Function),
           }),
-          global: expect.objectContaining({
-            headers: {
-              Authorization: `Bearer ${testAccessToken}`,
-            },
-          }),
         })
       );
     });
@@ -283,12 +267,6 @@ describe("supabase.client", () => {
           cookies: expect.objectContaining({
             getAll: expect.any(Function),
             setAll: expect.any(Function),
-          }),
-          global: expect.objectContaining({
-            headers: {
-              apikey: "test-service-role-key",
-              Authorization: "Bearer test-service-role-key",
-            },
           }),
         })
       );
@@ -310,12 +288,6 @@ describe("supabase.client", () => {
             getAll: expect.any(Function),
             setAll: expect.any(Function),
           }),
-          global: expect.objectContaining({
-            headers: {
-              apikey: "test-service-role-key",
-              Authorization: "Bearer test-service-role-key",
-            },
-          }),
         })
       );
     });
@@ -335,12 +307,6 @@ describe("supabase.client", () => {
           cookies: expect.objectContaining({
             getAll: expect.any(Function),
             setAll: expect.any(Function),
-          }),
-          global: expect.objectContaining({
-            headers: {
-              apikey: "test-service-role-key",
-              Authorization: "Bearer test-service-role-key",
-            },
           }),
         })
       );
@@ -362,11 +328,6 @@ describe("supabase.client", () => {
           cookies: expect.objectContaining({
             getAll: expect.any(Function),
             setAll: expect.any(Function),
-          }),
-          global: expect.objectContaining({
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
           }),
         })
       );

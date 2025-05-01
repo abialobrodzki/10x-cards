@@ -69,13 +69,37 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
 
       if (sessionError) {
         console.log("Błąd pobierania sesji:", sessionError);
-        // ... (obsługa błędów sesji, może wymagać dostosowania)
+        // If getSession returns 401, clear cookies and redirect
+        if (sessionError.status === 401 && !isPublicPath) {
+          console.log("Błąd autoryzacji (401) getSession, usuwam ciasteczka i przekierowuję do logowania");
+          cookies.delete("sb-access-token", { path: "/" });
+          cookies.delete("sb-refresh-token", { path: "/" });
+          return redirect("/auth/login");
+        }
       } else if (sessionData.session) {
         console.log(
           "Sesja ważna do:",
           sessionData.session.expires_at ? new Date(sessionData.session.expires_at * 1000).toISOString() : "nieznana"
         );
-        // ... (logika odświeżania tokenu)
+        // Logika odświeżania tokenu jeśli sesja wkrótce wygaśnie (np. mniej niż 5 minut)
+        const expiryTime = sessionData.session.expires_at;
+        const now = Math.floor(Date.now() / 1000);
+        const refreshThreshold = 300; // 5 minut w sekundach
+
+        if (expiryTime && expiryTime < now + refreshThreshold) {
+          console.log("Sesja wkrótce wygaśnie, próbuję odświeżyć");
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error("Błąd podczas odświeżania sesji:", refreshError);
+            // Jeśli odświeżenie się nie powiedzie, usuń ciasteczka i przekieruj
+            if (!isPublicPath) {
+              console.log("Odświeżenie sesji nie powiodło się, usuwam ciasteczka i przekierowuję");
+              cookies.delete("sb-access-token", { path: "/" });
+              cookies.delete("sb-refresh-token", { path: "/" });
+              return redirect("/auth/login");
+            }
+          }
+        }
       } else if (!sessionData.session && !isPublicPath) {
         // Sesja nie istnieje, a ścieżka wymaga uwierzytelnienia
         console.log("Brak aktywnej sesji (getSession), przekierowuję do logowania");
