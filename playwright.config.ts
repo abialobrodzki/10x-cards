@@ -17,6 +17,7 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "on-first-retry",
+    testIdAttribute: "data-testid",
   },
   projects: [
     {
