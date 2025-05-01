@@ -128,19 +128,19 @@ export async function generateFlashcards(
     }
 
     // 5. Insert generated flashcards into flashcards table
-    if (!updatedGeneration) {
-      throw new Error("Failed to update generation record: generation data is null");
-    }
+    // if (!updatedGeneration) {
+    //   throw new Error("Failed to update generation record: generation data is null");
+    // }
 
-    const cardsToInsert: CreateFlashcardDto[] = flashcards.map((card: Omit<CreateFlashcardDto, "generation_id">) => ({
-      front: card.front,
-      back: card.back,
-      source: "ai-full" as const,
-      generation_id: updatedGeneration.id,
-    }));
-    const insertedFlashcards = await createFlashcardsService(supabase, userId, { flashcards: cardsToInsert });
+    // const cardsToInsert: CreateFlashcardDto[] = flashcards.map((card: Omit<CreateFlashcardDto, "generation_id">) => ({
+    //   front: card.front,
+    //   back: card.back,
+    //   source: "ai-full" as const,
+    //   generation_id: updatedGeneration.id,
+    // }));
+    // const insertedFlashcards = await createFlashcardsService(supabase, userId, { flashcards: cardsToInsert });
 
-    const mappedFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = insertedFlashcards.map((card) => ({
+    const mappedFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = flashcards.map((card) => ({
       front: card.front,
       back: card.back,
       source: "ai-full" as const,
