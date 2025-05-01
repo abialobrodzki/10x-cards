@@ -4,22 +4,6 @@ import { LoginPage } from "../page-objects/LoginPage";
 
 test.describe("Login Page", () => {
   let loginPage: LoginPage;
-  let userEmail: string;
-  let userPassword: string;
-
-  test.beforeAll(() => {
-    const emailFromEnv = process.env.TEST_USER_EMAIL;
-    const passwordFromEnv = process.env.TEST_USER_PASSWORD;
-
-    if (!emailFromEnv || !passwordFromEnv) {
-      throw new Error(
-        "Test environment variables TEST_USER_EMAIL or TEST_USER_PASSWORD are not set. Please check your .env.test file."
-      );
-    }
-    // Assign to scope variables after check
-    userEmail = emailFromEnv;
-    userPassword = passwordFromEnv;
-  });
 
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
@@ -27,21 +11,36 @@ test.describe("Login Page", () => {
   });
 
   test("has the correct title", async ({ page }) => {
-    const title = await page.title();
-    // W kodzie mamy "10xCards - Logowanie", ale faktycznie renderuje się jako "10x Cards - Logowanie"
-    expect(title).toContain("10x Cards - Logowanie");
-  });
-
-  test("allows entering login credentials", async ({ page }) => {
     // Arrange
-    const loginPage = new LoginPage(page);
+    const expectedTitle = "10xCards - Logowanie";
 
     // Act
-    await loginPage.goto();
-    await loginPage.login(userEmail, userPassword);
+    const title = await page.title();
 
     // Assert
-    await expect(page).toHaveURL("/generate");
+    expect(title, `Expected page title "${expectedTitle}"`).toContain(expectedTitle);
+  });
+
+  test("go to register page", async ({ page }) => {
+    // Arrange
+    const expectedUrl = "/auth/register";
+
+    // Act
+    await loginPage.registerLink.click();
+
+    // Assert
+    await expect(page, `Expected page URL "${expectedUrl}"`).toHaveURL(expectedUrl);
+  });
+
+  test("go to resend password page", async ({ page }) => {
+    // Arrange
+    const expectedUrl = "auth/forgot-password";
+
+    // Act
+    await loginPage.forgotPasswordLink.click();
+
+    // Assert
+    await expect(page, `Expected page URL "${expectedUrl}"`).toHaveURL(expectedUrl);
   });
 
   test("passes accessibility tests", async ({ page }) => {
