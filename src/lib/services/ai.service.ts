@@ -5,8 +5,11 @@ import type { CreateFlashcardDto } from "../../types";
 // interface OpenRouterRequest { /* ... */ }
 // interface OpenRouterResponse { /* ... */ }
 
+// Typ opisujący podstawowe dane fiszki zwrócone przez AI
+export type AIBaseFlashcard = Pick<CreateFlashcardDto, "front" | "back" | "source">;
+
 export interface AIGeneratedData {
-  flashcards: Omit<CreateFlashcardDto, "generation_id">[];
+  flashcards: AIBaseFlashcard[];
   model: string;
 }
 
@@ -59,6 +62,102 @@ export function detectLanguage(text: string): string {
 }
 
 /**
+ * Tworzy instrukcję systemową dla AI na podstawie języka.
+ * @param language Kod języka ('pl', 'en')
+ * @returns Instrukcja systemowa dla modelu AI
+ */
+function buildSystemPrompt(language: string): string {
+  if (language === "pl") {
+    return (
+      "Twoim zadaniem jest wygenerowanie 5 fiszek w formacie JSON. " +
+      "Zwróć WYŁĄCZNIE tablicę JSON obiektów bez żadnego dodatkowego tekstu przed lub po. " +
+      "Każdy obiekt musi zawierać pola: 'front' (pytanie), 'back' (odpowiedź), 'hint' (podpowiedź), " +
+      "'difficulty' (jedna z wartości: 'easy', 'medium', 'hard') oraz 'tags' (tablica stringów). " +
+      "Wygeneruj 5 różnych fiszek obejmujących różne aspekty tekstu. " +
+      "NIE DODAWAJ żadnych wyjaśnień, znaczników markdown ani bloków kodu przed lub po tablicy JSON. " +
+      "WAŻNE: Pytanie, odpowiedź i podpowiedź muszą być w języku POLSKIM."
+    );
+  } else {
+    return (
+      "Your task is to generate 5 flashcards in VALID JSON format. " +
+      "Always return ONLY a JSON ARRAY of flashcard objects with no extra text before or after. " +
+      "Each object must include these fields: 'front' (question), 'back' (answer), 'hint' (helpful tip), " +
+      "'difficulty' (one of: 'easy', 'medium', 'hard'), and 'tags' (array of strings). " +
+      "Generate 5 different flashcards covering different aspects of the text. " +
+      "DO NOT include any explanation text, markdown, or code blocks before or after the JSON array. " +
+      "IMPORTANT: The question, answer, and hint must be in ENGLISH."
+    );
+  }
+}
+
+/**
+ * Parsuje i czyści odpowiedź JSON od AI, próbując wyodrębnić tablicę fiszek.
+ * @param content Zawartość odpowiedzi od AI (może być stringiem lub już obiektem)
+ * @returns Sparsowane dane fiszek (oczekiwana tablica)
+ * @throws Błąd, jeśli parsowanie się nie powiedzie lub nie znaleziono danych
+ */
+function parseAndCleanAiJsonResponse(content: unknown): unknown {
+  if (!content) {
+    throw new Error("Brak zawartości w odpowiedzi AI do sparsowania");
+  }
+
+  let flashcardData;
+
+  if (typeof content === "string") {
+    logger.debug("Odpowiedź AI jest stringiem, próba parsowania JSON.");
+    try {
+      // Szukamy tablicy JSON ([...]) lub obiektu JSON ({...}) w stringu
+      const jsonMatch = content.match(/(\[\s*\{[\s\S]*?\}\s*\]|\{\s*["\w]+\s*:[\s\S]*?\s*\})/);
+      if (jsonMatch && jsonMatch[0]) {
+        logger.debug("Znaleziono potencjalny blok JSON w odpowiedzi stringowej");
+        let jsonString = jsonMatch[0];
+
+        // Debugujemy znalezione dane
+        logger.debug("Surowa treść JSON:", jsonString.substring(0, 150) + "...");
+
+        // Próba parsowania
+        try {
+          flashcardData = JSON.parse(jsonString);
+          logger.debug("Pomyślnie sparsowano wyodrębniony JSON.");
+        } catch (innerError) {
+          logger.warn("Błąd podczas pierwszej próby parsowania wyodrębnionego JSON, próba oczyszczenia:", innerError);
+
+          // Próba uprzątnięcia JSON (usuwanie znaków kontrolnych, naprawa przecinka na końcu)
+          jsonString = jsonString
+            .replace(/[^\x20-\x7E]/g, "") // Usuń znaki non-printable ASCII
+            .replace(/\}\s*,\s*(?=\])/g, "}") // Usuń przecinek przed zamykającym nawiasem kwadratowym
+            .trim();
+
+          logger.debug("Oczyszczona treść JSON przed drugą próbą parsowania:", jsonString.substring(0, 150) + "...");
+          flashcardData = JSON.parse(jsonString); // Druga próba parsowania
+          logger.debug("Pomyślnie sparsowano JSON po oczyszczeniu.");
+        }
+      } else {
+        logger.error(
+          "Nie znaleziono wzorca JSON (tablicy/obiektu) w odpowiedzi stringowej:",
+          content.substring(0, 200) + "..."
+        );
+        throw new Error("No JSON array or object found in AI string response");
+      }
+    } catch (e) {
+      logger.error("Ostateczny błąd parsowania JSON z odpowiedzi AI (string):", e);
+      logger.error("Odpowiedź zawierała:", content.substring(0, 300) + "...");
+      throw new Error("Failed to parse JSON from AI string response after cleaning attempts");
+    }
+  } else if (typeof content === "object") {
+    // Zawartość już jest obiektem JSON
+    logger.debug("Odpowiedź AI jest już obiektem, zwracam bezpośrednio.");
+    flashcardData = content;
+  } else {
+    logger.error("Nieoczekiwany typ zawartości odpowiedzi AI:", typeof content);
+    throw new Error(`Unexpected content type from AI: ${typeof content}`);
+  }
+
+  // Zwracamy sparsowane dane - oczekujemy, że to będzie tablica lub obiekt
+  return flashcardData;
+}
+
+/**
  * Generates flashcards using OpenRouter.ai API or mock based on config
  * @param text Text to generate flashcards from
  * @param language Optional language code ('pl', 'en') - auto-detected if not provided
@@ -94,27 +193,7 @@ export async function generateFlashcardsWithAI(
     logger.debug("Wysyłam zapytanie bezpośrednio do API OpenRouter");
 
     // Dostosuj instrukcję systemu w zależności od języka
-    let systemInstruction = "";
-
-    if (detectedLanguage === "pl") {
-      systemInstruction =
-        "Twoim zadaniem jest wygenerowanie 5 fiszek w formacie JSON. " +
-        "Zwróć WYŁĄCZNIE tablicę JSON obiektów bez żadnego dodatkowego tekstu przed lub po. " +
-        "Każdy obiekt musi zawierać pola: 'front' (pytanie), 'back' (odpowiedź), 'hint' (podpowiedź), " +
-        "'difficulty' (jedna z wartości: 'easy', 'medium', 'hard') oraz 'tags' (tablica stringów). " +
-        "Wygeneruj 5 różnych fiszek obejmujących różne aspekty tekstu. " +
-        "NIE DODAWAJ żadnych wyjaśnień, znaczników markdown ani bloków kodu przed lub po tablicy JSON. " +
-        "WAŻNE: Pytanie, odpowiedź i podpowiedź muszą być w języku POLSKIM.";
-    } else {
-      systemInstruction =
-        "Your task is to generate 5 flashcards in VALID JSON format. " +
-        "Always return ONLY a JSON ARRAY of flashcard objects with no extra text before or after. " +
-        "Each object must include these fields: 'front' (question), 'back' (answer), 'hint' (helpful tip), " +
-        "'difficulty' (one of: 'easy', 'medium', 'hard'), and 'tags' (array of strings). " +
-        "Generate 5 different flashcards covering different aspects of the text. " +
-        "DO NOT include any explanation text, markdown, or code blocks before or after the JSON array. " +
-        "IMPORTANT: The question, answer, and hint must be in ENGLISH.";
-    }
+    const systemInstruction = buildSystemPrompt(detectedLanguage);
 
     // Przygotuj żądanie
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -185,71 +264,53 @@ export async function generateFlashcardsWithAI(
       throw new Error("Brak zawartości w odpowiedzi AI");
     }
 
-    // Parsuj JSON z odpowiedzi, jeśli jest string
-    let flashcardData;
-    if (typeof content === "string") {
-      try {
-        // Szukamy tablicy JSON
-        const jsonMatch = content.match(/\[\s*\{[\s\S]*?\}\s*\]/);
-        if (jsonMatch) {
-          logger.debug("Znaleziono potencjalny blok JSON w odpowiedzi");
-          // Czyścimy potencjalnie problematyczne znaki
-          let jsonString = jsonMatch[0];
-
-          // Debugujemy znalezione dane
-          logger.debug("Surowa treść JSON:", jsonString.substring(0, 50) + "...");
-
-          // Próba parsowania
-          try {
-            flashcardData = JSON.parse(jsonString);
-          } catch (innerError) {
-            logger.error("Błąd podczas parsowania wyodrębnionego JSON:", innerError);
-
-            // Próba uprzątnięcia JSON
-            jsonString = jsonString
-              .replace(/[^\x20-\x7E]/g, "")
-              .replace(/\}\s*,\s*\]/g, "}]")
-              .trim();
-
-            logger.debug("Oczyszczona treść JSON:", jsonString.substring(0, 50) + "...");
-            flashcardData = JSON.parse(jsonString);
-          }
-        } else {
-          logger.error("Nie znaleziono bloku JSON w odpowiedzi:", content.substring(0, 100) + "...");
-          throw new Error("No JSON object found in response");
-        }
-      } catch (e) {
-        logger.error("Error parsing JSON from AI response:", e);
-        logger.error("Odpowiedź zawierała:", content.substring(0, 200) + "...");
-        throw new Error("Failed to parse JSON from AI response");
-      }
-    } else {
-      // Zawartość już jest obiektem JSON
-      flashcardData = content;
-    }
+    // Parsuj JSON z odpowiedzi
+    const flashcardData = parseAndCleanAiJsonResponse(content);
 
     // Stwórz obiekty fiszek z tablicy
-    const cards: Omit<CreateFlashcardDto, "generation_id">[] = [];
+    const cards: AIBaseFlashcard[] = [];
 
     // Sprawdź czy mamy tablicę fiszek
     if (Array.isArray(flashcardData)) {
       // Mapuj każdy element tablicy na fiszkę
-      flashcardData.forEach((item) => {
-        cards.push({
-          front: item.front,
-          back: item.back,
-          source: "ai-full",
-        });
+      flashcardData.forEach((item: unknown) => {
+        // Upewnij się, że item jest obiektem i ma wymagane pola przed dodaniem
+        if (
+          item &&
+          typeof item === "object" &&
+          "front" in item &&
+          typeof item.front === "string" &&
+          "back" in item &&
+          typeof item.back === "string"
+        ) {
+          cards.push({
+            front: item.front,
+            back: item.back,
+            source: "ai-full", // Source jest stały dla AI
+          });
+        } else {
+          logger.warn("Pominięto nieprawidłowy obiekt fiszki z odpowiedzi AI:", item);
+        }
       });
-      logger.debug(`Wygenerowano ${cards.length} fiszek`);
-    } else {
-      // Jeśli nie jest tablicą, dodaj pojedynczą fiszkę
+      logger.debug(`Pomyślnie zmapowano ${cards.length} fiszek z odpowiedzi AI.`);
+    } else if (
+      flashcardData &&
+      typeof flashcardData === "object" &&
+      "front" in flashcardData &&
+      typeof flashcardData.front === "string" &&
+      "back" in flashcardData &&
+      typeof flashcardData.back === "string"
+    ) {
+      // Jeśli nie jest tablicą, ale poprawnym pojedynczym obiektem, dodaj go
       cards.push({
         front: flashcardData.front,
         back: flashcardData.back,
         source: "ai-full",
       });
-      logger.debug("Wygenerowano 1 fiszkę (nie tablicę)");
+      logger.debug("Wygenerowano 1 fiszkę (odpowiedź AI nie była tablicą).");
+    } else {
+      logger.error("Sparsowane dane z AI nie są tablicą ani poprawnym obiektem fiszki:", flashcardData);
+      throw new Error("Parsed AI response is not an array or a valid flashcard object.");
     }
 
     return {
@@ -271,7 +332,7 @@ export async function generateFlashcardsWithAI(
  */
 export function generateMockFlashcards(text: string): AIGeneratedData {
   const wordCount = text.split(/\s+/).length;
-  const mockFlashcards: Omit<CreateFlashcardDto, "generation_id">[] = [];
+  const mockFlashcards: AIBaseFlashcard[] = [];
   for (let i = 1; i <= 5; i++) {
     mockFlashcards.push({
       front: `Mock Flashcard ${i} Front (from text with ${wordCount} words)`,

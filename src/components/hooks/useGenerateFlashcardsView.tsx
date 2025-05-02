@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
 import { useReducer, useRef } from "react";
+import { logger } from "../../lib/openrouter.logger"; // Importuj logger
 import type {
   FlashcardBaseData,
   FlashcardViewModel,
@@ -105,14 +105,13 @@ function reducer(state: State, action: Action): State {
       const newFlashcards = [...state.flashcards];
 
       if (index >= 0 && index < newFlashcards.length) {
-        console.log(`Reducer - ACCEPT_FLASHCARD for index ${index}`);
-        console.log(
-          `  Before: ${JSON.stringify({
+        logger.debug(`Reducer - ACCEPT_FLASHCARD for index ${index}`, {
+          before: {
             front: newFlashcards[index].front.substring(0, 30) + "...",
             isAccepted: newFlashcards[index].isAccepted,
             isRejected: newFlashcards[index].isRejected,
-          })}`
-        );
+          },
+        });
 
         // Jawnie ustawiamy wartości, aby upewnić się, że są zgodne z oczekiwaniami
         newFlashcards[index] = {
@@ -121,19 +120,23 @@ function reducer(state: State, action: Action): State {
           isRejected: false, // ZAWSZE false dla zaakceptowanych
         };
 
-        // Asercja dla pewności
-        console.assert(newFlashcards[index].isAccepted === true, "isAccepted powinno być true");
-        console.assert(newFlashcards[index].isRejected === false, "isRejected powinno być false");
+        // Asercja dla pewności - zamieniona na logowanie ostrzeżenia w razie niespełnienia
+        if (newFlashcards[index].isAccepted !== true) {
+          logger.warn(`Reducer ACCEPT_FLASHCARD - Assertion failed: isAccepted should be true`, newFlashcards[index]);
+        }
+        if (newFlashcards[index].isRejected !== false) {
+          logger.warn(`Reducer ACCEPT_FLASHCARD - Assertion failed: isRejected should be false`, newFlashcards[index]);
+        }
 
-        console.log(
-          `  After: ${JSON.stringify({
+        logger.debug(`Reducer - ACCEPT_FLASHCARD processed for index ${index}`, {
+          after: {
             front: newFlashcards[index].front.substring(0, 30) + "...",
             isAccepted: newFlashcards[index].isAccepted,
             isRejected: newFlashcards[index].isRejected,
-          })}`
-        );
+          },
+        });
       } else {
-        console.error(
+        logger.error(
           `Reducer - ACCEPT_FLASHCARD: Invalid index ${index}, valid range is 0-${state.flashcards.length - 1}`
         );
       }
@@ -157,14 +160,13 @@ function reducer(state: State, action: Action): State {
       const newFlashcards = [...state.flashcards];
 
       if (index >= 0 && index < newFlashcards.length) {
-        console.log(`Reducer - REJECT_FLASHCARD for index ${index}`);
-        console.log(
-          `  Before: ${JSON.stringify({
+        logger.debug(`Reducer - REJECT_FLASHCARD for index ${index}`, {
+          before: {
             front: newFlashcards[index].front.substring(0, 30) + "...",
             isAccepted: newFlashcards[index].isAccepted,
             isRejected: newFlashcards[index].isRejected,
-          })}`
-        );
+          },
+        });
 
         // Jawnie ustawiamy wartości, aby upewnić się, że są zgodne z oczekiwaniami
         newFlashcards[index] = {
@@ -173,19 +175,23 @@ function reducer(state: State, action: Action): State {
           isRejected: true, // ZAWSZE true dla odrzuconych
         };
 
-        // Asercja dla pewności
-        console.assert(newFlashcards[index].isAccepted === false, "isAccepted powinno być false");
-        console.assert(newFlashcards[index].isRejected === true, "isRejected powinno być true");
+        // Asercja dla pewności - zamieniona na logowanie ostrzeżenia w razie niespełnienia
+        if (newFlashcards[index].isAccepted !== false) {
+          logger.warn(`Reducer REJECT_FLASHCARD - Assertion failed: isAccepted should be false`, newFlashcards[index]);
+        }
+        if (newFlashcards[index].isRejected !== true) {
+          logger.warn(`Reducer REJECT_FLASHCARD - Assertion failed: isRejected should be true`, newFlashcards[index]);
+        }
 
-        console.log(
-          `  After: ${JSON.stringify({
+        logger.debug(`Reducer - REJECT_FLASHCARD processed for index ${index}`, {
+          after: {
             front: newFlashcards[index].front.substring(0, 30) + "...",
             isAccepted: newFlashcards[index].isAccepted,
             isRejected: newFlashcards[index].isRejected,
-          })}`
-        );
+          },
+        });
       } else {
-        console.error(
+        logger.error(
           `Reducer - REJECT_FLASHCARD: Invalid index ${index}, valid range is 0-${state.flashcards.length - 1}`
         );
       }
@@ -223,7 +229,7 @@ function reducer(state: State, action: Action): State {
           originalData: originalData, // Always preserve the original data
         };
 
-        console.log(`Flashcard at index ${index} edited. Original:`, originalData, "New:", data);
+        logger.debug(`Reducer - EDIT_FLASHCARD processed for index ${index}`, { originalData, newData: data });
       }
 
       return {
@@ -314,12 +320,12 @@ export function useGenerateFlashcardsView() {
 
   // Functions for managing flashcards
   const acceptFlashcard = (index: number) => {
-    console.log(`Accepting flashcard at index ${index}`);
+    logger.debug(`Accepting flashcard at index ${index}`);
 
     // Add detailed state check before change
     if (index >= 0 && index < state.flashcards.length) {
       const flashcard = state.flashcards[index];
-      console.log(
+      logger.debug(
         `Flashcard BEFORE accepting: "${flashcard.front}" [Accepted: ${flashcard.isAccepted}, Rejected: ${flashcard.isRejected}]`
       );
     }
@@ -331,7 +337,7 @@ export function useGenerateFlashcardsView() {
     setTimeout(() => {
       if (index >= 0 && index < state.flashcards.length) {
         const flashcard = state.flashcards[index];
-        console.log(
+        logger.debug(
           `Flashcard AFTER accepting: "${flashcard.front}" [Accepted: ${flashcard.isAccepted}, Rejected: ${flashcard.isRejected}]`
         );
       }
@@ -339,7 +345,7 @@ export function useGenerateFlashcardsView() {
   };
 
   const editFlashcard = (index: number, updatedData: FlashcardBaseData) => {
-    console.log(`Editing flashcard at index ${index}`, updatedData);
+    logger.debug(`Editing flashcard at index ${index}`, updatedData);
     dispatch({
       type: "EDIT_FLASHCARD",
       payload: { index, data: updatedData },
@@ -348,12 +354,12 @@ export function useGenerateFlashcardsView() {
   };
 
   const rejectFlashcard = (index: number) => {
-    console.log(`Rejecting flashcard at index ${index}`);
+    logger.debug(`Rejecting flashcard at index ${index}`);
 
     // Add detailed state check before change
     if (index >= 0 && index < state.flashcards.length) {
       const flashcard = state.flashcards[index];
-      console.log(
+      logger.debug(
         `Flashcard BEFORE rejecting: "${flashcard.front}" [Accepted: ${flashcard.isAccepted}, Rejected: ${flashcard.isRejected}]`
       );
     }
@@ -364,7 +370,7 @@ export function useGenerateFlashcardsView() {
     setTimeout(() => {
       if (index >= 0 && index < state.flashcards.length) {
         const flashcard = state.flashcards[index];
-        console.log(
+        logger.debug(
           `Flashcard AFTER rejecting: "${flashcard.front}" [Accepted: ${flashcard.isAccepted}, Rejected: ${flashcard.isRejected}]`
         );
       }
@@ -373,7 +379,7 @@ export function useGenerateFlashcardsView() {
 
   // Function to select a flashcard without accepting it
   const selectFlashcard = (index: number) => {
-    console.log(`Selecting flashcard at index ${index} (without accepting)`);
+    logger.debug(`Selecting flashcard at index ${index} (without accepting)`);
     dispatch({ type: "SELECT_FLASHCARD", payload: index });
   };
 
@@ -381,19 +387,19 @@ export function useGenerateFlashcardsView() {
   const mapToCreateFlashcardDto = (flashcard: FlashcardViewModel, generationId: number): CreateFlashcardDto => {
     // Asercje bezpieczeństwa - weryfikujemy stan fiszki przed mapowaniem
     if (flashcard.isRejected) {
-      console.error("CRITICAL ERROR: Próba mapowania odrzuconej fiszki!", flashcard);
+      logger.error("CRITICAL ERROR: Próba mapowania odrzuconej fiszki!", flashcard);
       throw new Error("Próba mapowania odrzuconej fiszki. To nie powinno się zdarzyć.");
     }
 
     if (!flashcard.isAccepted) {
-      console.warn("WARNING: Mapowanie fiszki, która nie jest jawnie zaakceptowana:", flashcard);
+      logger.warn("WARNING: Mapowanie fiszki, która nie jest jawnie zaakceptowana:", flashcard);
 
       // Dla saveAllFlashcards traktujemy wszystkie jako zaakceptowane
-      console.log("Zakładam, że działa w trybie 'saveAllFlashcards' i kontynuuję...");
+      logger.debug("Zakładam, że działa w trybie 'saveAllFlashcards' i kontynuuję...");
     }
 
     // Dokładne logowanie dla debugowania
-    console.log(
+    logger.debug(
       `Mapowanie fiszki: "${flashcard.front.substring(0, 30)}..." [` +
         `Accepted: ${flashcard.isAccepted}, ` +
         `Rejected: ${flashcard.isRejected}, ` +
@@ -411,13 +417,13 @@ export function useGenerateFlashcardsView() {
   // Function to save selected (accepted) flashcards
   const saveSelectedFlashcards = async () => {
     if (savingInProgressRef.current || state.saving.isSaving) {
-      console.warn("Save already in progress");
+      logger.warn("Save already in progress");
       return;
     }
 
     const generationId = state.generation.generationResult?.generation.id;
     if (!generationId) {
-      console.error("No generation ID available");
+      logger.error("No generation ID available");
       return;
     }
 
@@ -428,8 +434,8 @@ export function useGenerateFlashcardsView() {
       const errorMessage =
         "Wszystkie fiszki muszą zostać ocenione (zaakceptowane lub odrzucone) przed zapisaniem wybranych. " +
         `Liczba nieocenionych fiszek: ${unReviewedFlashcards.length}`;
-      console.error(errorMessage);
-      console.error("Nieocenione fiszki:", unReviewedFlashcards);
+      logger.error(errorMessage);
+      logger.error("Nieocenione fiszki:", unReviewedFlashcards);
       dispatch({ type: "SAVE_ERROR", payload: errorMessage });
       return;
     }
@@ -437,8 +443,8 @@ export function useGenerateFlashcardsView() {
     // Pobierz TYLKO zaakceptowane fiszki
     const acceptedFlashcards = state.flashcards.filter((flashcard) => flashcard.isAccepted === true);
 
-    console.log(`Znaleziono ${acceptedFlashcards.length} zaakceptowanych fiszek do zapisania`);
-    console.log(
+    logger.debug(`Znaleziono ${acceptedFlashcards.length} zaakceptowanych fiszek do zapisania`);
+    logger.debug(
       "ACCEPTED flashcards:",
       JSON.stringify(
         acceptedFlashcards.map((f) => ({ front: f.front, isAccepted: f.isAccepted, isRejected: f.isRejected }))
@@ -447,8 +453,8 @@ export function useGenerateFlashcardsView() {
 
     // Sprawdź zaodrzucone (dla weryfikacji)
     const rejectedFlashcards = state.flashcards.filter((flashcard) => flashcard.isRejected === true);
-    console.log(`Znaleziono ${rejectedFlashcards.length} odrzuconych fiszek (NIE będą zapisane)`);
-    console.log(
+    logger.debug(`Znaleziono ${rejectedFlashcards.length} odrzuconych fiszek (NIE będą zapisane)`);
+    logger.debug(
       "REJECTED flashcards:",
       JSON.stringify(
         rejectedFlashcards.map((f) => ({ front: f.front, isAccepted: f.isAccepted, isRejected: f.isRejected }))
@@ -457,7 +463,7 @@ export function useGenerateFlashcardsView() {
 
     if (acceptedFlashcards.length === 0) {
       const errorMessage = "Brak zaakceptowanych fiszek do zapisania. Zaakceptuj co najmniej jedną fiszkę.";
-      console.error(errorMessage);
+      logger.error(errorMessage);
       dispatch({ type: "SAVE_ERROR", payload: errorMessage });
       return;
     }
@@ -468,7 +474,7 @@ export function useGenerateFlashcardsView() {
     try {
       // Przygotuj dane do API - tylko zaakceptowane fiszki
       const flashcardsToSave = acceptedFlashcards.map((f) => mapToCreateFlashcardDto(f, generationId));
-      console.log("SAVING ONLY THESE FLASHCARDS:", JSON.stringify(flashcardsToSave));
+      logger.debug("SAVING ONLY THESE FLASHCARDS:", JSON.stringify(flashcardsToSave));
 
       // Wyślij do API
       const response = await fetch(`/api/generations/${generationId}/accept-flashcards`, {
@@ -485,7 +491,7 @@ export function useGenerateFlashcardsView() {
       }
 
       const responseData = await response.json();
-      console.log("Save response:", responseData);
+      logger.debug("Save response:", responseData);
 
       dispatch({
         type: "SAVE_SUCCESS",
@@ -496,7 +502,7 @@ export function useGenerateFlashcardsView() {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Nieznany błąd";
-      console.error("Save error:", errorMessage);
+      logger.error("Save error:", errorMessage);
       dispatch({ type: "SAVE_ERROR", payload: errorMessage });
     } finally {
       savingInProgressRef.current = false;
@@ -506,28 +512,28 @@ export function useGenerateFlashcardsView() {
   // Function to save all flashcards
   const saveAllFlashcards = async () => {
     if (savingInProgressRef.current || state.saving.isSaving) {
-      console.warn("Save already in progress");
+      logger.warn("Save already in progress");
       return;
     }
 
     const generationId = state.generation.generationResult?.generation.id;
     if (!generationId) {
-      console.error("No generation ID available");
+      logger.error("No generation ID available");
       return;
     }
 
     // Check if there are any flashcards to save
     if (state.flashcards.length === 0) {
       const errorMessage = "Brak fiszek do zapisania.";
-      console.error(errorMessage);
+      logger.error(errorMessage);
       dispatch({ type: "SAVE_ERROR", payload: errorMessage });
       return;
     }
 
-    console.log(`[SAVE ALL] Zapisywanie wszystkich ${state.flashcards.length} fiszek, niezależnie od statusu`);
-    console.log("[SAVE ALL] Status fiszek przed zapisaniem:");
+    logger.debug(`[SAVE ALL] Zapisywanie wszystkich ${state.flashcards.length} fiszek, niezależnie od statusu`);
+    logger.debug("[SAVE ALL] Status fiszek przed zapisaniem:");
     state.flashcards.forEach((f, i) => {
-      console.log(`  [${i}] "${f.front.substring(0, 30)}..." - Accepted: ${f.isAccepted}, Rejected: ${f.isRejected}`);
+      logger.debug(`  [${i}] "${f.front.substring(0, 30)}..." - Accepted: ${f.isAccepted}, Rejected: ${f.isRejected}`);
     });
 
     savingInProgressRef.current = true;
@@ -541,15 +547,17 @@ export function useGenerateFlashcardsView() {
         isRejected: false, // Usuwamy status odrzucenia
       }));
 
-      console.log("[SAVE ALL] Po wymuszeniu akceptacji wszystkich:");
+      logger.debug("[SAVE ALL] Po wymuszeniu akceptacji wszystkich:");
       allFlashcards.forEach((f, i) => {
-        console.log(`  [${i}] "${f.front.substring(0, 30)}..." - Accepted: ${f.isAccepted}, Rejected: ${f.isRejected}`);
+        logger.debug(
+          `  [${i}] "${f.front.substring(0, 30)}..." - Accepted: ${f.isAccepted}, Rejected: ${f.isRejected}`
+        );
       });
 
       // Mapujemy wszystkie jako zaakceptowane
       const flashcardsToSave = allFlashcards.map((f) => mapToCreateFlashcardDto(f, generationId));
-      console.log(`[SAVE ALL] Wysyłanie ${flashcardsToSave.length} fiszek do API (wszystkie jako zaakceptowane)`);
-      console.log("[SAVE ALL] Dane wysyłane do API:", JSON.stringify(flashcardsToSave));
+      logger.debug(`[SAVE ALL] Wysyłanie ${flashcardsToSave.length} fiszek do API (wszystkie jako zaakceptowane)`);
+      logger.debug("[SAVE ALL] Dane wysyłane do API:", JSON.stringify(flashcardsToSave));
 
       // Wyślij do API
       const response = await fetch(`/api/generations/${generationId}/accept-flashcards`, {
@@ -569,7 +577,7 @@ export function useGenerateFlashcardsView() {
       }
 
       const responseData = await response.json();
-      console.log("[SAVE ALL] Odpowiedź z API:", responseData);
+      logger.debug("[SAVE ALL] Odpowiedź z API:", responseData);
 
       dispatch({
         type: "SAVE_SUCCESS",
@@ -577,7 +585,7 @@ export function useGenerateFlashcardsView() {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Nieznany błąd";
-      console.error("[SAVE ALL] Błąd:", errorMessage);
+      logger.error("[SAVE ALL] Błąd:", errorMessage);
       dispatch({ type: "SAVE_ERROR", payload: errorMessage });
     } finally {
       savingInProgressRef.current = false;

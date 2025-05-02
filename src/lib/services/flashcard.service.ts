@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, PostgrestError } from "@supabase/supabase-js";
+import { logger } from "../openrouter.logger";
 import type {
   FlashcardDto,
   FlashcardFilterParams,
@@ -9,6 +9,29 @@ import type {
   CreateFlashcardsDto,
 } from "../../types";
 import type { Database } from "../../db/database.types";
+
+// Stałe dla tabeli i kolumn
+const FLASHCARDS_TABLE = "flashcards";
+const DEFAULT_FLASHCARD_SELECT = "id, front, back, source, created_at, updated_at, generation_id";
+
+/**
+ * Sprawdza i loguje błąd zwrócony przez Supabase.
+ * @param error Obiekt błędu PostgrestError lub null.
+ * @param context String opisujący operację, podczas której wystąpił błąd.
+ * @returns True, jeśli wystąpił błąd, w przeciwnym razie false.
+ */
+function checkAndLogSupabaseError(error: PostgrestError | null, context: string): boolean {
+  if (error) {
+    logger.error(`Supabase error during ${context}:`, {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+    return true;
+  }
+  return false;
+}
 
 /**
  * Retrieves a paginated list of flashcards for a user
@@ -33,8 +56,8 @@ export async function getFlashcardsService(
   const to = from + pageSize - 1;
 
   // Dodatkowe logi dla diagnostyki
-  console.log("FLASHCARD SERVICE - Otrzymane parametry:", JSON.stringify(params, null, 2));
-  console.log("FLASHCARD SERVICE - Używam zoptymalizowanych parametrów:", {
+  logger.debug("FLASHCARD SERVICE - Otrzymane parametry:", params);
+  logger.debug("FLASHCARD SERVICE - Używam zoptymalizowanych parametrów:", {
     pagination: { page, pageSize, from, to },
     sorting: { sortBy, sortOrder },
     filters: {
@@ -45,26 +68,19 @@ export async function getFlashcardsService(
   });
 
   try {
-    // Inicjalizacja zapytania bazowego
-    let query = initializeQuery(supabase, userId, from, to);
-
-    // Dodajemy filtry
-    query = applyFilters(query, params);
-
-    // Dodajemy sortowanie
-    query = applySorting(query, sortBy, sortOrder);
+    // Budowanie zapytania
+    const query = buildFlashcardListQuery(supabase, userId, params);
 
     // Wykonujemy zapytanie
-    console.log("FLASHCARD SERVICE - Executing query");
+    logger.debug("FLASHCARD SERVICE - Executing query");
     const { data, count, error } = await query;
 
-    if (error) {
-      console.error("FLASHCARD SERVICE - Error fetching flashcards:", error);
+    if (checkAndLogSupabaseError(error, "fetching flashcards list")) {
       throw error;
     }
 
     // Logi wyników
-    console.log("FLASHCARD SERVICE - Fetched flashcards count:", count);
+    logger.debug("FLASHCARD SERVICE - Fetched flashcards count:", { count });
 
     return {
       flashcards: data as FlashcardDto[],
@@ -72,17 +88,56 @@ export async function getFlashcardsService(
     };
   } catch (err) {
     // Log ogólny błąd, który może wystąpić poza głównym kodem
-    console.error("Unexpected error in getFlashcardsService:", err);
-    console.error("Error type:", typeof err);
+    logger.error("Unexpected error in getFlashcardsService", err);
     if (err instanceof Error) {
-      console.error("Error name:", err.name);
-      console.error("Error message:", err.message);
-      console.error("Error stack:", err.stack);
+      logger.error("Error details", { name: err.name, message: err.message });
     } else {
-      console.error("Full error object:", err);
+      logger.error("Non-Error object thrown", { errorObject: err });
     }
     throw err;
   }
+}
+
+/**
+ * Buduje zapytanie Supabase do pobrania listy fiszek na podstawie parametrów.
+ * @param supabase Klient Supabase.
+ * @param userId ID użytkownika.
+ * @param params Parametry filtrowania i paginacji.
+ * @returns Obiekt zapytania Supabase gotowy do wykonania.
+ */
+function buildFlashcardListQuery(supabase: SupabaseClient<Database>, userId: string, params: FlashcardFilterParams) {
+  // Default values
+  const page = params.page || 1;
+  const pageSize = params.page_size || 20;
+  const sortBy = params.sortBy || "created_at";
+  const sortOrder = params.sortOrder || "desc";
+
+  // Calculate range for pagination
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  // Logowanie parametrów
+  logger.debug("Building flashcard list query with params:", {
+    pagination: { page, pageSize, from, to },
+    sorting: { sortBy, sortOrder },
+    filters: {
+      generationId: params.generationId || params.generation_id,
+      source: params.source,
+      searchText: params.searchText,
+    },
+    userId,
+  });
+
+  // Inicjalizacja zapytania bazowego
+  let query = initializeQuery(supabase, userId, from, to);
+
+  // Dodajemy filtry
+  query = applyFilters(query, params);
+
+  // Dodajemy sortowanie
+  query = applySorting(query, sortBy, sortOrder);
+
+  return query;
 }
 
 /**
@@ -90,8 +145,8 @@ export async function getFlashcardsService(
  */
 function initializeQuery(supabase: SupabaseClient<Database>, userId: string, from: number, to: number) {
   return supabase
-    .from("flashcards")
-    .select("id, front, back, source, created_at, updated_at, generation_id", { count: "exact" })
+    .from(FLASHCARDS_TABLE)
+    .select(DEFAULT_FLASHCARD_SELECT, { count: "exact" })
     .eq("user_id", userId)
     .range(from, to);
 }
@@ -107,20 +162,20 @@ function applyFilters(
   const generationId = params.generationId || params.generation_id;
   if (generationId) {
     query = query.eq("generation_id", generationId);
-    console.log("FLASHCARD SERVICE - Added generation_id filter:", generationId);
+    logger.debug("FLASHCARD SERVICE - Added generation_id filter", { generationId });
   }
 
   // Filtr źródła
   if (params.source) {
     query = query.eq("source", params.source);
-    console.log("FLASHCARD SERVICE - Added source filter:", params.source);
+    logger.debug("FLASHCARD SERVICE - Added source filter", { source: params.source });
   }
 
   // Filtr wyszukiwania tekstowego
   if (params.searchText && params.searchText.trim() !== "") {
     const searchPattern = `%${params.searchText.trim()}%`;
     query = query.or(`front.ilike.${searchPattern},back.ilike.${searchPattern}`);
-    console.log("FLASHCARD SERVICE - Added search filter with pattern:", searchPattern);
+    logger.debug("FLASHCARD SERVICE - Added search filter", { searchPattern });
   }
 
   return query;
@@ -135,7 +190,7 @@ function applySorting(
   sortOrder: "asc" | "desc"
 ): ReturnType<typeof initializeQuery> {
   const ascending = sortOrder === "asc";
-  console.log(`FLASHCARD SERVICE - Sorting by ${sortBy} in ${sortOrder} order`);
+  logger.debug(`FLASHCARD SERVICE - Applying sorting`, { sortBy, sortOrder, ascending });
   return query.order(sortBy, { ascending });
 }
 
@@ -151,44 +206,40 @@ export async function getFlashcardByIdService(
   userId: string,
   flashcardId: number
 ): Promise<FlashcardDto | null> {
-  console.log(`[getFlashcardByIdService] Starting fetch for flashcard ID=${flashcardId}, userID=${userId}`);
+  logger.debug(`[getFlashcardByIdService] Starting fetch for flashcard ID=${flashcardId}, userID=${userId}`);
 
   // Dodatkowe logi dla problematycznego ID
   if (flashcardId === 404) {
-    console.log(`[getFlashcardByIdService] SPECIAL CASE: Fetching flashcard with ID 404`);
+    logger.debug(`[getFlashcardByIdService] SPECIAL CASE: Fetching flashcard with ID 404`);
   }
 
   try {
     const { data, error } = await supabase
-      .from("flashcards")
-      .select("id, front, back, source, created_at, updated_at, generation_id")
+      .from(FLASHCARDS_TABLE)
+      .select(DEFAULT_FLASHCARD_SELECT)
       .eq("user_id", userId)
       .eq("id", flashcardId)
       .single();
 
+    // Sprawdź, czy wystąpił błąd podczas pobierania
     if (error) {
+      // Specjalna obsługa błędu "Not Found" (PGRST116)
       if (error.code === "PGRST116") {
-        // Record not found error from PostgREST
-        console.log(`[getFlashcardByIdService] Flashcard with ID=${flashcardId} not found (PGRST116)`);
+        logger.debug(`[getFlashcardByIdService] Flashcard with ID=${flashcardId} not found (PGRST116)`);
         return null;
       }
 
-      console.error(`[getFlashcardByIdService] Error fetching flashcard:`, error);
-      console.error(`[getFlashcardByIdService] Error details:`, {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      });
+      // Dla wszystkich innych błędów Supabase: zaloguj i rzuć dalej
+      checkAndLogSupabaseError(error, `fetching flashcard by ID ${flashcardId}`);
       throw error;
     }
 
     if (!data) {
-      console.log(`[getFlashcardByIdService] No data returned for flashcard ID=${flashcardId}, userID=${userId}`);
+      logger.debug(`[getFlashcardByIdService] No data returned for flashcard ID=${flashcardId}, userID=${userId}`);
       return null;
     }
 
-    console.log(`[getFlashcardByIdService] Successfully retrieved flashcard:`, {
+    logger.debug(`[getFlashcardByIdService] Successfully retrieved flashcard:`, {
       id: data.id,
       front: data.front?.substring(0, 50) + (data.front?.length > 50 ? "..." : ""),
       back: data.back?.substring(0, 50) + (data.back?.length > 50 ? "..." : ""),
@@ -199,9 +250,9 @@ export async function getFlashcardByIdService(
 
     return data as FlashcardDto;
   } catch (error) {
-    console.error(`[getFlashcardByIdService] Unexpected error:`, error);
+    logger.error(`[getFlashcardByIdService] Unexpected error:`, error);
     if (error instanceof Error) {
-      console.error(`[getFlashcardByIdService] Error details:`, {
+      logger.error(`[getFlashcardByIdService] Error details:`, {
         name: error.name,
         message: error.message,
         stack: error.stack,
@@ -227,27 +278,26 @@ export async function updateFlashcardService(
 ): Promise<FlashcardDto | null> {
   // Check if flashcard exists and belongs to user
   const exists = await supabase
-    .from("flashcards")
+    .from(FLASHCARDS_TABLE)
     .select("id")
     .eq("user_id", userId)
     .eq("id", flashcardId)
     .maybeSingle();
 
-  if (exists.error || !exists.data) {
+  if (checkAndLogSupabaseError(exists.error, `checking existence for update (ID: ${flashcardId})`) || !exists.data) {
     return null;
   }
 
   // Update the flashcard
   const { data, error } = await supabase
-    .from("flashcards")
+    .from(FLASHCARDS_TABLE)
     .update(flashcardData)
     .eq("user_id", userId)
     .eq("id", flashcardId)
-    .select("id, front, back, source, created_at, updated_at, generation_id")
+    .select(DEFAULT_FLASHCARD_SELECT)
     .single();
 
-  if (error) {
-    console.error("Error updating flashcard:", error);
+  if (checkAndLogSupabaseError(error, `updating flashcard (ID: ${flashcardId})`)) {
     throw error;
   }
 
@@ -266,46 +316,36 @@ export async function deleteFlashcardService(
   userId: string,
   flashcardId: number
 ): Promise<boolean> {
-  console.log(`[deleteFlashcardService] Starting delete for flashcard ID=${flashcardId}, userID=${userId}`);
+  logger.debug(`[deleteFlashcardService] Starting delete for flashcard ID=${flashcardId}, userID=${userId}`);
 
   // Specjalne obejście dla ID 404 - potencjalny konflikt z kodem HTTP 404
   if (flashcardId === 404) {
-    console.log(`[deleteFlashcardService] WORKAROUND: Special case for flashcard ID 404`);
+    logger.debug(`[deleteFlashcardService] WORKAROUND: Special case for flashcard ID 404`);
 
     try {
       // Próbujemy bezpośrednio usunąć bez sprawdzania istnienia
-      console.log(`[deleteFlashcardService] WORKAROUND: Attempting direct deletion for ID 404`);
+      logger.debug(`[deleteFlashcardService] WORKAROUND: Attempting direct deletion for ID 404`);
 
       // Wykonaj bezpośrednie zapytanie usuwające
-      const { error } = await supabase.from("flashcards").delete().eq("id", 404).eq("user_id", userId);
+      const { error } = await supabase.from(FLASHCARDS_TABLE).delete().eq("id", 404).eq("user_id", userId);
 
-      if (error) {
-        console.error(`[deleteFlashcardService] WORKAROUND: Direct deletion error:`, error);
-        console.error(`[deleteFlashcardService] WORKAROUND: Error details:`, {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-        });
-
+      if (checkAndLogSupabaseError(error, `direct deletion workaround (ID: 404)`)) {
         // Próbujemy alternatywne zapytanie - może inny format ID
-        console.log(`[deleteFlashcardService] WORKAROUND: Trying alternative query`);
+        logger.debug(`[deleteFlashcardService] WORKAROUND: Trying alternative query`);
 
         // Użyjemy alternatywnego podejścia - zapytanie raw SQL
         const { error: error2 } = await supabase
-          .from("flashcards")
+          .from(FLASHCARDS_TABLE)
           .delete()
           .filter("id", "eq", 404)
           .filter("user_id", "eq", userId);
 
-        if (error2) {
-          console.error(`[deleteFlashcardService] WORKAROUND: Alternative method error:`, error2);
-
+        if (checkAndLogSupabaseError(error2, `alternative deletion workaround (ID: 404)`)) {
           // Trzecia próba - soft delete przez aktualizację
-          console.log(`[deleteFlashcardService] WORKAROUND: Trying soft delete via update`);
+          logger.debug(`[deleteFlashcardService] WORKAROUND: Trying soft delete via update`);
 
           const { error: error3 } = await supabase
-            .from("flashcards")
+            .from(FLASHCARDS_TABLE)
             .update({
               front: "[DELETED] This flashcard has been deleted",
               back: "[DELETED] This flashcard has been deleted",
@@ -314,86 +354,71 @@ export async function deleteFlashcardService(
             .eq("id", 404)
             .eq("user_id", userId);
 
-          if (error3) {
-            console.error(`[deleteFlashcardService] WORKAROUND: Soft delete error:`, error3);
+          if (checkAndLogSupabaseError(error3, `soft delete workaround (ID: 404)`)) {
             return false;
           }
 
-          console.log(`[deleteFlashcardService] WORKAROUND: Soft delete successful`);
+          logger.debug(`[deleteFlashcardService] WORKAROUND: Soft delete successful`);
           return true;
         }
 
-        console.log(`[deleteFlashcardService] WORKAROUND: Direct deletion successful`);
+        logger.debug(`[deleteFlashcardService] WORKAROUND: Direct deletion successful`);
         return true;
       }
 
-      console.log(`[deleteFlashcardService] WORKAROUND: Direct deletion successful`);
+      logger.debug(`[deleteFlashcardService] WORKAROUND: Direct deletion successful`);
       return true;
     } catch (specialError) {
-      console.error(`[deleteFlashcardService] WORKAROUND: Error:`, specialError);
+      logger.error(`[deleteFlashcardService] WORKAROUND: Error:`, specialError);
       return false;
     }
   }
 
   try {
     // Check if flashcard exists and belongs to user
-    console.log(`[deleteFlashcardService] Checking if flashcard exists for user...`);
+    logger.debug(`[deleteFlashcardService] Checking if flashcard exists for user...`);
     const { data: existsData, error: existsError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .select("id")
       .eq("user_id", userId)
       .eq("id", flashcardId)
       .maybeSingle();
 
     // Szczegółowe logowanie wyniku zapytania sprawdzającego
-    console.log(`[deleteFlashcardService] Exists check result:`, {
+    logger.debug(`[deleteFlashcardService] Exists check result:`, {
       data: existsData,
       hasError: !!existsError,
       errorMessage: existsError?.message,
     });
 
-    if (existsError) {
-      console.error(`[deleteFlashcardService] Error checking flashcard existence:`, existsError);
-      console.error(`[deleteFlashcardService] Error details:`, {
-        code: existsError.code,
-        message: existsError.message,
-        details: existsError.details,
-        hint: existsError.hint,
-      });
+    if (checkAndLogSupabaseError(existsError, `checking existence for delete (ID: ${flashcardId})`)) {
       return false;
     }
 
     if (!existsData) {
-      console.log(`[deleteFlashcardService] Flashcard ID=${flashcardId} not found for user ID=${userId}`);
+      logger.debug(`[deleteFlashcardService] Flashcard ID=${flashcardId} not found for user ID=${userId}`);
       return false;
     }
 
-    console.log(`[deleteFlashcardService] Flashcard found, proceeding with deletion...`);
+    logger.debug(`[deleteFlashcardService] Flashcard found, proceeding with deletion...`);
 
     // Delete the flashcard
     const { error: deleteError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .delete()
       .eq("user_id", userId)
       .eq("id", flashcardId);
 
-    if (deleteError) {
-      console.error(`[deleteFlashcardService] Error deleting flashcard:`, deleteError);
-      console.error(`[deleteFlashcardService] Delete error details:`, {
-        code: deleteError.code,
-        message: deleteError.message,
-        details: deleteError.details,
-        hint: deleteError.hint,
-      });
+    if (checkAndLogSupabaseError(deleteError, `deleting flashcard (ID: ${flashcardId})`)) {
       throw deleteError;
     }
 
-    console.log(`[deleteFlashcardService] Successfully deleted flashcard ID=${flashcardId}`);
+    logger.debug(`[deleteFlashcardService] Successfully deleted flashcard ID=${flashcardId}`);
     return true;
   } catch (error) {
-    console.error(`[deleteFlashcardService] Unexpected error during flashcard deletion:`, error);
+    logger.error(`[deleteFlashcardService] Unexpected error during flashcard deletion:`, error);
     if (error instanceof Error) {
-      console.error(`[deleteFlashcardService] Error details:`, {
+      logger.error(`[deleteFlashcardService] Error details:`, {
         name: error.name,
         message: error.message,
         stack: error.stack,
@@ -416,26 +441,33 @@ export async function createFlashcardService(
   flashcardData: CreateFlashcardDto
 ): Promise<FlashcardDto> {
   // Log input data for debugging
-  console.log(`Creating single flashcard for user: ${userId}`);
+  logger.debug(`Creating single flashcard for user: ${userId}`);
 
   // Check for existing flashcard with the same generation_id, user_id, front, and back
   // to prevent duplicates
   if (flashcardData.generation_id) {
-    console.log(`Checking for existing flashcard for user ${userId} and generation ${flashcardData.generation_id}`);
+    logger.debug(`Checking for existing flashcard for user ${userId} and generation ${flashcardData.generation_id}`);
 
     const { data: existingFlashcard, error: checkError } = await supabase
-      .from("flashcards")
-      .select("id, front, back, source, created_at, updated_at, generation_id")
+      .from(FLASHCARDS_TABLE)
+      .select(DEFAULT_FLASHCARD_SELECT)
       .eq("user_id", userId)
       .eq("generation_id", flashcardData.generation_id)
       .eq("front", flashcardData.front)
       .eq("back", flashcardData.back)
       .maybeSingle();
 
-    if (checkError) {
-      console.error("Error checking existing flashcard:", checkError);
-    } else if (existingFlashcard) {
-      console.log(`Found existing flashcard with ID ${existingFlashcard.id}`);
+    if (
+      checkAndLogSupabaseError(
+        checkError,
+        `checking existing flashcard before create (gen: ${flashcardData.generation_id})`
+      )
+    ) {
+      throw checkError;
+    }
+
+    if (existingFlashcard) {
+      logger.debug(`Found existing flashcard with ID ${existingFlashcard.id}`);
       return existingFlashcard as FlashcardDto;
     }
   }
@@ -448,13 +480,12 @@ export async function createFlashcardService(
 
   // Insert the flashcard
   const { data: createdFlashcard, error } = await supabase
-    .from("flashcards")
+    .from(FLASHCARDS_TABLE)
     .insert(data)
-    .select("id, front, back, source, created_at, updated_at, generation_id")
+    .select(DEFAULT_FLASHCARD_SELECT)
     .single();
 
-  if (error) {
-    console.error("Error creating flashcard:", error);
+  if (checkAndLogSupabaseError(error, "creating single flashcard")) {
     throw error;
   }
 
@@ -476,15 +507,15 @@ export async function createFlashcardsService(
   isSaveAll = false
 ): Promise<FlashcardDto[]> {
   // Log input data for debugging
-  console.log(
+  logger.debug(
     `Creating flashcards, count: ${flashcardsData.flashcards.length}, user: ${userId}, isSaveAll: ${isSaveAll}`
   );
-  console.log(`Incoming flashcards: ${JSON.stringify(flashcardsData.flashcards)}`);
+  logger.debug(`Incoming flashcards: ${JSON.stringify(flashcardsData.flashcards)}`);
 
   // Check for existing flashcards with the same generation_id, user_id
   const generationId = flashcardsData.flashcards[0]?.generation_id;
   if (!generationId) {
-    console.log("No generation ID provided, cannot proceed with creating flashcards");
+    logger.debug("No generation ID provided, cannot proceed with creating flashcards");
     return [];
   }
 
@@ -492,43 +523,43 @@ export async function createFlashcardsService(
   const editedFlashcards = flashcardsData.flashcards.filter((card) => card.source === "ai-edited");
   const nonEditedFlashcards = flashcardsData.flashcards.filter((card) => card.source !== "ai-edited");
 
-  console.log(
+  logger.debug(
     `Split request into edited (${editedFlashcards.length}) and non-edited (${nonEditedFlashcards.length}) flashcards`
   );
 
   // Get existing flashcards for this generation
   const { data: existingFlashcards, error: checkError } = await supabase
-    .from("flashcards")
-    .select("id, front, back, source, created_at, updated_at, generation_id")
+    .from(FLASHCARDS_TABLE)
+    .select(DEFAULT_FLASHCARD_SELECT)
     .eq("user_id", userId)
     .eq("generation_id", generationId);
 
-  if (checkError) {
-    console.error("Error checking existing flashcards:", checkError);
+  if (
+    checkAndLogSupabaseError(checkError, `checking existing flashcards before create multiple (gen: ${generationId})`)
+  ) {
     throw checkError;
   }
 
   // Logic for "Zapisz wszystkie" - zachowujemy oryginalną logikę
   if (isSaveAll && existingFlashcards && existingFlashcards.length > 0) {
-    console.log(`Found ${existingFlashcards.length} existing flashcards, replacing them with all new versions`);
+    logger.debug(`Found ${existingFlashcards.length} existing flashcards, replacing them with all new versions`);
 
     // Get IDs of existing flashcards to delete
     const existingIds = existingFlashcards.map((card) => card.id);
-    console.log(`Deleting existing flashcards with IDs: ${existingIds.join(", ")}`);
+    logger.debug(`Deleting existing flashcards with IDs: ${existingIds.join(", ")}`);
 
     // Delete existing flashcards
     const { error: deleteError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .delete()
       .eq("user_id", userId)
       .eq("generation_id", generationId);
 
-    if (deleteError) {
-      console.error("Error deleting existing flashcards:", deleteError);
+    if (checkAndLogSupabaseError(deleteError, `deleting existing flashcards for save all (gen: ${generationId})`)) {
       throw deleteError;
     }
 
-    console.log(`Successfully deleted ${existingIds.length} existing flashcards`);
+    logger.debug(`Successfully deleted ${existingIds.length} existing flashcards`);
 
     // Insert all flashcards for "Zapisz wszystkie"
     const dataToInsert = flashcardsData.flashcards.map((flashcard) => ({
@@ -536,39 +567,39 @@ export async function createFlashcardsService(
       user_id: userId,
     }));
 
-    console.log(`Inserting ${dataToInsert.length} new flashcards`);
+    logger.debug(`Inserting ${dataToInsert.length} new flashcards`);
 
     const { data: createdFlashcards, error: insertError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .insert(dataToInsert)
-      .select("id, front, back, source, created_at, updated_at, generation_id");
+      .select(DEFAULT_FLASHCARD_SELECT);
 
-    if (insertError) {
-      console.error("Error creating flashcards:", insertError);
+    if (checkAndLogSupabaseError(insertError, `inserting flashcards for save all (gen: ${generationId})`)) {
       throw insertError;
     }
 
-    console.log(`Successfully created ${createdFlashcards?.length || 0} new flashcards`);
+    logger.debug(`Successfully created ${createdFlashcards?.length || 0} new flashcards`);
     return createdFlashcards as FlashcardDto[];
   }
 
   // Logic for "Zapisz wybrane" - zamieniamy całą poprzednią logikę
   if (!isSaveAll && existingFlashcards && existingFlashcards.length > 0) {
-    console.log(`"Zapisz wybrane": Found ${existingFlashcards.length} existing flashcards, deleting them all first`);
+    logger.debug(`"Zapisz wybrane": Found ${existingFlashcards.length} existing flashcards, deleting them all first`);
 
     // Delete all existing flashcards for this generation
     const { error: deleteError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .delete()
       .eq("user_id", userId)
       .eq("generation_id", generationId);
 
-    if (deleteError) {
-      console.error("Error deleting existing flashcards:", deleteError);
+    if (
+      checkAndLogSupabaseError(deleteError, `deleting existing flashcards for save selected (gen: ${generationId})`)
+    ) {
       throw deleteError;
     }
 
-    console.log(`Successfully deleted all existing flashcards for this generation`);
+    logger.debug(`Successfully deleted all existing flashcards for this generation`);
 
     // Insert the new flashcards (frontendowa logika zapewnia, że są to tylko zaakceptowane)
     const dataToInsert = flashcardsData.flashcards.map((flashcard) => ({
@@ -576,19 +607,18 @@ export async function createFlashcardsService(
       user_id: userId,
     }));
 
-    console.log(`Inserting ${dataToInsert.length} selected flashcards`);
+    logger.debug(`Inserting ${dataToInsert.length} selected flashcards`);
 
     const { data: createdFlashcards, error: insertError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .insert(dataToInsert)
-      .select("id, front, back, source, created_at, updated_at, generation_id");
+      .select(DEFAULT_FLASHCARD_SELECT);
 
-    if (insertError) {
-      console.error("Error creating flashcards:", insertError);
+    if (checkAndLogSupabaseError(insertError, `inserting flashcards for save selected (gen: ${generationId})`)) {
       throw insertError;
     }
 
-    console.log(`Successfully created ${createdFlashcards?.length || 0} selected flashcards`);
+    logger.debug(`Successfully created ${createdFlashcards?.length || 0} selected flashcards`);
     return createdFlashcards as FlashcardDto[];
   }
 
@@ -598,24 +628,23 @@ export async function createFlashcardsService(
     user_id: userId,
   }));
 
-  console.log(`No existing flashcards found. Inserting ${dataToInsert.length} new flashcards`);
+  logger.debug(`No existing flashcards found. Inserting ${dataToInsert.length} new flashcards`);
 
   try {
     // Insert the new flashcards
     const { data: createdFlashcards, error: insertError } = await supabase
-      .from("flashcards")
+      .from(FLASHCARDS_TABLE)
       .insert(dataToInsert)
-      .select("id, front, back, source, created_at, updated_at, generation_id");
+      .select(DEFAULT_FLASHCARD_SELECT);
 
-    if (insertError) {
-      console.error("Error creating flashcards:", insertError);
+    if (checkAndLogSupabaseError(insertError, `inserting new flashcards (no existing, gen: ${generationId})`)) {
       throw insertError;
     }
 
-    console.log(`Successfully created ${createdFlashcards?.length || 0} new flashcards`);
+    logger.debug(`Successfully created ${createdFlashcards?.length || 0} new flashcards`);
     return createdFlashcards as FlashcardDto[];
   } catch (error) {
-    console.error("Unexpected error creating flashcards:", error);
+    logger.error("Unexpected error creating flashcards:", error);
     throw error;
   }
 }

@@ -141,7 +141,10 @@ export async function generateFlashcards(
         updated_at: updatedGeneration.updated_at,
         model: updatedGeneration.model,
       },
-      flashcards: flashcards,
+      flashcards: flashcards.map((card) => ({
+        ...card,
+        user_id: userId,
+      })),
     };
   } catch (error) {
     // Log the error for generation - użyj klienta serwisowego w razie potrzeby
