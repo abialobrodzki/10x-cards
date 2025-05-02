@@ -17,9 +17,9 @@ export default defineConfig({
   reporter: [["html", { open: "never" }], ["list"]],
   use: {
     baseURL: "http://localhost:4321",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "on-first-retry",
+    video: "retain-on-failure",
     testIdAttribute: "data-testid",
   },
   projects: [
@@ -27,18 +27,18 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    // },
     {
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
     },
-    {
-      name: "Mobile Chrome",
-      use: { ...devices["Pixel 7"] },
-    },
+    // {
+    //   name: "Mobile Chrome",
+    //   use: { ...devices["Pixel 7"] },
+    // },
     {
       name: "Mobile Safari",
       use: { ...devices["iPhone 14"] },

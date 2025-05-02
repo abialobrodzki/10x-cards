@@ -46,6 +46,7 @@ export class GeneratePage {
   readonly flashCardFifthItemEditButton: Locator;
   readonly flashCardFifthItemRejectButton: Locator;
   readonly flashCardSaveSelectedButton: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.container = page.getByTestId("generate-view-container");

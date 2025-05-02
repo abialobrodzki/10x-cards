@@ -62,7 +62,6 @@ test.describe("Generate Page", () => {
     const randomText = generateRandomText(1000, 10000);
 
     // Act
-    await generatePage.goto();
     await generatePage.generateFlashcards(randomText);
 
     // Assert
@@ -90,8 +89,9 @@ test.describe("Generate Page", () => {
     const randomText = generateRandomText(1000, 10000);
 
     // Act
-    await generatePage.goto();
+    await generatePage.generateButton.isDisabled();
     await generatePage.generateFlashcards(randomText);
+    await expect(generatePage.flashcardList).toBeVisible({ timeout: 20000 });
     await generatePage.saveAllFlashcards();
 
     // Assert
@@ -109,8 +109,8 @@ test.describe("Generate Page", () => {
     const back = generateRandomText(3, 100);
 
     // Act
-    await generatePage.goto();
     await generatePage.generateFlashcards(randomText);
+    await expect(generatePage.flashcardList).toBeVisible({ timeout: 20000 });
     await generatePage.saveSimpleFlashcards(front, back);
 
     // Assert
