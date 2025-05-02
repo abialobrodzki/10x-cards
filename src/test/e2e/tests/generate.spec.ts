@@ -86,7 +86,7 @@ test.describe("Generate Page", () => {
   test("allows all of a new flashcards", async () => {
     // Arrange
     const expectedPopupText = "Zapisano wszystkie 5 fiszki";
-    const randomText = generateRandomText(1000, 10000);
+    const randomText = generateRandomText(1100, 10000);
 
     // Act
     await generatePage.generateButton.isDisabled();

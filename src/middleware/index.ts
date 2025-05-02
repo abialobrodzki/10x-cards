@@ -120,10 +120,13 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
 
     if (error) {
       console.error("Middleware - Błąd podczas pobierania użytkownika:", error);
-      // ... (obsługa błędów getUser, może wymagać dostosowania)
-      if (error.status === 401 && !isPublicPath) {
-        console.log("Błąd autoryzacji (401) getUser, przekierowuję do logowania");
-        // ... (usuwanie ciasteczek) ...
+      // Jeśli getUser zawiedzie (np. AuthSessionMissingError lub 401),
+      // a ścieżka nie jest publiczna, usuń ciasteczka i przekieruj
+      if (!isPublicPath) {
+        console.log("Błąd getUser lub brak użytkownika, usuwam ciasteczka i przekierowuję do logowania");
+        cookies.delete("sb-access-token", { path: "/" });
+        cookies.delete("sb-refresh-token", { path: "/" });
+        // Rozważ usunięcie również innych potencjalnych ciasteczek sesji, jeśli istnieją
         return redirect("/auth/login");
       }
     }
