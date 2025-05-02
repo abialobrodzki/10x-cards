@@ -20,9 +20,6 @@ const PUBLIC_PATHS = [
   // ... existing code ...
 ];
 
-// Nazwy ciasteczek używane przez Supabase
-const AUTH_COOKIE_NAMES = ["sb-access-token", "sb-refresh-token", "supabase-auth-token", "sb-127-auth-token"];
-
 export const onRequest = defineMiddleware(async ({ locals, cookies, request, url, redirect }, next) => {
   console.log("Middleware - URL:", url.pathname);
 
@@ -54,95 +51,73 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     // Sprawdź czy użytkownik jest zalogowany
     console.log("Middleware - Sprawdzam sesję użytkownika");
 
-    // Sprawdzam ciasteczka sesji (tylko do logowania, nie do podejmowania decyzji)
-    const cookieHeader = request.headers.get("Cookie") || "";
-    const sessionCookies = cookieHeader
-      .split(";")
-      .map((c) => c.trim())
-      .filter((c) => AUTH_COOKIE_NAMES.some((name) => c.startsWith(name + "=")));
-
-    console.log("Middleware - Ciasteczka sesji (tylko info):", sessionCookies);
-
     // Próba odświeżenia sesji
-    try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        console.log("Błąd pobierania sesji:", sessionError);
-        // If getSession returns 401, clear cookies and redirect
-        if (sessionError.status === 401 && !isPublicPath) {
-          console.log("Błąd autoryzacji (401) getSession, usuwam ciasteczka i przekierowuję do logowania");
+    if (sessionError) {
+      console.log("Błąd pobierania sesji:", sessionError);
+      if (sessionError.status === 401 && !isPublicPath) {
+        console.log("Błąd autoryzacji (401) getSession, usuwam ciasteczka i przekierowuję do logowania");
+        cookies.delete("sb-access-token", { path: "/" });
+        cookies.delete("sb-refresh-token", { path: "/" });
+        return redirect("/auth/login");
+      }
+    } else if (sessionData.session) {
+      console.log(
+        "Sesja ważna do:",
+        sessionData.session.expires_at ? new Date(sessionData.session.expires_at * 1000).toISOString() : "nieznana"
+      );
+      // Logika odświeżania tokenu jeśli sesja wkrótce wygaśnie (np. mniej niż 5 minut)
+      const expiryTime = sessionData.session.expires_at;
+      const now = Math.floor(Date.now() / 1000);
+      const refreshThreshold = 300; // 5 minut w sekundach
+
+      if (expiryTime && expiryTime < now + refreshThreshold) {
+        console.log("Sesja wkrótce wygaśnie, próbuję odświeżyć");
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error("Błąd podczas odświeżania sesji:", refreshError);
+          if (!isPublicPath) {
+            console.log("Odświeżenie sesji nie powiodło się, usuwam ciasteczka i przekierowuję");
+            cookies.delete("sb-access-token", { path: "/" });
+            cookies.delete("sb-refresh-token", { path: "/" });
+            return redirect("/auth/login");
+          }
+        }
+      }
+
+      // Sesja jest (lub została odświeżona), pobierz dane użytkownika
+      const {
+        data: { user },
+        error: getUserError,
+      } = await supabase.auth.getUser();
+
+      if (getUserError) {
+        console.error("Middleware - Błąd podczas pobierania użytkownika (mimo sesji?):", getUserError);
+        if (!isPublicPath) {
+          console.log("Błąd getUser lub brak użytkownika, usuwam ciasteczka i przekierowuję do logowania");
           cookies.delete("sb-access-token", { path: "/" });
           cookies.delete("sb-refresh-token", { path: "/" });
           return redirect("/auth/login");
         }
-      } else if (sessionData.session) {
-        console.log(
-          "Sesja ważna do:",
-          sessionData.session.expires_at ? new Date(sessionData.session.expires_at * 1000).toISOString() : "nieznana"
-        );
-        // Logika odświeżania tokenu jeśli sesja wkrótce wygaśnie (np. mniej niż 5 minut)
-        const expiryTime = sessionData.session.expires_at;
-        const now = Math.floor(Date.now() / 1000);
-        const refreshThreshold = 300; // 5 minut w sekundach
+      }
 
-        if (expiryTime && expiryTime < now + refreshThreshold) {
-          console.log("Sesja wkrótce wygaśnie, próbuję odświeżyć");
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.error("Błąd podczas odświeżania sesji:", refreshError);
-            // Jeśli odświeżenie się nie powiedzie, usuń ciasteczka i przekieruj
-            if (!isPublicPath) {
-              console.log("Odświeżenie sesji nie powiodło się, usuwam ciasteczka i przekierowuję");
-              cookies.delete("sb-access-token", { path: "/" });
-              cookies.delete("sb-refresh-token", { path: "/" });
-              return redirect("/auth/login");
-            }
-          }
-        }
-      } else if (!sessionData.session && !isPublicPath) {
-        // Sesja nie istnieje, a ścieżka wymaga uwierzytelnienia
+      if (user) {
+        // Ustaw informacje o użytkowniku w locals
+        locals.user = {
+          id: user.id,
+          email: user.email,
+        };
+        console.log("Middleware - Ustawiono użytkownika w locals:", locals.user.id);
+      } else if (!isPublicPath) {
+        // Sesja nie istnieje (getSession zwróciła null), a ścieżka wymaga uwierzytelnienia
         console.log("Brak aktywnej sesji (getSession), przekierowuję do logowania");
         return redirect("/auth/login");
       }
-    } catch (refreshErr) {
-      console.error("Błąd podczas odświeżania sesji:", refreshErr);
-      if (!isPublicPath) {
-        return redirect("/auth/login");
-      }
-    }
-
-    // Pobierz ID użytkownika z tokenu JWT
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error) {
-      console.error("Middleware - Błąd podczas pobierania użytkownika:", error);
-      // Jeśli getUser zawiedzie (np. AuthSessionMissingError lub 401),
-      // a ścieżka nie jest publiczna, usuń ciasteczka i przekieruj
-      if (!isPublicPath) {
-        console.log("Błąd getUser lub brak użytkownika, usuwam ciasteczka i przekierowuję do logowania");
-        cookies.delete("sb-access-token", { path: "/" });
-        cookies.delete("sb-refresh-token", { path: "/" });
-        // Rozważ usunięcie również innych potencjalnych ciasteczek sesji, jeśli istnieją
-        return redirect("/auth/login");
-      }
-    }
-
-    console.log("Middleware - Użytkownik (po getUser):", user ? `zalogowany (${user.email})` : "niezalogowany");
-
-    if (user) {
-      // Ustaw informacje o użytkowniku w locals
-      locals.user = {
-        id: user.id,
-        email: user.email,
-      };
-      console.log("Middleware - Ustawiono użytkownika w locals:", locals.user.id);
     } else if (!isPublicPath) {
-      // Użytkownik nie istnieje (getUser zwrócił null) a ścieżka nie jest publiczna
-      console.log("Middleware - Przekierowanie na /auth/login (brak użytkownika po getUser)");
+      // Jeśli doszliśmy tutaj, a locals.user nie jest ustawiony (bo getSession lub getUser zawiodło)
+      // i ścieżka jest chroniona, wykonajmy ostateczne przekierowanie.
+      console.log("Middleware - Przekierowanie na /auth/login (brak użytkownika w locals dla chronionej ścieżki)");
       return redirect("/auth/login");
     }
   } catch (err) {
