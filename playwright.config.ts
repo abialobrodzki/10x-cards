@@ -48,6 +48,15 @@ export default defineConfig({
     command: "npm run preview -- --port 4321",
     port: 4321,
     reuseExistingServer: !process.env.CI,
+    env: {
+      // Pass Supabase and other required runtime env vars to the preview server
+      // These are read from process.env, which gets them from GitHub secrets
+      SUPABASE_URL: process.env.SUPABASE_URL ?? "",
+      SUPABASE_KEY: process.env.SUPABASE_KEY ?? "",
+      // Note: SERVICE_ROLE_KEY is typically NOT needed by the frontend/preview server
+      // Pass any other runtime variables your Astro app needs here
+      OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY ?? "",
+    },
   },
   // Global Setup: czyszczenie bazy przed testami
   globalSetup: "./src/test/e2e/global.setup.ts",
