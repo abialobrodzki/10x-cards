@@ -1,16 +1,13 @@
-name: CI Pipeline
+name: PR Pipeline
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
-  workflow_dispatch: # Allows manual triggering
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
-  build-and-test:
+  lint:
+    name: Lint Code
     runs-on: ubuntu-latest
 
     steps:
@@ -20,20 +17,99 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc' # Use Node.js version from .nvmrc
+          node-version-file: '.nvmrc'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Unit and Integration Tests
-        run: npm test # Assuming 'npm test' runs unit/integration tests
+      - name: Run linting
+        run: npm run lint:check
 
-      - name: Build project
-        run: npm run build # Assuming 'npm run build' creates a production build
+  unit-test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Unit Tests and collect coverage
+        run: npm run test:coverage
+      
+      - name: Upload unit test coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          retention-days: 1
+
+  e2e-test:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    needs: lint
+    environment: integration
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install
+        run: npx playwright install --with-deps
 
-      - name: Run E2E Tests
-        run: npm run test:e2e:run # Use the script that builds before testing
-        # Add necessary environment variables here if needed for E2E tests (e.g., API URL)
+      - name: Run E2E Tests and collect coverage
+        run: npm run test:e2e:run
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_USERNAME_ID: ${{ secrets.E2E_USERNAME_ID }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      
+      - name: Upload E2E test coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-coverage
+          path: playwright-report/
+          retention-days: 1
+
+  status-comment:
+    name: Update PR Status
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test]
+    if: success()
+
+    steps:
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage-reports
+      
+      - name: Post status comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ✅ All checks passed! Unit tests, E2E tests, and linting were successful. 
+            
+            Coverage reports have been generated and are available as artifacts. 
