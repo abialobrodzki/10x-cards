@@ -50,7 +50,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
   // Global Setup: czyszczenie bazy przed testami
-  globalSetup: "./tests/global.setup.ts",
+  globalSetup: "./src/test/e2e/global.setup.ts",
   // Global Teardown: czyszczenie bazy po testach
-  globalTeardown: "./tests/global.teardown.ts",
+  globalTeardown: "./src/test/e2e/global.teardown.ts",
 });

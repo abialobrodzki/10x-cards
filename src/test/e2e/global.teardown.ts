@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/db/database.types";
+import type { Database } from "../../db/database.types";
 
 async function globalTeardown() {
   // Wyświetl informację o rozpoczęciu czyszczenia
