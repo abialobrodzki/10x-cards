@@ -24,7 +24,7 @@ export class RegisterPage {
   }
 
   async goto() {
-    await this.page.goto("/auth/register");
+    await this.page.goto("/auth/register", { waitUntil: "networkidle" });
   }
 
   async signup(email: string, password: string, confirmPassword: string) {

@@ -51,10 +51,4 @@ test.describe("Login Page", () => {
     console.log("Accessibility violations:", accessibilityScanResults.violations);
     expect(accessibilityScanResults.violations.length).toBeLessThanOrEqual(1);
   });
-
-  // Test zrzutu ekranu - wymaga wcześniejszego wygenerowania referencyjnych zrzutów
-  // Aby wygenerować bazowe zrzuty, najpierw uruchom test z flagą --update-snapshots
-  test.skip("takes a screenshot that matches the baseline", async ({ page }) => {
-    await expect(page).toHaveScreenshot("login-page.png");
-  });
 });

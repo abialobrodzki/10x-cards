@@ -72,5 +72,51 @@ test.describe("Generate Page", () => {
       generatePage.flashcardListHeader.getByText(expectedHeaderText),
       `Expected front flashcard "${expectedHeaderText}"`
     ).toBeVisible();
+    await expect(generatePage.flashCardFirstItemFront).toBeVisible();
+    await expect(generatePage.flashCardFirstItemBack).toBeVisible();
+    await expect(generatePage.flashCardSecondItemFront).toBeVisible();
+    await expect(generatePage.flashCardSecondItemBack).toBeVisible();
+    await expect(generatePage.flashCardThirdItemFront).toBeVisible();
+    await expect(generatePage.flashCardThirdItemBack).toBeVisible();
+    await expect(generatePage.flashCardFourthItemFront).toBeVisible();
+    await expect(generatePage.flashCardFourthItemBack).toBeVisible();
+    await expect(generatePage.flashCardFifthItemFront).toBeVisible();
+    await expect(generatePage.flashCardFifthItemBack).toBeVisible();
+  });
+
+  test("allows all of a new flashcards", async () => {
+    // Arrange
+    const expectedPopupText = "Zapisano wszystkie 5 fiszki";
+    const randomText = generateRandomText(1000, 10000);
+
+    // Act
+    await generatePage.goto();
+    await generatePage.generateFlashcards(randomText);
+    await generatePage.saveAllFlashcards();
+
+    // Assert
+    await expect(generatePage.successAlert).toBeVisible();
+    await expect(generatePage.successAlert, `Expected front flashcard "${expectedPopupText}"`).toHaveText(
+      expectedPopupText
+    );
+  });
+
+  test("allows simple and editable flashcards", async () => {
+    // Arrange
+    const expectedPopupText = "Zapisano 2 zaakceptowanych fiszek";
+    const randomText = generateRandomText(1000, 10000);
+    const front = generateRandomText(3, 100);
+    const back = generateRandomText(3, 100);
+
+    // Act
+    await generatePage.goto();
+    await generatePage.generateFlashcards(randomText);
+    await generatePage.saveSimpleFlashcards(front, back);
+
+    // Assert
+    await expect(generatePage.successAlert).toBeVisible();
+    await expect(generatePage.successAlert, `Expected front flashcard "${expectedPopupText}"`).toHaveText(
+      expectedPopupText
+    );
   });
 });

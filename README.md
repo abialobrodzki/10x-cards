@@ -306,6 +306,20 @@ npm run test:e2e:debug
 npm run test:e2e -- --update-snapshots
 ```
 
+### Environment Variables - package.json scripts before running tests
+
+```bash
+# run supabase locally
+supabase start
+supabase migration up
+supabase stop
+
+# run dev server locally
+dev astro dev # for local dev in port 3000
+# or
+dev:e2e npm run dev astro dev -- --mode test --port4321 # for e2e tests in port 4321
+```
+
 ## Testing Guidelines
 
 ### Unit Testing Best Practices

@@ -18,7 +18,7 @@ export class ForgotPasswordPage {
   }
 
   async goto() {
-    await this.page.goto("/auth/forgot-password");
+    await this.page.goto("/auth/forgot-password", { waitUntil: "networkidle" });
   }
 
   async requestPasswordReset(email: string) {
