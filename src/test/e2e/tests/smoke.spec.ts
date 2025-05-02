@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { LoginPage } from "../page-objects/LoginPage";
 
-test.describe("Login Page", () => {
+test.describe("Smoke tests", () => {
   let loginPage: LoginPage;
 
   test.beforeEach(async ({ page }) => {
@@ -45,10 +45,6 @@ test.describe("Login Page", () => {
 
   test("passes accessibility tests", async ({ page }) => {
     const accessibilityScanResults = await new AxeBuilder({ page: page }).analyze();
-    // Tymczasowo pozwalamy na pewne problemy z dostępnością w przykładowym teście
-    // W prawdziwym projekcie należy je naprawić
-    // eslint-disable-next-line no-console
-    console.log("Accessibility violations:", accessibilityScanResults.violations);
     expect(accessibilityScanResults.violations.length).toBeLessThanOrEqual(1);
   });
 });

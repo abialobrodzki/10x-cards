@@ -44,7 +44,8 @@ test.describe("Flashcards Page", () => {
 
   test("allows manual creation of a new flashcard", async () => {
     // Arrange
-    const frontText = "Test Front";
+    const timestamp = new Date().getTime();
+    const frontText = `Test Front ${timestamp}`;
     const backText = "Test Back";
 
     // Act
@@ -60,19 +61,24 @@ test.describe("Flashcards Page", () => {
     ).toBeVisible();
   });
 
-  test("allows delete of a flashcard", async ({ page }) => {
+  test("allows delete of a flashcard", async () => {
     // Arrange
-    const frontText = "Test Front";
-    const firstFlashcardElement = page
-      .locator('[data-testid="flashcards-grid-view"]')
-      .locator('[data-slot="card"]')
-      .first();
+    const timestamp = new Date().getTime();
+    const frontText = `Test Front to Delete ${timestamp}`;
+    const backText = "Test Back to Delete";
 
-    // Act
+    // Create a flashcard to delete
     await flashcardsPage.goto();
-    const dataTestId = await firstFlashcardElement.getAttribute("data-testid");
+    await flashcardsPage.addFlashcard(frontText, backText);
+    // Wait for the new flashcard to be visible before attempting to delete
+    const flashcardToDelete = flashcardsPage.flashcardsList.getByText(frontText).first();
+    await expect(flashcardToDelete).toBeVisible();
+
+    const dataTestId = await flashcardToDelete.getAttribute("data-testid");
     const flashcardIdString = dataTestId?.split("-").pop();
     const flashcardId = flashcardIdString ? parseInt(flashcardIdString, 10) : null;
+
+    // Act
     if (flashcardId !== null) {
       await flashcardsPage.deleteFlashcard(flashcardId);
     } else {
