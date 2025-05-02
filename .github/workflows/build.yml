@@ -17,8 +17,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -38,15 +38,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run Unit Tests and collect coverage
         run: npm run test:coverage
-      
+
       - name: Upload unit test coverage reports
         uses: actions/upload-artifact@v4
         with:
@@ -67,8 +67,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -79,14 +79,14 @@ jobs:
       - name: Run E2E Tests and collect coverage
         run: npm run test:e2e:run
         env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           E2E_USERNAME_ID: ${{ secrets.E2E_USERNAME_ID }}
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      
+
       - name: Upload E2E test coverage reports
         uses: actions/upload-artifact@v4
         with:
@@ -105,12 +105,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: coverage-reports
-      
+
       - name: Post status comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ✅ All checks passed! Unit tests, E2E tests, and linting were successful. 
-            
-            Coverage reports have been generated and are available as artifacts. 
+
+            Coverage reports have been generated and are available as artifacts.
