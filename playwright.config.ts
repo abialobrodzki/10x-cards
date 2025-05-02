@@ -2,7 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+// Najpierw wczytaj domyślne zmienne z .env
+dotenv.config();
+// Następnie nadpisz zmienne z .env.test (jeśli istnieje) - dodajemy override: true
+dotenv.config({ path: path.resolve(process.cwd(), ".env.test"), override: true });
 
 export default defineConfig({
   testDir: "./src/test/e2e",
@@ -46,4 +49,8 @@ export default defineConfig({
     port: 4321,
     reuseExistingServer: !process.env.CI,
   },
+  // Global Setup: czyszczenie bazy przed testami
+  globalSetup: "./tests/global.setup.ts",
+  // Global Teardown: czyszczenie bazy po testach
+  globalTeardown: "./tests/global.teardown.ts",
 });
