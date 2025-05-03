@@ -6,14 +6,14 @@ import { GeneratePage } from "../page-objects/GeneratePage";
 import { FlashcardsPage } from "../page-objects/FlashcardsPage";
 
 // Aby wygenerować bazowe zrzuty, najpierw uruchom test z flagą --update-snapshots
-test.describe("Visual tests", () => {
+test.describe("Visual tests @visual", () => {
   let loginPage: LoginPage;
   let registerPage: RegisterPage;
   let forgotPasswordPage: ForgotPasswordPage;
   let generatePage: GeneratePage;
   let flashcardsPage: FlashcardsPage;
 
-  test("takes a screenshot page: /auth/register", async ({ page }) => {
+  test("takes a screenshot page: /auth/register @visual", async ({ page }) => {
     // Arrange
     loginPage = new LoginPage(page);
 
@@ -24,7 +24,7 @@ test.describe("Visual tests", () => {
     await expect(page).toHaveScreenshot("login-page.png");
   });
 
-  test("takes a screenshot page: /auth/login", async ({ page }) => {
+  test("takes a screenshot page: /auth/login @visual", async ({ page }) => {
     // Arrange
     registerPage = new RegisterPage(page);
 
@@ -35,7 +35,7 @@ test.describe("Visual tests", () => {
     await expect(page).toHaveScreenshot("register-page.png");
   });
 
-  test("takes a screenshot page: auth/forgot-password", async ({ page }) => {
+  test("takes a screenshot page: auth/forgot-password @visual", async ({ page }) => {
     // Arrange
     forgotPasswordPage = new ForgotPasswordPage(page);
 
@@ -46,7 +46,7 @@ test.describe("Visual tests", () => {
     await expect(page).toHaveScreenshot("forgot-password-page.png");
   });
 
-  test("takes a screenshot page: /generate", async ({ page }) => {
+  test("takes a screenshot page: /generate @visual", async ({ page }) => {
     // Arrange
     loginPage = new LoginPage(page);
     generatePage = new GeneratePage(page);
@@ -66,7 +66,7 @@ test.describe("Visual tests", () => {
     await expect(page).toHaveScreenshot("generate-page.png");
   });
 
-  test("takes a screenshot page: /flashcards", async ({ page }) => {
+  test("takes a screenshot page: /flashcards @visual", async ({ page }) => {
     // Arrange
     loginPage = new LoginPage(page);
     flashcardsPage = new FlashcardsPage(page);
