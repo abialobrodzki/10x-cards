@@ -36,4 +36,4 @@ Testy - Narzędzia do testowania aplikacji:
 CI/CD i Hosting:
 
 - Github Actions do tworzenia pipeline'ów CI/CD
-- DigitalOcean do hostowania aplikacji za pośrednictwem obrazu docker
+- Cloudflare Pages do hostowania aplikacji, wykorzystując wsparcie dla Astro i funkcji serverless/edge do obsługi treści statycznych oraz endpointów API.

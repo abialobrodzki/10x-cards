@@ -11,6 +11,7 @@
 - [Getting Started](#getting-started)
 - [Available Scripts](#available-scripts)
 - [Project Structure](#project-structure)
+- [Deployments & Hosting](#deployments--hosting)
 - [AI Development Support](#ai-development-support)
 - [Contributing](#contributing)
 - [License](#license)
@@ -80,6 +81,12 @@ npm run build
 │ └── assets/ # Static assets
 ├── public/ # Public assets
 ```
+
+## Deployments & Hosting
+
+The application is hosted on **Cloudflare Pages**, utilizing its support for Astro and serverless/edge functions to serve both static content and API endpoints (`src/pages/api`).
+
+Continuous Integration and Continuous Deployment (CI/CD) are managed via **GitHub Actions**, which automate the build and deployment process to Cloudflare Pages upon code changes.
 
 ## AI Development Support
 
