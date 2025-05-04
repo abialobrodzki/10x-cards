@@ -236,11 +236,12 @@ describe("useFlashcardsManager", () => {
     const { result } = renderHook(() => useFlashcardsManager(mockUserId));
     await waitFor(() => expect(result.current.isLoadingList).toBe(false));
 
-    const newCardData: FlashcardFormValues = {
+    const newCardData: FlashcardFormValues & { user_id: string } = {
       front: "New Front",
       back: "New Back",
       source: "manual",
       generation_id: 123,
+      user_id: mockUserId,
     };
 
     // Wywołanie funkcji createFlashcard

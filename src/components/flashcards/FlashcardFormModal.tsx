@@ -69,16 +69,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
         generation_id: null,
       });
     }
-    // Resetuj błąd przy zmianie edytowanej fiszki
-    setSubmitError(null);
   }, [flashcard, form]);
-
-  // Resetowanie błędu przy zamknięciu modalnego okna
-  useEffect(() => {
-    if (!isOpen) {
-      setSubmitError(null);
-    }
-  }, [isOpen]);
 
   // Obsługa wysłania formularza
   const handleSubmit = async (values: FlashcardFormSchema) => {
@@ -103,7 +94,15 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          setSubmitError(null);
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[540px]" data-testid="flashcard-form-modal">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edytuj fiszkę" : "Utwórz nową fiszkę"}</DialogTitle>

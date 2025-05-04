@@ -7,7 +7,7 @@ import type { FlashcardFilters } from "../../../components/flashcards/types";
 // Chcemy kontrolować debounce w testach, więc mockujemy hooka
 // Założenie: hook zwraca wartość natychmiast, jeśli nie ma timera
 vi.mock("../../../components/flashcards/hooks/useDebounce", () => ({
-  useDebounce: (value: string) => value,
+  useDebounce: vi.fn((value) => value),
 }));
 
 describe("FlashcardFilterBar", () => {

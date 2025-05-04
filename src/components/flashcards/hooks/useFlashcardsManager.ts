@@ -8,7 +8,6 @@ export function useFlashcardsManager(userId: string) {
   // Stan fiszek
   const [flashcards, setFlashcards] = useState<FlashcardDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Stany ładowania dla poszczególnych operacji
@@ -128,6 +127,7 @@ export function useFlashcardsManager(userId: string) {
 
     try {
       const newFlashcard: CreateFlashcardDto = {
+        user_id: userId,
         front: flashcard.front,
         back: flashcard.back,
         source: flashcard.source,
@@ -240,10 +240,8 @@ export function useFlashcardsManager(userId: string) {
   const openDeleteModal = (id: number) => setDeletingFlashcardId(id);
   const closeDeleteModal = () => setDeletingFlashcardId(null);
 
-  // Aktualizujemy ogólny stan ładowania na podstawie stanów dla poszczególnych operacji
-  useEffect(() => {
-    setIsLoading(isLoadingList || isCreatingCard || isUpdatingCard || isDeletingCard);
-  }, [isLoadingList, isCreatingCard, isUpdatingCard, isDeletingCard]);
+  // Obliczamy ogólny stan ładowania bezpośrednio
+  const isLoading = isLoadingList || isCreatingCard || isUpdatingCard || isDeletingCard;
 
   return {
     // Stan

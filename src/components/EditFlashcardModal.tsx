@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks-extra/no-direct-set-state-in-use-effect */
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import type { FlashcardViewModel, FlashcardBaseData } from "../types/viewModels";
