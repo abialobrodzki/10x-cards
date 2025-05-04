@@ -1,0 +1,4 @@
+name = "10x-cards"
+compatibility_date = "2025-05-04"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"

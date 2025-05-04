@@ -84,7 +84,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: >
-            pages deploy dist --project-name 10x-cards
-            --compatibility-date=2025-05-04
-            --compatibility-flags=nodejs_compat
+          command: pages deploy dist --project-name 10x-cards
