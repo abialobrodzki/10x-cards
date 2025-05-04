@@ -78,6 +78,14 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
+      - name: Create wrangler.toml for Pages Functions
+        run: |
+          echo "name = \"10x-cards-worker\"" > dist/wrangler.toml
+          echo "compatibility_date = \"2024-05-04\"" >> dist/wrangler.toml
+          echo "compatibility_flags = [\"nodejs_compat\"]" >> dist/wrangler.toml
+          echo "Adding wrangler.toml:"
+          cat dist/wrangler.toml
+
       - name: Deploy to Cloudflare Pages
         id: deployment
         uses: cloudflare/wrangler-action@v3
