@@ -1,27 +1,74 @@
 /* eslint-disable no-console */
-import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-import type { AstroCookies } from "astro";
+import type { APIContext } from "astro";
 import type { Database } from "./database.types";
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
 const defaultUserId = import.meta.env.DEFAULT_USER_ID;
 
-export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
-  // Determine Supabase URL and keys from runtime import.meta.env stubbed by Vitest
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const runtimeEnv = (globalThis as any)["import.meta.env"] as Record<string, string> | undefined;
-  const url = runtimeEnv?.SUPABASE_URL ?? supabaseUrl;
-  // Zawsze używaj publicznego klucza anon z SUPABASE_KEY
-  const anonKey = runtimeEnv?.SUPABASE_KEY ?? import.meta.env.SUPABASE_KEY;
+export const createSupabaseServerInstance = (context: APIContext) => {
+  let supabaseUrl: string | undefined;
+  let supabaseKey: string | undefined;
+  let sourceDescription = "unknown";
 
-  if (!anonKey) {
-    console.error("BŁĄD KRYTYCZNY: Brak klucza anonimowego Supabase (SUPABASE_KEY)!");
-    throw new Error("Brak konfiguracji klucza anonimowego Supabase.");
+  // Primary check: Cloudflare Runtime Environment Variables
+  if (context.locals.runtime?.env) {
+    sourceDescription = "context.locals.runtime.env";
+    console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
+    // Log the actual content to be sure (this log will only show in wrangler dev or if deployed with logs)
+    // console.log(JSON.stringify(context.locals.runtime.env, null, 2));
+    supabaseUrl = context.locals.runtime.env.SUPABASE_URL;
+    supabaseKey = context.locals.runtime.env.SUPABASE_KEY;
+  } else {
+    // Log why the primary check failed
+    console.log(`createSupabaseServerInstance: context.locals.runtime.env not found or empty.`);
+    if (context.locals.runtime) {
+      console.log(
+        "createSupabaseServerInstance: context.locals.runtime exists, logging its keys:",
+        Object.keys(context.locals.runtime)
+      );
+    } else {
+      console.log("createSupabaseServerInstance: context.locals.runtime does not exist.");
+    }
+
+    // Fallback ONLY for local development (import.meta.env.DEV is true)
+    if (import.meta.env.DEV) {
+      sourceDescription = "import.meta.env (dev fallback)";
+      console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
+      supabaseUrl = import.meta.env.SUPABASE_URL;
+      supabaseKey = import.meta.env.SUPABASE_KEY;
+    } else {
+      // In production/deployment, if runtime.env wasn't found, we should fail.
+      sourceDescription = "production environment (runtime.env expected but not found)";
+      console.error(`createSupabaseServerInstance: Failed to find runtime env variables in non-DEV environment.`);
+      // Explicitly set to undefined to trigger errors below
+      supabaseUrl = undefined;
+      supabaseKey = undefined;
+    }
   }
 
-  // Create Supabase client with runtime URL and the guaranteed anon key
-  const supabase = createServerClient<Database>(url, anonKey, {
+  console.log(
+    `createSupabaseServerInstance: Trying to get URL from ${sourceDescription}: ${supabaseUrl ? "FOUND" : "NOT FOUND"}`
+  );
+  console.log(
+    `createSupabaseServerInstance: Trying to get Key from ${sourceDescription}: ${supabaseKey ? "FOUND" : "NOT FOUND"}`
+  );
+
+  if (!supabaseUrl) {
+    console.error(
+      `BŁĄD KRYTYCZNY: Brak adresu URL Supabase (SUPABASE_URL) w zmiennych środowiskowych ${sourceDescription}!`
+    );
+    throw new Error("Brak konfiguracji adresu URL Supabase.");
+  }
+  if (!supabaseKey) {
+    console.error(
+      `BŁĄD KRYTYCZNY: Brak klucza Supabase (SUPABASE_KEY) w zmiennych środowiskowych ${sourceDescription}!`
+    );
+    throw new Error("Brak konfiguracji klucza Supabase.");
+  }
+
+  console.log("createSupabaseServerInstance: Creating Supabase client...");
+
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
       get(key) {
         return context.cookies.get(key)?.value;
@@ -37,20 +84,6 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
 
   return supabase;
 };
-
-// Główny klient Supabase dla operacji serwerowych
-export const supabaseClient = createClient<Database>(supabaseUrl, import.meta.env.SUPABASE_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: false,
-  },
-  global: {
-    headers: {
-      apikey: import.meta.env.SUPABASE_KEY,
-      Authorization: `Bearer ${import.meta.env.SUPABASE_KEY}`,
-    },
-  },
-});
 
 /**
  * UWAGA: To ID nie powinno być używane w normalnym przepływie aplikacji.

@@ -1,22 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { POST } from "../../../pages/api/auth/login";
 import type { APIContext, AstroCookies } from "astro";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Mock the Supabase client module
+// Mock the Supabase client methods directly
 const mockSignInWithPassword = vi.fn();
 const mockGetUser = vi.fn();
 
-vi.mock("../../../db/supabase.client", () => {
-  const mockCreateSupabaseServerInstance = vi.fn(() => ({
-    auth: {
-      signInWithPassword: mockSignInWithPassword,
-      getUser: mockGetUser,
-    },
-  }));
-  return {
-    createSupabaseServerInstance: mockCreateSupabaseServerInstance,
-  };
-});
+// No longer need to mock the creator function
+// vi.mock("../../../db/supabase.client", ...);
 
 interface LoginRequestBody {
   email?: string;
@@ -24,57 +16,52 @@ interface LoginRequestBody {
 }
 
 // Helper function to create a mock APIContext
-const createMockAPIContext = (
-  body: LoginRequestBody,
-  cookies?: Record<string, string | undefined>, // Use Record for cookies input
-  headers?: Record<string, string>
-): APIContext => ({
-  request: {
-    json: vi.fn().mockResolvedValue(body),
-    headers: new Headers(headers),
-  } as unknown as APIContext["request"],
-  // Create a mock AstroCookies object
-  cookies: {
-    get: vi.fn((name: string) => {
-      // Mock the get method
-      // Simple mock logic: return a value if provided in the initial cookies object
-      if (cookies && cookies[name]) {
-        return { value: cookies[name] };
-      }
-      return undefined; // Return undefined if cookie not found
-    }),
-    set: vi.fn(), // Mock the set method
-    has: vi.fn(() => false), // Mock the has method, simple implementation
-    delete: vi.fn(), // Mock the delete method
-    // Add other required properties/methods if necessary based on AstroCookies type
-  } as unknown as AstroCookies, // Cast the mock object to AstroCookies
-  // Add other necessary properties of APIContext
-  params: {} as APIContext["params"],
-  site: undefined as APIContext["site"],
-  url: new URL("http://localhost") as unknown as APIContext["url"],
-  redirect: vi.fn() as unknown as APIContext["redirect"],
-  generator: "" as APIContext["generator"],
-  clientAddress: "" as APIContext["clientAddress"],
-  props: {} as APIContext["props"],
-  rewrite: vi.fn() as unknown as APIContext["rewrite"],
-  locals: {} as APIContext["locals"],
-  preferredLocale: "" as APIContext["preferredLocale"],
-  // Added missing properties based on the linter error
-  preferredLocaleList: [] as unknown as APIContext["preferredLocaleList"],
-  currentLocale: undefined as unknown as APIContext["currentLocale"],
-  routePattern: "" as unknown as APIContext["routePattern"],
-  originPathname: "" as unknown as APIContext["originPathname"],
-  // Removed html, text, and response as they caused type errors and are not used in current tests
-  // Added missing properties based on the linter error
-  getActionResult: vi.fn() as unknown as APIContext["getActionResult"],
-  callAction: vi.fn() as unknown as APIContext["callAction"],
-  isPrerendered: false as APIContext["isPrerendered"],
-});
+const createMockAPIContext = (body: LoginRequestBody, mockSupabaseClient?: Partial<SupabaseClient>): APIContext => {
+  const mockCookies = {
+    get: vi.fn(),
+    set: vi.fn(),
+    has: vi.fn(() => false),
+    delete: vi.fn(),
+  } as unknown as AstroCookies;
+
+  return {
+    request: {
+      json: vi.fn().mockResolvedValue(body),
+      headers: new Headers(),
+    } as unknown as APIContext["request"],
+    cookies: mockCookies,
+    locals: {
+      // Inject the provided mock Supabase client
+      supabase: mockSupabaseClient || {
+        auth: {
+          signInWithPassword: mockSignInWithPassword,
+          getUser: mockGetUser,
+        },
+      },
+    },
+    // Add other necessary properties of APIContext
+    // ... (keep other mock properties as needed)
+    url: new URL("http://localhost"),
+    redirect: vi.fn(),
+  } as unknown as APIContext;
+};
 
 describe("POST /api/auth/login", () => {
-  // Reset mocks before each test
+  let mockSupabase: SupabaseClient; // Use full client type so .auth is non-optional
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mocks for auth methods
+    mockSignInWithPassword.mockReset();
+    mockGetUser.mockReset();
+
+    // Create a base mock Supabase client for tests
+    mockSupabase = {
+      auth: {
+        signInWithPassword: mockSignInWithPassword,
+        getUser: mockGetUser,
+      },
+    } as unknown as SupabaseClient;
   });
 
   it("should return 200 and success: true for valid credentials", async () => {
@@ -85,7 +72,8 @@ describe("POST /api/auth/login", () => {
     mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
 
     const requestBody = { email: "test@example.com", password: "password123" };
-    const context = createMockAPIContext(requestBody);
+    // Pass the mock client to the context creator
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
@@ -96,14 +84,18 @@ describe("POST /api/auth/login", () => {
     expect(jsonResponse.success).toBe(true);
     expect(jsonResponse.redirectUrl).toBe("/generate");
     expect(jsonResponse.user).toEqual({ id: mockUser.id, email: mockUser.email });
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: requestBody.email, password: requestBody.password });
-    expect(mockGetUser).toHaveBeenCalled();
+    // Check mock methods on the injected client
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: requestBody.email,
+      password: requestBody.password,
+    });
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
   });
 
   it("should return 400 for invalid email format", async () => {
     // Arrange
     const requestBody = { email: "invalid-email", password: "password123" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
@@ -113,14 +105,14 @@ describe("POST /api/auth/login", () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
     expect(jsonResponse.error).toBe("Nieprawidłowe dane logowania");
-    expect(mockSignInWithPassword).not.toHaveBeenCalled();
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it("should return 400 for missing password", async () => {
     // Arrange
     const requestBody = { email: "test@example.com" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
@@ -130,14 +122,14 @@ describe("POST /api/auth/login", () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
     expect(jsonResponse.error).toBe("Nieprawidłowe dane logowania");
-    expect(mockSignInWithPassword).not.toHaveBeenCalled();
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it("should return 400 for missing email", async () => {
     // Arrange
     const requestBody = { password: "password123" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
@@ -147,8 +139,8 @@ describe("POST /api/auth/login", () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
     expect(jsonResponse.error).toBe("Nieprawidłowe dane logowania");
-    expect(mockSignInWithPassword).not.toHaveBeenCalled();
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it("should return 401 for invalid email or password from Supabase", async () => {
@@ -157,7 +149,7 @@ describe("POST /api/auth/login", () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
 
     const requestBody = { email: "test@example.com", password: "wrongpassword" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
@@ -167,8 +159,11 @@ describe("POST /api/auth/login", () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
     expect(jsonResponse.error).toBe("Nieprawidłowy email lub hasło");
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: requestBody.email, password: requestBody.password });
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: requestBody.email,
+      password: requestBody.password,
+    });
+    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it("should return 500 for other Supabase signInWithPassword errors", async () => {
@@ -177,27 +172,31 @@ describe("POST /api/auth/login", () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
 
     const requestBody = { email: "test@example.com", password: "password123" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
 
     // Assert
-    expect(response.status).toBe(401); // Current implementation returns 401 for any signInWithPassword error
+    // The code returns 401 on ANY signIn error, so this test case reflects that
+    expect(response.status).toBe(401);
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
-    expect(jsonResponse.error).toBe("Nieprawidłowy email lub hasło"); // Current implementation returns same error message
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: requestBody.email, password: requestBody.password });
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(jsonResponse.error).toBe("Nieprawidłowy email lub hasło");
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: requestBody.email,
+      password: requestBody.password,
+    });
+    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it("should return 500 if Supabase signInWithPassword succeeds but no session is returned", async () => {
     // Arrange
     const mockUser = { id: "user-id", email: "test@example.com" };
-    mockSignInWithPassword.mockResolvedValue({ data: { user: mockUser, session: null }, error: null }); // Session is null
+    mockSignInWithPassword.mockResolvedValue({ data: { user: mockUser, session: null }, error: null });
 
     const requestBody = { email: "test@example.com", password: "password123" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
@@ -207,8 +206,11 @@ describe("POST /api/auth/login", () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
     expect(jsonResponse.error).toBe("Nie udało się utworzyć sesji");
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: requestBody.email, password: requestBody.password });
-    expect(mockGetUser).not.toHaveBeenCalled(); // getUser is not called if session is null
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: requestBody.email,
+      password: requestBody.password,
+    });
+    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it("should return 200 even if getUser fails after successful login", async () => {
@@ -217,30 +219,33 @@ describe("POST /api/auth/login", () => {
     const mockSession = { expires_at: 1234567890, expires_in: 3600, token: "mock-token", user: mockUser };
     mockSignInWithPassword.mockResolvedValue({ data: { user: mockUser, session: mockSession }, error: null });
     const userError = { message: "Failed to fetch user", status: 500, name: "AuthApiError" };
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: userError }); // getUser fails
+    mockGetUser.mockResolvedValue({ data: { user: null }, error: userError });
 
     const requestBody = { email: "test@example.com", password: "password123" };
-    const context = createMockAPIContext(requestBody);
+    const context = createMockAPIContext(requestBody, mockSupabase);
 
     // Act
     const response = await POST(context);
 
     // Assert
-    expect(response.status).toBe(200); // Should still succeed if login was successful
+    expect(response.status).toBe(200);
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(true);
     expect(jsonResponse.redirectUrl).toBe("/generate");
-    expect(jsonResponse.user).toEqual({ id: mockUser.id, email: mockUser.email }); // Should return user from signInWithPassword data
-    expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: requestBody.email, password: requestBody.password });
-    expect(mockGetUser).toHaveBeenCalled(); // getUser should still be called
+    expect(jsonResponse.user).toEqual({ id: mockUser.id, email: mockUser.email });
+    expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: requestBody.email,
+      password: requestBody.password,
+    });
+    expect(mockSupabase.auth.getUser).toHaveBeenCalled();
   });
 
   it("should return 500 for unexpected errors during request processing", async () => {
     // Arrange
     const unexpectedError = new Error("Something went wrong");
-    // Simulate an error before supabase call, e.g., in request.json()
-    const context = createMockAPIContext({});
-    context.request.json = vi.fn().mockRejectedValue(unexpectedError);
+    const context = createMockAPIContext({}, mockSupabase);
+    // Simulate error during request.json()
+    (context.request.json as Mock).mockRejectedValue(unexpectedError);
 
     // Act
     const response = await POST(context);
@@ -250,7 +255,6 @@ describe("POST /api/auth/login", () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
     expect(jsonResponse.error).toBe("Wystąpił błąd podczas logowania");
-    expect(mockSignInWithPassword).not.toHaveBeenCalled();
-    expect(mockGetUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
   });
 });

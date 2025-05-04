@@ -1,21 +1,18 @@
 /* eslint-disable no-console */
 import type { APIContext } from "astro";
-import { createSupabaseServerInstance } from "../../../db/supabase.client";
 
 export const prerender = false;
 
 // Nazwy ciasteczek używane przez Supabase
 const AUTH_COOKIE_NAMES = ["sb-access-token", "sb-refresh-token", "supabase-auth-token"];
 
-export async function POST({ request, cookies, redirect }: APIContext) {
+export async function POST(context: APIContext) {
+  const { request, cookies, redirect, locals } = context;
   console.log("Rozpoczynam proces wylogowywania");
 
   try {
-    // Utworzenie klienta Supabase dla tego requestu
-    const supabase = createSupabaseServerInstance({
-      headers: request.headers,
-      cookies,
-    });
+    // Use Supabase client from middleware
+    const supabase = locals.supabase;
 
     // Wyloguj użytkownika w Supabase
     const { error } = await supabase.auth.signOut();

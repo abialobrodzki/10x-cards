@@ -1,18 +1,13 @@
 /* eslint-disable no-console */
 import { z } from "zod";
 import type { APIContext } from "astro";
-import type {
-  FlashcardFilterParams,
-  ValidationErrorResponseDto,
-  CreateFlashcardDto,
-  CreateFlashcardsDto,
-} from "../../types";
+import type { FlashcardFilterParams, ValidationErrorResponseDto, CreateFlashcardDto, FlashcardDto } from "../../types";
 import {
   getFlashcardsService,
   createFlashcardService,
-  createFlashcardsService,
+  deleteFlashcardService,
+  updateFlashcardService,
 } from "../../lib/services/flashcard.service";
-import { DEFAULT_USER_ID, supabaseClient } from "../../db/supabase.client";
 
 export const prerender = false;
 
@@ -49,17 +44,28 @@ const FlashcardsSchema = z.object({
   flashcards: z.array(FlashcardSchema).min(1),
 });
 
+// Schema for validating flashcard update (allow partial updates)
+const UpdateFlashcardDtoSchema = FlashcardSchema.partial();
+
 export async function GET({ request, locals }: APIContext) {
   try {
     console.log("\n----- ROZPOCZYNAM OBSŁUGĘ ŻĄDANIA GET /api/flashcards -----");
 
     // Check authorization
-    if (!locals.supabase) {
-      console.warn("Brak locals.supabase - używam supabaseClient jako fallback");
-      locals.supabase = supabaseClient;
+    const user = locals.user;
+    if (!user) {
+      console.log("Unauthorized access attempt - user not logged in");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
-    const userId = locals.user?.id || DEFAULT_USER_ID;
+    const userId = user.id;
     console.log("User ID:", userId);
+
+    // Get Supabase client from locals
+    const supabase = locals.supabase;
+    if (!supabase) {
+      console.error("GET /api/flashcards: Supabase client not found in locals!");
+      return new Response(JSON.stringify({ error: "Internal server configuration error" }), { status: 500 });
+    }
 
     // Parse and validate query parameters
     const url = new URL(request.url);
@@ -101,7 +107,7 @@ export async function GET({ request, locals }: APIContext) {
 
     console.log("Parametry przekazywane do serwisu:", JSON.stringify(params, null, 2));
 
-    const response = await getFlashcardsService(locals.supabase, userId, params);
+    const response = await getFlashcardsService(supabase, userId, params);
     console.log(`Zwracam ${response.flashcards.length} fiszek (z ${response.total})`);
     console.log("----- KOŃCZĘ OBSŁUGĘ ŻĄDANIA GET /api/flashcards -----\n");
 
@@ -122,11 +128,19 @@ export async function GET({ request, locals }: APIContext) {
 export async function POST({ request, locals }: APIContext) {
   try {
     // Check authorization
-    if (!locals.supabase) {
-      console.warn("Brak locals.supabase - używam supabaseClient jako fallback");
-      locals.supabase = supabaseClient;
+    const user = locals.user;
+    if (!user) {
+      console.log("Unauthorized access attempt - user not logged in");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
-    const userId = locals.user?.id || DEFAULT_USER_ID;
+    const userId = user.id;
+
+    // Get Supabase client from locals
+    const supabase = locals.supabase;
+    if (!supabase) {
+      console.error("POST /api/flashcards: Supabase client not found in locals!");
+      return new Response(JSON.stringify({ error: "Internal server configuration error" }), { status: 500 });
+    }
 
     // Parse request body
     const body = await request.json();
@@ -134,6 +148,8 @@ export async function POST({ request, locals }: APIContext) {
 
     // Check if it's a single flashcard or multiple flashcards
     let response;
+
+    const createdFlashcards: FlashcardDto[] = []; // Tablica na wyniki
 
     if (body.flashcards && Array.isArray(body.flashcards)) {
       // Jest tablica fiszek - waliduj jako multiple flashcards
@@ -152,8 +168,24 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       // Create multiple flashcards
-      const flashcardsDto: CreateFlashcardsDto = validationResult.data;
-      response = await createFlashcardsService(locals.supabase, userId, flashcardsDto);
+      const flashcardsToCreate = validationResult.data.flashcards;
+
+      // Iteruj i twórz każdą fiszkę osobno
+      for (const flashcardData of flashcardsToCreate) {
+        const flashcardDto: CreateFlashcardDto = {
+          ...flashcardData,
+          user_id: userId, // Dodaj user_id
+        };
+        try {
+          const created = await createFlashcardService(supabase, userId, flashcardDto);
+          createdFlashcards.push(created);
+        } catch (singleError) {
+          console.error(`Error creating flashcard ${JSON.stringify(flashcardData)}:`, singleError);
+          // Można zdecydować, czy kontynuować, czy przerwać i zwrócić błąd
+          // Na razie kontynuujemy, ale można dodać logikę zwracania częściowego sukcesu lub błędu
+        }
+      }
+      response = createdFlashcards; // Zwróć tablicę utworzonych fiszek
     } else {
       // Pojedyncza fiszka - waliduj jako single flashcard
       console.log("Przetwarzam pojedynczą fiszkę");
@@ -171,9 +203,13 @@ export async function POST({ request, locals }: APIContext) {
       }
 
       // Create single flashcard
-      const flashcardDto: CreateFlashcardDto = validationResult.data;
+      const flashcardData = validationResult.data;
+      const flashcardDto: CreateFlashcardDto = {
+        ...flashcardData,
+        user_id: userId, // Dodaj user_id
+      };
       console.log("Tworzę fiszkę:", JSON.stringify(flashcardDto));
-      response = await createFlashcardService(locals.supabase, userId, flashcardDto);
+      response = await createFlashcardService(supabase, userId, flashcardDto);
     }
 
     // Return successful response
@@ -192,6 +228,97 @@ export async function POST({ request, locals }: APIContext) {
       });
     }
 
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+export async function DELETE({ params, locals }: APIContext) {
+  console.log(`DELETE /flashcards/${params.id} request received`);
+  const user = locals.user;
+  if (!user) {
+    console.log("Unauthorized access attempt - user not logged in");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+  const userId = user.id;
+  const flashcardId = params.id;
+  console.log(`Using user ID: ${userId}, attempting to delete flashcard ID: ${flashcardId}`);
+
+  // Convert flashcardId to number
+  const flashcardIdNum = parseInt(flashcardId ?? "", 10);
+  if (!flashcardId || isNaN(flashcardIdNum)) {
+    console.log("Missing or invalid flashcard ID");
+    return new Response(JSON.stringify({ error: "Missing or invalid flashcard ID" }), { status: 400 });
+  }
+
+  // Get Supabase client from locals
+  const supabase = locals.supabase;
+  if (!supabase) {
+    console.error("DELETE /api/flashcards: Supabase client not found in locals!");
+    return new Response(JSON.stringify({ error: "Internal server configuration error" }), { status: 500 });
+  }
+
+  try {
+    console.log("Deleting flashcard via service...");
+    await deleteFlashcardService(supabase, userId, flashcardIdNum);
+    console.log(`Flashcard ${flashcardId} deleted successfully`);
+    return new Response(null, { status: 204 }); // No Content
+  } catch (error) {
+    console.error("Error deleting flashcard:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+export async function PUT({ params, request, locals }: APIContext) {
+  console.log(`PUT /flashcards/${params.id} request received`);
+  const user = locals.user;
+  if (!user) {
+    console.log("Unauthorized access attempt - user not logged in");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+  const userId = user.id;
+  const flashcardId = params.id;
+  console.log(`Using user ID: ${userId}, attempting to update flashcard ID: ${flashcardId}`);
+
+  // Convert flashcardId to number
+  const flashcardIdNum = parseInt(flashcardId ?? "", 10);
+  if (!flashcardId || isNaN(flashcardIdNum)) {
+    console.log("Missing or invalid flashcard ID");
+    return new Response(JSON.stringify({ error: "Missing or invalid flashcard ID" }), { status: 400 });
+  }
+
+  // Get Supabase client from locals
+  const supabase = locals.supabase;
+  if (!supabase) {
+    console.error("PUT /api/flashcards: Supabase client not found in locals!");
+    return new Response(JSON.stringify({ error: "Internal server configuration error" }), { status: 500 });
+  }
+
+  const body = await request.json();
+  console.log(`Received data for PUT /flashcards/${flashcardId}: ${JSON.stringify(body)}`);
+
+  // Walidacja pól przekazanych do aktualizacji
+  const result = UpdateFlashcardDtoSchema.safeParse(body);
+
+  if (!result.success) {
+    console.log("Validation failed:", result.error.flatten());
+    return new Response(JSON.stringify({ error: "Invalid data", details: result.error.flatten() }), {
+      status: 400,
+    });
+  }
+
+  try {
+    console.log("Updating flashcard via service...");
+    const updatedFlashcard = await updateFlashcardService(supabase, userId, flashcardIdNum, result.data);
+    console.log(`Flashcard ${flashcardId} updated successfully`);
+    return new Response(JSON.stringify(updatedFlashcard), { status: 200 });
+  } catch (error) {
+    console.error("Error updating flashcard:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

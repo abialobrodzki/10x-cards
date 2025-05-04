@@ -20,32 +20,31 @@ const PUBLIC_PATHS = [
   // ... existing code ...
 ];
 
-export const onRequest = defineMiddleware(async ({ locals, cookies, request, url, redirect }, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
+  const { locals, cookies, url, redirect } = context;
   console.log("Middleware - URL:", url.pathname);
 
   // Sprawdzamy, czy ścieżka jest publiczna
   const isPublicPath = PUBLIC_PATHS.some((path) => url.pathname === path || url.pathname.startsWith(path + "/"));
   console.log("Middleware - Ścieżka publiczna:", isPublicPath);
 
-  // Dla publicznych endpointów API pomijamy sprawdzenie uwierzytelniania
-  if (url.pathname.startsWith("/api/auth/")) {
-    console.log("Middleware - Endpoint API auth, pomijam sprawdzanie uwierzytelniania");
-    // Dodaj klienta Supabase do locals dla API
-    locals.supabase = createSupabaseServerInstance({
-      headers: request.headers,
-      cookies,
-    });
-    return next();
+  // Inicjalizacja klienta Supabase - zawsze na początku, przekazując pełen kontekst
+  try {
+    locals.supabase = createSupabaseServerInstance(context);
+  } catch (error) {
+    console.error("Middleware - BŁĄD KRYTYCZNY podczas tworzenia instancji Supabase:", error);
+    // W przypadku krytycznego błędu konfiguracji, zwróć błąd serwera
+    return new Response("Internal Server Error: Supabase configuration failed", { status: 500 });
   }
 
-  // Inicjalizacja klienta Supabase z obsługą ciasteczek
-  const supabase = createSupabaseServerInstance({
-    headers: request.headers,
-    cookies,
-  });
+  // Pobierz utworzoną instancję dla dalszych operacji
+  const supabase = locals.supabase;
 
-  // Dodaj klienta Supabase do locals
-  locals.supabase = supabase;
+  // Dla publicznych endpointów API auth pomijamy dalsze sprawdzanie uwierzytelniania
+  if (url.pathname.startsWith("/api/auth/")) {
+    console.log("Middleware - Endpoint API auth, pomijam sprawdzanie uwierzytelniania");
+    return next(); // Przejdź dalej bez sprawdzania sesji
+  }
 
   try {
     // Sprawdź czy użytkownik jest zalogowany

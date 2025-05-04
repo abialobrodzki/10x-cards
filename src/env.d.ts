@@ -11,6 +11,15 @@ declare global {
         id: string;
         [key: string]: unknown;
       } | null;
+      // Add runtime definition for Cloudflare
+      runtime: {
+        env: {
+          SUPABASE_URL: string;
+          SUPABASE_KEY: string;
+          OPENROUTER_API_KEY?: string; // Make optional if not always present/needed
+        };
+        [key: string]: unknown; // Allow other properties if needed
+      };
     }
   }
 }

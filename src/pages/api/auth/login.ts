@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { z } from "zod";
 import type { APIContext } from "astro";
-import { createSupabaseServerInstance } from "../../../db/supabase.client";
 
 export const prerender = false;
 
@@ -11,7 +10,8 @@ const loginSchema = z.object({
   password: z.string().min(1, "Hasło jest wymagane"),
 });
 
-export async function POST({ request, cookies }: APIContext) {
+export async function POST(context: APIContext) {
+  const { request, locals } = context;
   try {
     const body = await request.json();
     const validatedData = loginSchema.safeParse(body);
@@ -28,11 +28,14 @@ export async function POST({ request, cookies }: APIContext) {
 
     console.log("Próba logowania dla użytkownika:", validatedData.data.email);
 
-    // Utworzenie klienta Supabase dla tego requestu
-    const supabase = createSupabaseServerInstance({
-      headers: request.headers,
-      cookies,
-    });
+    // Use Supabase client from middleware
+    const supabase = locals.supabase;
+
+    // --- Dodane logowanie ---
+    console.log(`[Login API] Attempting Supabase login for email: ${validatedData.data.email}`);
+    // Nie logujemy hasła, ale sprawdzamy, czy istnieje
+    console.log(`[Login API] Password provided: ${validatedData.data.password ? "Yes" : "No"}`);
+    // --- Koniec dodanego logowania ---
 
     // Próba zalogowania użytkownika
     const { data, error } = await supabase.auth.signInWithPassword({

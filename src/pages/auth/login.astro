@@ -15,7 +15,7 @@ export const prerender = false;
   <div class="bg-gray-50 h-full">
     <div class="container max-w-md mx-auto px-4 py-8">
       <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
-        <LoginForm client:load />
+        <LoginForm client:only="react" />
       </div>
     </div>
   </div>

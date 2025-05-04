@@ -6,7 +6,6 @@ vi.mock("../../../db/supabase.client", () => ({
   DEFAULT_USER_ID: "default-user-id",
   supabaseClient: {},
 }));
-import { DEFAULT_USER_ID, supabaseClient } from "../../../db/supabase.client";
 
 // Mock the flashcard service module
 vi.mock("../../../lib/services/flashcard.service", () => ({
@@ -14,11 +13,7 @@ vi.mock("../../../lib/services/flashcard.service", () => ({
   createFlashcardService: vi.fn(),
   createFlashcardsService: vi.fn(),
 }));
-import {
-  getFlashcardsService,
-  createFlashcardService,
-  createFlashcardsService,
-} from "../../../lib/services/flashcard.service";
+import { getFlashcardsService, createFlashcardService } from "../../../lib/services/flashcard.service";
 import { GET, POST } from "../../../pages/api/flashcards";
 
 describe("Flashcards API", () => {
@@ -55,7 +50,7 @@ describe("Flashcards API", () => {
       );
     });
 
-    it("uses fallback supabaseClient when locals.supabase is missing", async () => {
+    it("returns 500 when Supabase client is missing", async () => {
       const mockResponse = { flashcards: [], total: 0 };
       (getFlashcardsService as Mock).mockResolvedValue(mockResponse);
 
@@ -63,13 +58,13 @@ describe("Flashcards API", () => {
       const locals = { user: { id: "user-456" } };
 
       const response = await GET({ request, locals } as unknown as APIContext);
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(500);
       const json = await response.json();
-      expect(json).toEqual(mockResponse);
-      expect(getFlashcardsService).toHaveBeenCalledWith(supabaseClient, "user-456", expect.any(Object));
+      expect(json).toEqual({ error: "Internal server configuration error" });
+      expect(getFlashcardsService).not.toHaveBeenCalled();
     });
 
-    it("uses DEFAULT_USER_ID when locals.user is missing", async () => {
+    it("returns 401 when user is missing", async () => {
       const mockResponse = { flashcards: [{ id: 2, front: "X", back: "Y" }], total: 1 };
       (getFlashcardsService as Mock).mockResolvedValue(mockResponse);
 
@@ -77,8 +72,10 @@ describe("Flashcards API", () => {
       const locals = { supabase: { client: true } };
 
       const response = await GET({ request, locals } as unknown as APIContext);
-      expect(response.status).toBe(200);
-      expect(getFlashcardsService).toHaveBeenCalledWith(locals.supabase, DEFAULT_USER_ID, expect.any(Object));
+      expect(response.status).toBe(401);
+      const json = await response.json();
+      expect(json).toEqual({ error: "Unauthorized" });
+      expect(getFlashcardsService).not.toHaveBeenCalled();
     });
 
     it("returns 400 for invalid query parameters", async () => {
@@ -115,7 +112,11 @@ describe("Flashcards API", () => {
       expect(response.status).toBe(201);
       const json = await response.json();
       expect(json).toEqual(serviceResponse);
-      expect(createFlashcardService).toHaveBeenCalledWith(locals.supabase, "user-10", newFlashcard);
+      expect(createFlashcardService).toHaveBeenCalledWith(
+        locals.supabase,
+        "user-10",
+        expect.objectContaining({ ...newFlashcard, user_id: "user-10" })
+      );
     });
 
     it("returns 400 for invalid single flashcard data", async () => {
@@ -145,8 +146,9 @@ describe("Flashcards API", () => {
         { front: "Baz", back: "Qux", source: "ai-full", generation_id: null },
       ];
       const dto = { flashcards };
-      const serviceResponse = [{ id: 1 }, { id: 2 }];
-      (createFlashcardsService as Mock).mockResolvedValue(serviceResponse);
+      (createFlashcardService as Mock)
+        .mockResolvedValueOnce({ id: 1, ...flashcards[0], user_id: "user-12" })
+        .mockResolvedValueOnce({ id: 2, ...flashcards[1], user_id: "user-12" });
 
       const request = new Request("http://localhost/api/flashcards", {
         method: "POST",
@@ -158,8 +160,21 @@ describe("Flashcards API", () => {
       const response = await POST({ request, locals } as unknown as APIContext);
       expect(response.status).toBe(201);
       const json = await response.json();
-      expect(json).toEqual(serviceResponse);
-      expect(createFlashcardsService).toHaveBeenCalledWith(locals.supabase, "user-12", dto);
+      expect(json).toEqual([
+        { id: 1, ...flashcards[0], user_id: "user-12" },
+        { id: 2, ...flashcards[1], user_id: "user-12" },
+      ]);
+      expect(createFlashcardService).toHaveBeenCalledTimes(2);
+      expect(createFlashcardService).toHaveBeenCalledWith(
+        locals.supabase,
+        "user-12",
+        expect.objectContaining({ ...flashcards[0], user_id: "user-12" })
+      );
+      expect(createFlashcardService).toHaveBeenCalledWith(
+        locals.supabase,
+        "user-12",
+        expect.objectContaining({ ...flashcards[1], user_id: "user-12" })
+      );
     });
 
     it("returns 400 for invalid multiple flashcards data", async () => {

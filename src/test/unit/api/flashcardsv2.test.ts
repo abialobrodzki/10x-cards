@@ -2,7 +2,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GET, POST } from "../../../pages/api/flashcards";
 import * as flashcardService from "../../../lib/services/flashcard.service";
-import { supabaseClient, DEFAULT_USER_ID } from "../../../db/supabase.client";
 
 describe("Flashcards API", () => {
   beforeEach(() => {
@@ -35,54 +34,47 @@ describe("Flashcards API", () => {
       expect(json).toEqual(fakeResult);
     });
 
-    it("should use snake_case parameters and fallback supabaseClient and DEFAULT_USER_ID", async () => {
-      // Arrange
-      const fakeResult = { flashcards: [], total: 0 };
-      vi.spyOn(flashcardService, "getFlashcardsService").mockResolvedValue(fakeResult as any);
+    it("should return 401 when user is missing (no fallback)", async () => {
+      // Spy on service to ensure it's not called
+      const spyGet = vi.spyOn(flashcardService, "getFlashcardsService");
+      // Arrange: missing locals.user
       const url = "http://localhost/api/flashcards?sort_by=updated_at&sort_order=asc&generation_id=15";
-      const request = { url } as unknown as Request;
+      const request = { url } as any;
       const locals = {} as any;
       // Act
       const response = await GET({ request, locals } as any);
       // Assert
-      expect(flashcardService.getFlashcardsService).toHaveBeenCalledWith(supabaseClient, DEFAULT_USER_ID, {
-        page: 1,
-        page_size: 20,
-        sort_by: "updated_at",
-        sort_order: "asc",
-        generation_id: 15,
-        sortBy: "updated_at",
-        sortOrder: "asc",
-        generationId: 15,
-      });
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(401);
       const json = await response.json();
-      expect(json).toEqual(fakeResult);
+      expect(json).toEqual({ error: "Unauthorized" });
+      expect(spyGet).not.toHaveBeenCalled();
     });
 
-    it("should return 400 on invalid query parameters", async () => {
-      // Arrange
+    it("should return 400 on invalid query parameters when user is present", async () => {
+      // Arrange: valid user present
       const url = "http://localhost/api/flashcards?page=0&page_size=200";
-      const request = { url } as unknown as Request;
-      const locals = { supabase: {} as unknown } as any;
+      const request = { url } as any;
+      const locals = { supabase: {} as unknown, user: { id: "user-999" } } as any;
       // Act
       const response = await GET({ request, locals } as any);
       // Assert
       expect(response.status).toBe(400);
       const json = await response.json();
-      expect(json).toMatchInlineSnapshot(`
+      expect(json).toMatchInlineSnapshot(
+        `
         {
           "error": "Invalid query parameters",
         }
-      `);
+      `
+      );
     });
 
-    it("should return 500 on service error", async () => {
-      // Arrange
+    it("should return 500 on service error when user is present", async () => {
+      // Arrange: valid user present
       vi.spyOn(flashcardService, "getFlashcardsService").mockRejectedValue(new Error("fail"));
       const url = "http://localhost/api/flashcards";
-      const request = { url } as unknown as Request;
-      const locals = {} as any;
+      const request = { url } as any;
+      const locals = { supabase: {} as unknown, user: { id: "user-123" } } as any;
       // Act
       const response = await GET({ request, locals } as any);
       // Assert
@@ -107,7 +99,11 @@ describe("Flashcards API", () => {
       // Act
       const response = await POST({ request, locals } as any);
       // Assert
-      expect(flashcardService.createFlashcardService).toHaveBeenCalledWith(locals.supabase, "u1", body);
+      expect(flashcardService.createFlashcardService).toHaveBeenCalledWith(
+        locals.supabase,
+        "u1",
+        expect.objectContaining({ ...body, user_id: "u1" })
+      );
       expect(response.status).toBe(201);
       const json = await response.json();
       expect(json).toEqual(fakeCard);
@@ -116,18 +112,22 @@ describe("Flashcards API", () => {
     it("should create multiple flashcards", async () => {
       // Arrange
       const cardsDto = [{ front: "Abc", back: "Def", source: "ai-edited", generation_id: null }];
-      const fakeResult = [{ id: 1, ...cardsDto[0] }];
-      vi.spyOn(flashcardService, "createFlashcardsService").mockResolvedValue(fakeResult as any);
+      const fakeCreated = { id: 1, ...cardsDto[0], user_id: "u2" };
+      const spyCreate = vi.spyOn(flashcardService, "createFlashcardService").mockResolvedValueOnce(fakeCreated as any);
       const body = { flashcards: cardsDto };
       const request = { json: async () => body } as unknown as Request;
       const locals = { supabase: {} as unknown, user: { id: "u2" } } as any;
       // Act
       const response = await POST({ request, locals } as any);
-      // Assert
-      expect(flashcardService.createFlashcardsService).toHaveBeenCalledWith(locals.supabase, "u2", body);
+      // Assert single creation called
+      expect(spyCreate).toHaveBeenCalledWith(
+        locals.supabase,
+        "u2",
+        expect.objectContaining({ ...cardsDto[0], user_id: "u2" })
+      );
       expect(response.status).toBe(201);
       const json = await response.json();
-      expect(json).toEqual(fakeResult);
+      expect(json).toEqual([fakeCreated]);
     });
 
     it("should return 400 on invalid single flashcard", async () => {
@@ -140,28 +140,32 @@ describe("Flashcards API", () => {
       // Assert
       expect(response.status).toBe(400);
       const json = await response.json();
-      expect(json).toMatchInlineSnapshot(`
+      expect(json).toMatchInlineSnapshot(
+        `
         {
           "error": "Invalid flashcard data",
         }
-      `);
+      `
+      );
     });
 
     it("should return 400 on invalid multiple flashcards", async () => {
       // Arrange
       const body = { flashcards: [] };
       const request = { json: async () => body } as unknown as Request;
-      const locals = { supabase: {} as unknown } as any;
+      const locals = { supabase: {} as unknown, user: { id: "u3" } } as any;
       // Act
       const response = await POST({ request, locals } as any);
       // Assert
       expect(response.status).toBe(400);
       const json = await response.json();
-      expect(json).toMatchInlineSnapshot(`
+      expect(json).toMatchInlineSnapshot(
+        `
         {
           "error": "Invalid flashcards data",
         }
-      `);
+      `
+      );
     });
 
     it("should return 500 on service error", async () => {
