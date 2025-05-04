@@ -1,11 +1,6 @@
 ---
-import { LoginForm } from "../components/auth/LoginForm";
-import MainLayout from "../layouts/MainLayout.astro";
-
-// Force server-side rendering to properly handle requests and headers
-export const prerender = false;
+// Redirect root path to the login page
+return Astro.redirect("/auth/login");
 ---
 
-<MainLayout>
-  <LoginForm />
-</MainLayout>
+<!-- Content is removed as the page now redirects -->

@@ -2,7 +2,12 @@
 import MainLayout from "../../layouts/MainLayout.astro";
 import { LoginForm } from "../../components/auth/LoginForm";
 
-// Force client-side rendering for this page
+// Redirect logged-in users away from the login page
+if (Astro.locals.user) {
+  return Astro.redirect("/generate"); // Or /flashcards if that's the main page
+}
+
+// Force server-side rendering for this page
 export const prerender = false;
 ---
 
