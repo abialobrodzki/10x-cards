@@ -1,7 +1,0 @@
-[compatibility_flags]
-nodejs_compat = true
-
-[site]
-bucket = "./dist"
-
-pages_build_output_dir = "dist" 
