@@ -11,27 +11,36 @@ export const createSupabaseServerInstance = (context: APIContext) => {
   let sourceDescription = "unknown";
 
   // Primary check: Cloudflare Runtime Environment Variables
-  if (context.locals.runtime?.env) {
+  // Ensure context.locals.runtime and context.locals.runtime.env are defined
+  if (
+    context.locals &&
+    "runtime" in context.locals && // Check if runtime exists in locals
+    context.locals.runtime &&
+    "env" in context.locals.runtime && // Check if env exists in runtime (using any for type checking)
+    context.locals.runtime.env // Access env with type assertion
+  ) {
     sourceDescription = "context.locals.runtime.env";
     console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
     // Log the actual content to be sure (this log will only show in wrangler dev or if deployed with logs)
-    // console.log(JSON.stringify(context.locals.runtime.env, null, 2));
-    supabaseUrl = context.locals.runtime.env.SUPABASE_URL;
-    supabaseKey = context.locals.runtime.env.SUPABASE_KEY;
+    // console.log(JSON.stringify((context.locals.runtime as any).env, null, 2));
+
+    const runtimeEnv = context.locals.runtime.env;
+    supabaseUrl = runtimeEnv.SUPABASE_URL;
+    supabaseKey = runtimeEnv.SUPABASE_KEY;
   } else {
     // Log why the primary check failed
     console.log(`createSupabaseServerInstance: context.locals.runtime.env not found or empty.`);
-    if (context.locals.runtime) {
+    if (context.locals && "runtime" in context.locals && context.locals.runtime) {
       console.log(
         "createSupabaseServerInstance: context.locals.runtime exists, logging its keys:",
         Object.keys(context.locals.runtime)
       );
     } else {
-      console.log("createSupabaseServerInstance: context.locals.runtime does not exist.");
+      console.log("createSupabaseServerInstance: context.locals or context.locals.runtime is undefined.");
     }
 
-    // Fallback ONLY for local development (import.meta.env.DEV is true)
     if (import.meta.env.DEV) {
+      // Fallback 2: import.meta.env (dev fallback)
       sourceDescription = "import.meta.env (dev fallback)";
       console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
       supabaseUrl = import.meta.env.SUPABASE_URL;
@@ -61,7 +70,7 @@ export const createSupabaseServerInstance = (context: APIContext) => {
   }
   if (!supabaseKey) {
     console.error(
-      `BŁĄD KRYTYCZNY: Brak klucza Supabase (SUPABASE_KEY) w zmiennych środowiskowych ${sourceDescription}!`
+      `BŁAD KRYTYCZNY: Brak klucza Supabase (SUPABASE_KEY) w zmiennych środowiskowych ${sourceDescription}!`
     );
     throw new Error("Brak konfiguracji klucza Supabase.");
   }

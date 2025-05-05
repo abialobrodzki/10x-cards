@@ -26,6 +26,7 @@ export default defineConfig({
         ".astro/**/*", // build Astro
         "eslint.config.js", // ESLint
         "playwright.config.ts", // Playwright
+        "playwright-report/**/*", // Playwright report
         "vitest.config.ts", // Vitest
         "dist/**/*", // build output
         "public/**/*", // public assets
