@@ -1,7 +1,11 @@
 /* eslint-disable no-console */
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { APIContext } from "astro";
 import type { Database } from "./database.types";
+
+// Re-eksportuj typ SupabaseClient dla spójności
+export type { SupabaseClient };
 
 const defaultUserId = import.meta.env.DEFAULT_USER_ID;
 

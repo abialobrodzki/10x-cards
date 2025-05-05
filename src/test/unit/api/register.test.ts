@@ -1,15 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "../../../pages/api/auth/register";
 import type { APIContext } from "astro";
-
-const mockSignUp = vi.fn();
-
-vi.mock("../../../db/supabase.client", () => {
-  const mockCreateSupabaseServerInstance = vi.fn(() => ({
-    auth: { signUp: mockSignUp },
-  }));
-  return { createSupabaseServerInstance: mockCreateSupabaseServerInstance };
-});
+import type { SupabaseClient } from "../../../db/supabase.client";
 
 // Add a typed interface for the register request body
 interface RegisterRequestBody {
@@ -18,8 +10,8 @@ interface RegisterRequestBody {
   confirmPassword: string;
 }
 
-// Helper to create a mock APIContext with request.json, headers, url, cookies, and redirect
-const createMockAPIContext = (body: RegisterRequestBody): APIContext =>
+// Helper to create a mock APIContext with request.json, headers, url, cookies, redirect, and locals.supabase
+const createMockAPIContext = (body: RegisterRequestBody, mockSupabaseClient?: Partial<SupabaseClient>): APIContext =>
   ({
     request: {
       json: vi.fn().mockResolvedValue(body),
@@ -30,6 +22,9 @@ const createMockAPIContext = (body: RegisterRequestBody): APIContext =>
     redirect: vi.fn(
       (url: string) => new Response(null, { status: 302, headers: { Location: url } })
     ) as unknown as APIContext["redirect"],
+    locals: {
+      supabase: mockSupabaseClient,
+    },
   }) as unknown as APIContext;
 
 describe("POST /api/auth/register", () => {
@@ -76,10 +71,13 @@ describe("POST /api/auth/register", () => {
 
   it("returns 200 and success for registrations requiring email confirmation", async () => {
     const mockUser = { id: "user-id", email: "test@example.com" };
-    mockSignUp.mockResolvedValue({ data: { user: mockUser, session: null }, error: null });
+    const mockSignUp = vi.fn().mockResolvedValue({ data: { user: mockUser, session: null }, error: null });
+    const mockSupabase = {
+      auth: { signUp: mockSignUp },
+    } as unknown as SupabaseClient;
 
     const body = { email: mockUser.email, password: "password123", confirmPassword: "password123" };
-    const context = createMockAPIContext(body);
+    const context = createMockAPIContext(body, mockSupabase);
 
     const response = await POST(context);
     expect(mockSignUp).toHaveBeenCalledWith({
@@ -97,12 +95,16 @@ describe("POST /api/auth/register", () => {
   it("calls redirect for registrations not requiring email confirmation", async () => {
     const mockUser = { id: "user-id", email: "test@example.com" };
     const mockSession = { token: "abc" };
-    mockSignUp.mockResolvedValue({ data: { user: mockUser, session: mockSession }, error: null });
+    const mockSignUp = vi.fn().mockResolvedValue({ data: { user: mockUser, session: mockSession }, error: null });
+    const mockSupabase = {
+      auth: { signUp: mockSignUp },
+    } as unknown as SupabaseClient;
 
     const body = { email: mockUser.email, password: "password123", confirmPassword: "password123" };
-    const context = createMockAPIContext(body);
+    const context = createMockAPIContext(body, mockSupabase);
 
     const response = await POST(context);
+    expect(mockSignUp).toHaveBeenCalled();
     expect(context.redirect).toHaveBeenCalledWith("/generate");
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("/generate");
@@ -110,12 +112,16 @@ describe("POST /api/auth/register", () => {
 
   it("returns 400 and error message for supabase error containing email", async () => {
     const supabaseError = { message: "email already exists" };
-    mockSignUp.mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
+    const mockSignUp = vi.fn().mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
+    const mockSupabase = {
+      auth: { signUp: mockSignUp },
+    } as unknown as SupabaseClient;
 
     const body = { email: "test@example.com", password: "password123", confirmPassword: "password123" };
-    const context = createMockAPIContext(body);
+    const context = createMockAPIContext(body, mockSupabase);
 
     const response = await POST(context);
+    expect(mockSignUp).toHaveBeenCalled();
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toBe("Email już zarejestrowany");
@@ -123,12 +129,16 @@ describe("POST /api/auth/register", () => {
 
   it("returns 400 and error message for supabase error containing password", async () => {
     const supabaseError = { message: "password too weak" };
-    mockSignUp.mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
+    const mockSignUp = vi.fn().mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
+    const mockSupabase = {
+      auth: { signUp: mockSignUp },
+    } as unknown as SupabaseClient;
 
     const body = { email: "test@example.com", password: "weakpass", confirmPassword: "weakpass" };
-    const context = createMockAPIContext(body);
+    const context = createMockAPIContext(body, mockSupabase);
 
     const response = await POST(context);
+    expect(mockSignUp).toHaveBeenCalled();
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toBe("Hasło nie spełnia wymagań bezpieczeństwa");
@@ -136,23 +146,31 @@ describe("POST /api/auth/register", () => {
 
   it("returns 400 and generic error message for other supabase errors", async () => {
     const supabaseError = { message: "some other error" };
-    mockSignUp.mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
+    const mockSignUp = vi.fn().mockResolvedValue({ data: { user: null, session: null }, error: supabaseError });
+    const mockSupabase = {
+      auth: { signUp: mockSignUp },
+    } as unknown as SupabaseClient;
 
     const body = { email: "test@example.com", password: "password123", confirmPassword: "password123" };
-    const context = createMockAPIContext(body);
+    const context = createMockAPIContext(body, mockSupabase);
 
     const response = await POST(context);
+    expect(mockSignUp).toHaveBeenCalled();
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toBe("Błąd podczas rejestracji");
   });
 
   it("returns 500 on unexpected exceptions", async () => {
-    mockSignUp.mockImplementation(() => {
+    const mockSignUp = vi.fn().mockImplementation(() => {
       throw new Error("Unexpected");
     });
+    const mockSupabase = {
+      auth: { signUp: mockSignUp },
+    } as unknown as SupabaseClient;
+
     const body = { email: "test@example.com", password: "password123", confirmPassword: "password123" };
-    const context = createMockAPIContext(body);
+    const context = createMockAPIContext(body, mockSupabase);
 
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(vi.fn());
     const response = await POST(context);

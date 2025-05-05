@@ -1,43 +1,47 @@
-import { vi } from "vitest";
+// Usuwamy mockowanie na poziomie modułu
+// import { vi } from "vitest";
 
 // Mock Supabase client first, before any other imports
-vi.mock("../../../db/supabase.client", () => {
-  return {
-    createSupabaseServerInstance: vi.fn(() => ({
-      auth: { resetPasswordForEmail: vi.fn() },
-    })),
-  };
-});
+// vi.mock("../../../db/supabase.client", () => {
+//   return {
+//     createSupabaseServerInstance: vi.fn(() => ({
+//       auth: { resetPasswordForEmail: vi.fn() },
+//     })),
+//   };
+// });
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "../../../pages/api/auth/forgot-password";
 import type { APIContext } from "astro";
+import type { SupabaseClient } from "../../../db/supabase.client"; // Import typu
 
-// Get reference to the mocked functions after import
-const createSupabaseServerInstanceMock = vi.mocked(
-  (await import("../../../db/supabase.client")).createSupabaseServerInstance
-);
-const resetPasswordForEmailMock = vi.fn();
+// Usuwamy odniesienia do zamockowanego createSupabaseServerInstance
+// const createSupabaseServerInstanceMock = vi.mocked(
+//   (await import("../../../db/supabase.client")).createSupabaseServerInstance
+// );
+// const resetPasswordForEmailMock = vi.fn();
 
-// Update the mock implementation
-beforeEach(() => {
-  // Use type assertion to bypass type checking for the mock
+// Usuwamy beforeEach aktualizujące implementację mocka createSupabaseServerInstance
+// beforeEach(() => {
+//   // Use type assertion to bypass type checking for the mock
+//
+//   createSupabaseServerInstanceMock.mockImplementation(
+//     () =>
+//       ({
+//         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//         auth: { resetPasswordForEmail: resetPasswordForEmailMock } as any,
+//         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//       }) as any
+//   );
+// });
 
-  createSupabaseServerInstanceMock.mockImplementation(
-    () =>
-      ({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        auth: { resetPasswordForEmail: resetPasswordForEmailMock } as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any
-  );
-});
-
-// Create a mock APIContext factory
-const createMockAPIContext = (request: Request): APIContext => {
+// Create a mock APIContext factory - dostosowane do przekazywania mocka supabase
+const createMockAPIContext = (
+  request: Request,
+  mockSupabaseClient?: Partial<SupabaseClient> // Opcjonalny mock klienta
+): APIContext => {
   return {
     request,
-
     cookies: {
       get: vi.fn(),
       has: vi.fn(),
@@ -53,8 +57,7 @@ const createMockAPIContext = (request: Request): APIContext => {
     params: {},
     props: {},
     locals: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      supabase: {} as any,
+      supabase: mockSupabaseClient, // Przekazujemy mock do locals
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       user: {} as any,
     },
@@ -64,9 +67,12 @@ const createMockAPIContext = (request: Request): APIContext => {
 };
 
 describe("POST /api/auth/forgot-password", () => {
+  // Zmienna na mock resetPasswordForEmail, resetowana w beforeEach
+  let resetPasswordForEmailMock: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    resetPasswordForEmailMock.mockReset();
+    resetPasswordForEmailMock = vi.fn(); // Tworzymy nowy mock dla każdego testu
   });
 
   it("returns 400 if email is invalid", async () => {
@@ -77,6 +83,7 @@ describe("POST /api/auth/forgot-password", () => {
       body: JSON.stringify(invalidEmail),
     });
 
+    // Nie przekazujemy mocka supabase, bo walidacja powinna odrzucić request wcześniej
     const response = await POST(createMockAPIContext(request));
 
     expect(response.status).toBe(400);
@@ -93,19 +100,25 @@ describe("POST /api/auth/forgot-password", () => {
     const validEmail = { email: "test@example.com" };
     resetPasswordForEmailMock.mockResolvedValue({ error: null });
 
+    const mockSupabase = {
+      auth: { resetPasswordForEmail: resetPasswordForEmailMock },
+    } as unknown as SupabaseClient;
+
     const request = new Request("http://localhost/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(validEmail),
     });
 
-    const mockContext = createMockAPIContext(request);
+    const mockContext = createMockAPIContext(request, mockSupabase); // Przekazujemy mock
     const response = await POST(mockContext);
 
-    expect(createSupabaseServerInstanceMock).toHaveBeenCalledWith({
-      headers: request.headers,
-      cookies: mockContext.cookies,
-    });
+    // Usuwamy asercję na createSupabaseServerInstanceMock
+    // expect(createSupabaseServerInstanceMock).toHaveBeenCalledWith({
+    //   headers: request.headers,
+    //   cookies: mockContext.cookies,
+    // });
+    // Sprawdzamy wywołanie na mocku z locals
     expect(resetPasswordForEmailMock).toHaveBeenCalledWith(validEmail.email, {
       redirectTo: "http://localhost/auth/reset-password",
     });
@@ -125,6 +138,10 @@ describe("POST /api/auth/forgot-password", () => {
     const supabaseError = { message: "Some error" };
     resetPasswordForEmailMock.mockResolvedValue({ error: supabaseError });
 
+    const mockSupabase = {
+      auth: { resetPasswordForEmail: resetPasswordForEmailMock },
+    } as unknown as SupabaseClient;
+
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(vi.fn());
     const request = new Request("http://localhost/api/auth/forgot-password", {
       method: "POST",
@@ -132,8 +149,9 @@ describe("POST /api/auth/forgot-password", () => {
       body: JSON.stringify(validEmail),
     });
 
-    const response = await POST(createMockAPIContext(request));
+    const response = await POST(createMockAPIContext(request, mockSupabase)); // Przekazujemy mock
 
+    expect(resetPasswordForEmailMock).toHaveBeenCalled(); // Dodatkowa asercja
     expect(consoleErrorSpy).toHaveBeenCalledWith("Błąd podczas wysyłania linka resetującego:", supabaseError);
     expect(response.status).toBe(200);
     const json = await response.json();
@@ -148,9 +166,14 @@ describe("POST /api/auth/forgot-password", () => {
 
   it("returns 500 on unexpected exception", async () => {
     const errorInstance = new Error("Unexpected");
-    createSupabaseServerInstanceMock.mockImplementation(() => {
+    // Zamiast mockować implementację createSupabaseServerInstance, mockujemy metodę na kliencie
+    resetPasswordForEmailMock.mockImplementation(() => {
       throw errorInstance;
     });
+
+    const mockSupabase = {
+      auth: { resetPasswordForEmail: resetPasswordForEmailMock },
+    } as unknown as SupabaseClient;
 
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(vi.fn());
     const request = new Request("http://localhost/api/auth/forgot-password", {
@@ -159,8 +182,9 @@ describe("POST /api/auth/forgot-password", () => {
       body: JSON.stringify({ email: "test@example.com" }),
     });
 
-    const response = await POST(createMockAPIContext(request));
+    const response = await POST(createMockAPIContext(request, mockSupabase)); // Przekazujemy mock
 
+    expect(resetPasswordForEmailMock).toHaveBeenCalled(); // Dodatkowa asercja
     expect(consoleErrorSpy).toHaveBeenCalledWith("Błąd podczas obsługi resetowania hasła:", errorInstance);
     expect(response.status).toBe(500);
     const json = await response.json();

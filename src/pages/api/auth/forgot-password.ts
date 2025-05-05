@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { APIContext } from "astro";
-import { createSupabaseServerInstance } from "../../../db/supabase.client";
 
 export const prerender = false;
 
@@ -9,7 +8,7 @@ const forgotPasswordSchema = z.object({
   email: z.string().email("Nieprawidłowy adres email"),
 });
 
-export async function POST({ request, cookies }: APIContext) {
+export async function POST({ request, locals }: APIContext) {
   try {
     // Parsowanie body requestu
     const body = await request.json();
@@ -31,11 +30,18 @@ export async function POST({ request, cookies }: APIContext) {
 
     const { email } = validationResult.data;
 
-    // Utworzenie klienta Supabase dla tego requestu
-    const supabase = createSupabaseServerInstance({
-      headers: request.headers,
-      cookies,
-    });
+    // Pobranie klienta Supabase z context.locals (utworzonego w middleware)
+    const supabase = locals.supabase;
+
+    // Sprawdzenie, czy klient Supabase istnieje (dodatkowe zabezpieczenie)
+    if (!supabase) {
+      // eslint-disable-next-line no-console
+      console.error("API ForgotPassword - Błąd krytyczny: Brak instancji Supabase w locals!");
+      return new Response(JSON.stringify({ error: "Błąd konfiguracji serwera." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Żądanie resetowania hasła
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
