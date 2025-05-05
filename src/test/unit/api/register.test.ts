@@ -83,7 +83,9 @@ describe("POST /api/auth/register", () => {
     expect(mockSignUp).toHaveBeenCalledWith({
       email: mockUser.email,
       password: "password123",
-      options: { emailRedirectTo: "http://localhost/auth/login" },
+      options: {
+        emailRedirectTo: "http://localhost:4321/auth/login",
+      },
     });
     expect(response.status).toBe(200);
     const json = await response.json();

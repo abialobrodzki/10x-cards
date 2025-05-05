@@ -120,7 +120,7 @@ describe("POST /api/auth/forgot-password", () => {
     // });
     // Sprawdzamy wywołanie na mocku z locals
     expect(resetPasswordForEmailMock).toHaveBeenCalledWith(validEmail.email, {
-      redirectTo: "http://localhost/auth/reset-password",
+      redirectTo: "http://localhost:4321/auth/reset-password",
     });
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/json");

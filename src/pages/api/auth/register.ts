@@ -51,9 +51,9 @@ export async function POST({ request, redirect, locals }: APIContext) {
       });
     }
 
-    // Compute dynamic redirect base URL
+    // Compute dynamic redirect base URL (Cloudflare Pages or fallback)
     const pagesUrl = locals.runtime?.env?.CF_PAGES_URL;
-    const redirectBase = pagesUrl ? `https://${pagesUrl}` : new URL(request.url).origin;
+    const redirectBase = pagesUrl ? `https://${pagesUrl}` : "http://localhost:4321";
 
     // Rejestracja użytkownika
     const { data, error } = await supabase.auth.signUp({
