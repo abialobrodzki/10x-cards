@@ -43,9 +43,13 @@ export async function POST({ request, locals }: APIContext) {
       });
     }
 
+    // Compute dynamic redirect base URL
+    const pagesUrl = locals.runtime?.env?.CF_PAGES_URL;
+    const redirectBase = pagesUrl ? `https://${pagesUrl}` : new URL(request.url).origin;
+
     // Żądanie resetowania hasła
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${new URL(request.url).origin}/auth/reset-password`,
+      redirectTo: `${redirectBase}/auth/reset-password`,
     });
 
     if (error) {

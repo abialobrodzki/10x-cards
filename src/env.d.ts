@@ -17,6 +17,7 @@ declare global {
           SUPABASE_URL: string;
           SUPABASE_KEY: string;
           OPENROUTER_API_KEY?: string; // Make optional if not always present/needed
+          CF_PAGES_URL?: string; // Cloudflare Pages deployment URL
         };
         [key: string]: unknown; // Allow other properties if needed
       };

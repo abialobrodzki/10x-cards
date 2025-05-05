@@ -51,12 +51,16 @@ export async function POST({ request, redirect, locals }: APIContext) {
       });
     }
 
+    // Compute dynamic redirect base URL
+    const pagesUrl = locals.runtime?.env?.CF_PAGES_URL;
+    const redirectBase = pagesUrl ? `https://${pagesUrl}` : new URL(request.url).origin;
+
     // Rejestracja użytkownika
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${new URL(request.url).origin}/auth/login`,
+        emailRedirectTo: `${redirectBase}/auth/login`,
       },
     });
 
