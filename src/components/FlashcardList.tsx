@@ -16,7 +16,7 @@ const FlashcardList: React.FC<FlashcardListProps> = ({ flashcards, onAccept, onE
 
   return (
     <div className="space-y-6" data-testid="flashcard-list-container">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2">
         <h2 className="text-xl font-semibold" data-testid="flashcard-count-heading">
           Wygenerowane fiszki ({flashcards.length})
         </h2>

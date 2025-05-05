@@ -88,15 +88,15 @@ const TextInputForm: React.FC<TextInputFormProps> = ({ onSubmit, isGenerating })
           )}
         </div>
 
-        <div className="flex justify-between items-center">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+          <div className="flex-grow">
             {textError && (
               <p className="text-sm text-red-600" data-testid="text-input-error-message">
                 {textError}
               </p>
             )}
           </div>
-          <div>
+          <div className="flex-shrink-0">
             <p
               className={`text-sm ${
                 charactersCount < MIN_CHARS || charactersCount > MAX_CHARS ? "text-red-600" : "text-gray-500"

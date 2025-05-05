@@ -39,7 +39,7 @@ const userName = isLoggedIn && Astro.locals.user ? Astro.locals.user.email : nul
                     <a href="/generate" class="hover:text-primary no-underline">
                       Generowanie
                     </a>
-                    <span class="text-sm text-muted-foreground">
+                    <span class="hidden sm:inline text-sm text-muted-foreground">
                       Zalogowany: <span class="font-medium">{userName}</span>
                     </span>
                     <LogoutButton client:load />

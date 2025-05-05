@@ -39,10 +39,10 @@ export default defineConfig({
     //   name: "Mobile Chrome",
     //   use: { ...devices["Pixel 7"] },
     // },
-    {
-      name: "Mobile Safari",
-      use: { ...devices["iPhone 14"] },
-    },
+    // {
+    //   name: "Mobile Safari",
+    //   use: { ...devices["iPhone 14"] },
+    // },
   ],
   webServer: {
     command: "npm run preview -- --port 4321",
