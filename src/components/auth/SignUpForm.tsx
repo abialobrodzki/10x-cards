@@ -211,7 +211,7 @@ export function SignUpForm() {
       {!registrationSuccess && (
         <div className="text-center text-sm">
           Masz już konto?{" "}
-          <a href="/auth/login" className="text-primary hover:underline" data-testid="login-link">
+          <a href="/auth/login" className="text-primary underline" data-testid="login-link">
             Zaloguj się
           </a>
         </div>

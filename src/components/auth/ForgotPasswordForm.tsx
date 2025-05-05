@@ -108,7 +108,7 @@ export function ForgotPasswordForm() {
       </Form>
 
       <div className="text-center text-sm">
-        <a href="/auth/login" className="text-primary hover:underline" data-testid="back-to-login-link">
+        <a href="/auth/login" className="text-primary underline" data-testid="back-to-login-link">
           Wróć do logowania
         </a>
       </div>
