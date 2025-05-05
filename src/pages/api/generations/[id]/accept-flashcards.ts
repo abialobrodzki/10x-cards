@@ -23,16 +23,6 @@ const requestSchema = z.object({
 const recentSubmissions = new Map<string, number>();
 const CACHE_EXPIRY_MS = 10000; // 10 seconds
 
-// Clean expired cache entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, timestamp] of recentSubmissions.entries()) {
-    if (now - timestamp > CACHE_EXPIRY_MS) {
-      recentSubmissions.delete(key);
-    }
-  }
-}, 30000); // Check every 30 seconds
-
 export const POST: APIRoute = async ({ request, params, locals }) => {
   try {
     const requestId = Date.now().toString(36) + Math.random().toString(36).substring(2);
