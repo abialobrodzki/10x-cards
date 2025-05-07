@@ -11,25 +11,25 @@ declare global {
         id: string;
         [key: string]: unknown;
       } | null;
-      // Add runtime definition for Cloudflare
+      // Cloudflare Pages runtime environment
       runtime: {
         env: {
           SUPABASE_URL: string;
           SUPABASE_KEY: string;
-          OPENROUTER_API_KEY?: string; // Make optional if not always present/needed
-          CF_PAGES_URL?: string; // Cloudflare Pages deployment URL
+          OPENROUTER_API_KEY?: string;
+          PAGES_URL?: string; // Cloudflare Pages dynamic URL
         };
-        [key: string]: unknown; // Allow other properties if needed
+        [key: string]: unknown;
       };
     }
   }
 }
 
 interface ImportMetaEnv {
+  readonly DEV: boolean;
   readonly SUPABASE_URL: string;
   readonly SUPABASE_KEY: string;
-  readonly OPENROUTER_API_KEY: string;
-  // more env variables...
+  readonly OPENROUTER_API_KEY?: string;
 }
 
 interface ImportMeta {

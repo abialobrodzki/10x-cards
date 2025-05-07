@@ -43,13 +43,14 @@ export async function POST({ request, locals }: APIContext) {
       });
     }
 
-    // Compute dynamic redirect base URL (Cloudflare Pages or fallback)
-    const pagesUrl = locals.runtime?.env?.CF_PAGES_URL;
-    const redirectBase = pagesUrl ? `https://${pagesUrl}` : "http://localhost:4321";
+    // Compute dynamic origin for redirect (handle localhost default port 4321)
+    const urlObj = new URL(request.url);
+    const origin =
+      urlObj.hostname === "localhost" && !urlObj.port ? `${urlObj.protocol}//${urlObj.hostname}:4321` : urlObj.origin;
 
     // Żądanie resetowania hasła
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${redirectBase}/auth/reset-password`,
+      redirectTo: `${origin}/auth/reset-password`,
     });
 
     if (error) {

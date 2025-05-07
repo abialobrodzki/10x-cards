@@ -51,16 +51,17 @@ export async function POST({ request, redirect, locals }: APIContext) {
       });
     }
 
-    // Compute dynamic redirect base URL (Cloudflare Pages or fallback)
-    const pagesUrl = locals.runtime?.env?.CF_PAGES_URL;
-    const redirectBase = pagesUrl ? `https://${pagesUrl}` : "http://localhost:4321";
+    // Compute actual origin for redirect links, adding default port 4321 for localhost
+    const urlObj = new URL(request.url);
+    const origin =
+      urlObj.hostname === "localhost" && !urlObj.port ? `${urlObj.protocol}//${urlObj.hostname}:4321` : urlObj.origin;
 
     // Rejestracja użytkownika
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${redirectBase}/auth/login`,
+        emailRedirectTo: `${origin}/auth/login`,
       },
     });
 
