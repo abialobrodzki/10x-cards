@@ -6,8 +6,13 @@ export class RegisterPage {
   readonly passwordInput: Locator;
   readonly confirmPasswordInput: Locator;
   readonly signupButton: Locator;
+  readonly mailErrorText: Locator;
+  readonly passwordErrorText: Locator;
+  readonly confirmPasswordErrorText: Locator;
   readonly serverErrorMessage: Locator;
   readonly registrationSuccessMessage: Locator;
+  readonly registrationSuccessMessageHeader: Locator;
+  readonly registrationSuccessMessageText: Locator;
   readonly loginLinkAfterSignup: Locator;
   readonly loginLink: Locator;
 
@@ -17,8 +22,13 @@ export class RegisterPage {
     this.passwordInput = page.getByTestId("password-input");
     this.confirmPasswordInput = page.getByTestId("confirm-password-input");
     this.signupButton = page.getByTestId("signup-button");
+    this.mailErrorText = page.getByText("Nieprawidłowy adres email");
+    this.passwordErrorText = page.getByText("Hasło musi mieć co najmniej 8 znaków");
+    this.confirmPasswordErrorText = page.getByText("Potwierdzenie hasła jest wymagane");
     this.serverErrorMessage = page.getByTestId("server-error-message");
     this.registrationSuccessMessage = page.getByTestId("registration-success-message");
+    this.registrationSuccessMessageHeader = page.getByText("Rejestracja zakończona pomyślnie");
+    this.registrationSuccessMessageText = page.getByText("Na Twój adres email został");
     this.loginLinkAfterSignup = page.getByTestId("login-link-after-signup");
     this.loginLink = page.getByTestId("login-link");
   }
