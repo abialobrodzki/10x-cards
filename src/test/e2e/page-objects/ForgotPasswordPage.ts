@@ -3,6 +3,7 @@ import { type Page, type Locator } from "@playwright/test";
 export class ForgotPasswordPage {
   readonly page: Page;
   readonly emailInput: Locator;
+  readonly mailErrorText: Locator;
   readonly sendResetLinkButton: Locator;
   readonly serverErrorMessage: Locator;
   readonly resetLinkSentMessage: Locator;
@@ -11,6 +12,7 @@ export class ForgotPasswordPage {
   constructor(page: Page) {
     this.page = page;
     this.emailInput = page.getByTestId("email-input");
+    this.mailErrorText = page.getByText("Nieprawidłowy adres email");
     this.sendResetLinkButton = page.getByTestId("send-reset-link-button");
     this.serverErrorMessage = page.getByTestId("server-error-message");
     this.resetLinkSentMessage = page.getByTestId("reset-link-sent-message");
