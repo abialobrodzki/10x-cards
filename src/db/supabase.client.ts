@@ -4,30 +4,43 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { APIContext } from "astro";
 import type { Database } from "./database.types";
 
+// Rozszerzony typ APIContext dla środowiska Cloudflare Pages z dostępem do .env
+interface CloudflareAPIContext extends APIContext {
+  env: {
+    // Definiujemy strukturę env, która powinna być dostępna w Cloudflare Pages
+    SUPABASE_URL: string;
+    SUPABASE_KEY: string;
+    DEFAULT_USER_ID?: string;
+    // Dodaj tutaj inne zmienne środowiskowe, jeśli są potrzebne i dostępne w .env
+  };
+}
+
 // Re-eksportuj typ SupabaseClient dla spójności
 export type { SupabaseClient };
 
 const defaultUserId = import.meta.env.DEFAULT_USER_ID;
 
-export const createSupabaseServerInstance = (context: APIContext) => {
+export const createSupabaseServerInstance = (context: CloudflareAPIContext) => {
   let supabaseUrl: string | undefined;
   let supabaseKey: string | undefined;
   let sourceDescription = "unknown";
 
-  // Primary check: Cloudflare Runtime Environment Variables
-  // Ensure context.locals.runtime and context.locals.runtime.env are defined
-  if (
+  // Primary check: context.env (standard for Astro adapters like Cloudflare Pages)
+  if (context.env && typeof context.env.SUPABASE_URL === "string" && typeof context.env.SUPABASE_KEY === "string") {
+    sourceDescription = "context.env";
+    console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
+    supabaseUrl = context.env.SUPABASE_URL;
+    supabaseKey = context.env.SUPABASE_KEY;
+  } else if (
+    // Fallback: Cloudflare Runtime Environment Variables via locals.runtime.env
     context.locals &&
-    "runtime" in context.locals && // Check if runtime exists in locals
+    "runtime" in context.locals &&
     context.locals.runtime &&
-    "env" in context.locals.runtime && // Check if env exists in runtime (using any for type checking)
-    context.locals.runtime.env // Access env with type assertion
+    "env" in context.locals.runtime &&
+    context.locals.runtime.env
   ) {
     sourceDescription = "context.locals.runtime.env";
     console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
-    // Log the actual content to be sure (this log will only show in wrangler dev or if deployed with logs)
-    // console.log(JSON.stringify((context.locals.runtime as any).env, null, 2));
-
     const runtimeEnv = context.locals.runtime.env;
     supabaseUrl = runtimeEnv.SUPABASE_URL;
     supabaseKey = runtimeEnv.SUPABASE_KEY;

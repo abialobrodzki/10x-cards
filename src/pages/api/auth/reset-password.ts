@@ -22,7 +22,8 @@ const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-export async function POST({ request, cookies }: APIContext) {
+export async function POST(context: APIContext) {
+  const { request } = context;
   try {
     // Log request URL and headers for debugging
     console.log("Reset password API - URL:", request.url);
@@ -58,91 +59,55 @@ export async function POST({ request, cookies }: APIContext) {
     console.log("Debug - Otrzymany identyfikator:", {
       value: token.substring(0, 10) + "...",
       length: token.length,
-      looksLikeCode: looksLikeCode,
+      looksLikeCode,
     });
 
-    // Utworzenie klienta Supabase dla tego requestu
-    const supabase = createSupabaseServerInstance({
-      headers: request.headers,
-      cookies,
-    });
+    // Sprawdzenie formatu tokenu (UUID)
+    if (!looksLikeCode) {
+      console.error("Otrzymany token/kod nie ma formatu UUID. Przepływ nieobsługiwany.");
+      return new Response(
+        JSON.stringify({
+          error: "Nieprawidłowy format linku resetującego.",
+          message: "Prosimy wygenerować nowy link resetujący hasło.",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-    if (looksLikeCode) {
-      console.log("Wykryto format kodu UUID. Próba wymiany kodu na sesję...");
-      try {
-        const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(token);
+    // Inicjalizacja klienta Supabase
+    // @ts-expect-error kontekst Astro przekazywany do klienta
+    const supabase = createSupabaseServerInstance(context);
+    console.log("Wykryto format kodu UUID. Próba wymiany kodu na sesję...");
+    try {
+      const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(token);
 
-        if (exchangeError) {
-          console.error("Błąd podczas wymiany kodu na sesję:", exchangeError);
-          let errorMessage = "Nieprawidłowy lub wygasły kod resetujący.";
-          if (exchangeError.message.includes("expired")) {
-            errorMessage = "Kod resetujący wygasł. Proszę wygenerować nowy link.";
-          } else if (exchangeError.message.includes("invalid")) {
-            errorMessage = "Kod resetujący jest nieprawidłowy.";
-          }
-          return new Response(
-            JSON.stringify({
-              error: errorMessage,
-              message: "Prosimy wygenerować nowy link resetujący hasło",
-              details: exchangeError.message,
-            }),
-            {
-              status: 400,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+      if (exchangeError) {
+        console.error("Błąd podczas wymiany kodu na sesję:", exchangeError);
+        let errorMessage = "Nieprawidłowy lub wygasły kod resetujący.";
+        if (exchangeError.message.includes("expired")) {
+          errorMessage = "Kod resetujący wygasł. Proszę wygenerować nowy link.";
+        } else if (exchangeError.message.includes("invalid")) {
+          errorMessage = "Kod resetujący jest nieprawidłowy.";
         }
-
-        if (!sessionData?.session || !sessionData?.user) {
-          console.error("Wymiana kodu na sesję nie zwróciła sesji lub użytkownika", sessionData);
-          return new Response(
-            JSON.stringify({
-              error: "Nie udało się uzyskać sesji po wymianie kodu.",
-              message: "Prosimy spróbować ponownie lub wygenerować nowy link.",
-            }),
-            {
-              status: 500,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-        }
-
-        console.log("Kod pomyślnie wymieniony na sesję dla użytkownika:", sessionData.user.id);
-
-        const { error: updateError } = await supabase.auth.updateUser({ password });
-
-        if (updateError) {
-          console.error("Błąd podczas aktualizacji hasła po wymianie kodu:", updateError);
-          return new Response(
-            JSON.stringify({
-              error: "Nie udało się zaktualizować hasła.",
-              message: "Wystąpił błąd podczas zapisywania nowego hasła.",
-              details: updateError.message,
-            }),
-            {
-              status: 500,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-        }
-
-        console.log("Hasło pomyślnie zaktualizowane dla użytkownika:", sessionData.user.id);
         return new Response(
           JSON.stringify({
-            message: "Hasło zostało pomyślnie zmienione",
-            success: true,
+            error: errorMessage,
+            message: "Prosimy wygenerować nowy link resetujący hasło",
+            details: exchangeError.message,
           }),
           {
-            status: 200,
+            status: 400,
             headers: { "Content-Type": "application/json" },
           }
         );
-      } catch (error) {
-        console.error("Nieoczekiwany błąd podczas procesu wymiany kodu i aktualizacji hasła:", error);
+      }
+
+      if (!sessionData?.session || !sessionData?.user) {
+        console.error("Wymiana kodu na sesję nie zwróciła sesji lub użytkownika", sessionData);
         return new Response(
           JSON.stringify({
-            error: "Wystąpił nieoczekiwany błąd serwera.",
-            message: "Prosimy spróbować ponownie później.",
+            error: "Nie udało się uzyskać sesji po wymianie kodu.",
+            message: "Prosimy spróbować ponownie lub wygenerować nowy link.",
           }),
           {
             status: 500,
@@ -150,15 +115,46 @@ export async function POST({ request, cookies }: APIContext) {
           }
         );
       }
-    } else {
-      console.error("Otrzymany token/kod nie ma formatu UUID. Przepływ nieobsługiwany.");
+
+      console.log("Kod pomyślnie wymieniony na sesję dla użytkownika:", sessionData.user.id);
+
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+
+      if (updateError) {
+        console.error("Błąd podczas aktualizacji hasła po wymianie kodu:", updateError);
+        return new Response(
+          JSON.stringify({
+            error: "Nie udało się zaktualizować hasła.",
+            message: "Wystąpił błąd podczas zapisywania nowego hasła.",
+            details: updateError.message,
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.log("Hasło pomyślnie zaktualizowane dla użytkownika:", sessionData.user.id);
       return new Response(
         JSON.stringify({
-          error: "Nieprawidłowy format linku resetującego.",
-          message: "Prosimy wygenerować nowy link resetujący hasło.",
+          message: "Hasło zostało pomyślnie zmienione",
+          success: true,
         }),
         {
-          status: 400,
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    } catch (error) {
+      console.error("Nieoczekiwany błąd podczas procesu wymiany kodu i aktualizacji hasła:", error);
+      return new Response(
+        JSON.stringify({
+          error: "Wystąpił nieoczekiwany błąd serwera.",
+          message: "Prosimy spróbować ponownie później.",
+        }),
+        {
+          status: 500,
           headers: { "Content-Type": "application/json" },
         }
       );
