@@ -1,7 +1,26 @@
+/**
+ * @file Globalny skrypt teardown dla testów end-to-end Playwright.
+ * Uruchamiany raz po wszystkich testach e2e.
+ * Odpowiedzialny za czyszczenie bazy danych Supabase po zakończeniu testów,
+ * usuwając wygenerowane dane testowe (fiszk i rekordów generacji).
+ */
+
 /* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 
+/**
+ * Globalna funkcja teardown dla testów Playwright.
+ * Uruchamiana po zakończeniu wszystkich testów e2e.
+ * Wczytuje zmienne środowiskowe (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`),
+ * tworzy klienta Supabase z uprawnieniami service role i usuwa wszystkie rekordy
+ * z tabel `flashcards` i `generations` w celu zapewnienia czystego stanu bazy danych
+ * przed kolejnym uruchomieniem testów.
+ * Wyświetla komunikaty diagnostyczne i błędy w konsoli.
+ *
+ * @async
+ * @returns {Promise<void>} Obietnica, która rozwiązuje się po zakończeniu teardownu.
+ */
 async function globalTeardown() {
   // Wyświetl informację o rozpoczęciu czyszczenia
   console.log("Cleaning up generated flashcards...");
@@ -9,6 +28,7 @@ async function globalTeardown() {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+  // Sprawdzenie wymaganych zmiennych środowiskowych
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     console.error("BŁĄD: SUPABASE_URL lub SUPABASE_SERVICE_ROLE_KEY nie są ustawione w środowisku.");
     console.error("Sprawdź plik .env.test lub zmienne środowiskowe CI/CD.");
@@ -41,7 +61,7 @@ async function globalTeardown() {
 
     console.log("Próba połączenia z bazą danych Supabase...");
 
-    // Testuj połączenie
+    // Testuj połączenie z bazą danych
     try {
       const { error: testError } = await supabase.from("flashcards").select("count", { count: "exact", head: true });
 
@@ -76,7 +96,7 @@ async function globalTeardown() {
       console.error("Nieoczekiwany błąd podczas pobierania listy fiszek:", err);
     }
 
-    // 2. Liczenie istniejących fiszek
+    // 2. Liczenie istniejących fiszek i ich usuwanie
     try {
       const { count: initialFlashcardsCount, error: countError } = await supabase
         .from("flashcards")
@@ -101,7 +121,7 @@ async function globalTeardown() {
       console.error("Nieoczekiwany błąd podczas usuwania fiszek:", err);
     }
 
-    // 4. Sprawdź, czy usunięcie się powiodło
+    // 4. Sprawdź, czy usunięcie fiszek się powiodło
     try {
       const { count: afterDeleteCount, error: afterDeleteError } = await supabase
         .from("flashcards")

@@ -6,12 +6,38 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 
+/**
+ * Schemat Zod do walidacji danych wejściowych formularza resetowania hasła (tylko email).
+ * Wymaga adresu email (prawidłowy format).
+ */
 const forgotPasswordSchema = z.object({
   email: z.string().email("Nieprawidłowy adres email"),
 });
 
+/**
+ * Typ danych formularza resetowania hasła wywnioskowany ze schematu `forgotPasswordSchema`.
+ */
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
+/**
+ * Komponent React renderujący formularz żądania resetowania hasła.
+ * Obsługuje walidację formularza przy użyciu react-hook-form i Zod,
+ * wysyła adres email do endpointu API `/api/auth/forgot-password`,
+ * obsługuje odpowiedzi (sukces/błąd) i zarządza stanem ładowania oraz
+ * komunikatami dla użytkownika. Zawsze wyświetla komunikat o sukcesie
+ * po wysłaniu żądania, niezależnie od tego, czy email istnieje w bazie (dla bezpieczeństwa).
+ *
+ * @component
+ * @returns {JSX.Element} Formularz żądania resetowania hasła w postaci elementu JSX.
+ * @dependencies
+ * - react: `useState` do zarządzania stanem.
+ * - react-hook-form: `useForm` do zarządzania formularzem i walidacją.
+ * - @hookform/resolvers/zod: Integracja Zod z react-hook-form.
+ * - zod: Definicja schematu walidacji `forgotPasswordSchema`.
+ * - ../ui/button, ../ui/input, ../ui/form: Komponenty UI (Shadcn/ui).
+ * @sideEffects
+ * - Wysyła żądanie POST do `/api/auth/forgot-password`.
+ */
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -24,6 +50,20 @@ export function ForgotPasswordForm() {
     },
   });
 
+  /**
+   * Funkcja obsługująca wysyłanie formularza żądania resetowania hasła.
+   * Waliduje dane, wysyła je do endpointu API `/api/auth/forgot-password`,
+   * przetwarza odpowiedź serwera, ustawia komunikaty o błędach lub sukcesie,
+   * i zarządza stanem ładowania. Resetuje formularz w przypadku sukcesu.
+   *
+   * @param {ForgotPasswordFormValues} values - Zwalidowane dane z formularza (tylko email).
+   * @returns {Promise<void>} Promise, który rozwiązuje się po zakończeniu procesu wysyłania.
+   * @throws {Error} Może rzucić błąd w przypadku problemów z siecią lub przetwarzaniem odpowiedzi (choć są one łapane wewnętrznie).
+   * @sideEffects
+   * - Ustawia stany `isLoading`, `isSuccess`, `serverError`.
+   * - Wywołuje `fetch` do endpointu API `/api/auth/forgot-password`.
+   * - Wywołuje `form.reset()` w przypadku sukcesu.
+   */
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsLoading(true);
     setServerError(null);

@@ -1,8 +1,11 @@
 /* eslint-disable no-console */
 import { defineMiddleware } from "astro:middleware";
-import { createSupabaseServerInstance } from "../db/supabase.client";
+import { createSupabaseServerInstance, type CloudflareAPIContext } from "../db/supabase.client";
 
-// Ścieżki publiczne - dostępne dla niezalogowanych użytkowników
+/**
+ * Tablica zawierająca ścieżki publiczne, które są dostępne dla użytkowników niezalogowanych.
+ * Żądania do tych ścieżek nie podlegają sprawdzaniu sesji uwierzytelnienia.
+ */
 const PUBLIC_PATHS = [
   // Strony uwierzytelniania
   "/auth/login",
@@ -20,6 +23,27 @@ const PUBLIC_PATHS = [
   // ... existing code ...
 ];
 
+/**
+ * Globalny middleware Astro do obsługi uwierzytelniania i autoryzacji przy użyciu Supabase.
+ * Sprawdza sesję użytkownika, odświeża tokeny jeśli jest to konieczne i ustawia instancję Supabase
+ * oraz dane użytkownika w `context.locals`. Chroni prywatne ścieżki, przekierowując
+ * niezalogowanych użytkowników do strony logowania.
+ *
+ * @param {object} context - Obiekt kontekstu Astro zawierający informacje o żądaniu i środowisku.
+ * @param {object} context.locals - Obiekt locals do przechowywania danych w trakcie przetwarzania żądania.
+ * @param {object} context.cookies - Obiekt cookies do zarządzania ciasteczkami.
+ * @param {URL} context.url - Obiekt URL reprezentujący adres żądania.
+ * @param {function} context.redirect - Funkcja do przekierowywania na inny adres URL.
+ * @param {function} next - Funkcja pozwalająca na przejście do następnego middleware lub obsługi routingu.
+ * @returns {Response} - Zwraca obiekt Response, który może być wynikiem dalszego przetwarzania
+ *                     przez `next()` lub przekierowaniem/błędem zwróconym przez middleware.
+ * @throws {Response} - Może zwrócić Response z błędem serwera (status 500) w przypadku
+ *                      krytycznego błędu inicjalizacji Supabase.
+ * @dependencies
+ * - `createSupabaseServerInstance`: Funkcja do tworzenia instancji klienta Supabase po stronie serwera.
+ * - Supabase Auth API: Wykorzystuje `supabase.auth.getSession()`, `supabase.auth.refreshSession()`,
+ *                      `supabase.auth.getUser()` do zarządzania sesją i użytkownikiem.
+ */
 export const onRequest = defineMiddleware(async (context, next) => {
   const { locals, cookies, url, redirect } = context;
   console.log("Middleware - URL:", url.pathname);
@@ -30,7 +54,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Inicjalizacja klienta Supabase - zawsze na początku, przekazując pełen kontekst
   try {
-    locals.supabase = createSupabaseServerInstance(context);
+    locals.supabase = createSupabaseServerInstance(context as CloudflareAPIContext);
   } catch (error) {
     console.error("Middleware - BŁĄD KRYTYCZNY podczas tworzenia instancji Supabase:", error);
     // W przypadku krytycznego błędu konfiguracji, zwróć błąd serwera

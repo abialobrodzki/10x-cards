@@ -2,16 +2,30 @@
 import MainLayout from "../../layouts/MainLayout.astro";
 import { LoginForm } from "../../components/auth/LoginForm";
 
+/**
+ * Logika strony logowania.
+ * Jeśli użytkownik jest już zalogowany (`Astro.locals.user`), zostaje przekierowany
+ * na stronę główną aplikacji (`/generate`).
+ */
 // Redirect logged-in users away from the login page
 if (Astro.locals.user) {
   return Astro.redirect("/generate"); // Or /flashcards if that's the main page
 }
 
-// Force server-side rendering for this page
+/**
+ * Wymusza renderowanie tej strony po stronie serwera (SSR).
+ * Niezbędne do działania logiki sprawdzającej stan uwierzytelnienia (`Astro.locals.user`).
+ */
 export const prerender = false;
 ---
 
 <MainLayout title="10xCards - Logowanie">
+  {
+    /* 
+    Kontener strony logowania zawierający formularz LoginForm.
+    LoginForm jest komponentem React renderowanym tylko po stronie klienta (`client:only="react"`).
+  */
+  }
   <div class="bg-gray-50 h-full">
     <div class="container max-w-md mx-auto px-4 py-8">
       <div class="rounded-lg border border-border bg-card p-6 shadow-sm">

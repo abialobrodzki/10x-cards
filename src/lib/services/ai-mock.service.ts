@@ -6,9 +6,10 @@ export interface AIGeneratedData {
 }
 
 /**
- * Generates mock flashcards for development/testing
- * @param text Text to generate flashcards from
- * @returns Generated flashcards and model info
+ * Generates mock flashcards based on the provided text for development and testing purposes.
+ * Simulates a network delay and creates a variable number of mock flashcards based on the input text length.
+ * @param text - The text from which to generate mock flashcards.
+ * @returns A promise that resolves with an object containing an array of mock flashcard DTOs and a mock model name.
  */
 export async function generateFlashcardsWithAI(text: string): Promise<AIGeneratedData> {
   // Simulate network delay
@@ -27,6 +28,7 @@ export async function generateFlashcardsWithAI(text: string): Promise<AIGenerate
       front: `Mock Flashcard ${i} Front (from text with ${wordCount} words)`,
       back: `Mock Answer ${i} with details based on the provided content that has approximately ${sentenceCount} sentences.`,
       source: "ai-full" as const,
+      user_id: "mock-user-id",
     });
   }
 

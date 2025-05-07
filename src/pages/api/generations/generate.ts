@@ -6,6 +6,17 @@ import { generateFlashcards } from "../../../lib/services/generation.service";
 
 export const prerender = false;
 
+/**
+ * @module Generations API Endpoint - Generate
+ * @description Handles API requests for generating flashcards from text content.
+ */
+
+/**
+ * @typedef {object} GenerateFlashcardsRequestDto
+ * @description Schema for validating the request body when generating flashcards.
+ * @property {string} text - The text content from which to generate flashcards. Must be between 1000 and 10000 characters.
+ * @property {string} [language] - The target language for the flashcards (optional).
+ */
 // Validation schema for the request
 const generateFlashcardsSchema = z.object({
   text: z
@@ -15,6 +26,25 @@ const generateFlashcardsSchema = z.object({
   language: z.string().optional(),
 });
 
+/**
+ * Handles POST requests to generate flashcards from provided text.
+ * Validates the request body against the `generateFlashcardsSchema`.
+ * Requires user authentication.
+ *
+ * @type {APIRoute}
+ * @param {object} context - The Astro API context.
+ * @param {object} context.request - The incoming request object. Expects a JSON body conforming to `GenerateFlashcardsRequestDto`.
+ * @param {object} context.locals - The locals object containing `user` and `supabase`.
+ * @param {object} context.locals.user - The authenticated user object, must have an `id`.
+ * @param {object} context.locals.supabase - The Supabase client instance.
+ * @returns {Promise<Response>} A Promise that resolves to a Response object.
+ * Returns 200 OK with the generation response on success.
+ * Returns 401 Unauthorized if the user is not logged in.
+ * Returns 400 Bad Request if the request body is invalid.
+ * Returns 500 Internal Server Error on other errors.
+ * @throws {Error} If an unexpected error occurs during processing (e.g., Supabase client not found).
+ * @dependencies {@link generateFlashcards}, Supabase client, Zod validation.
+ */
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     console.log("Received generation request");

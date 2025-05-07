@@ -8,6 +8,11 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 
+/**
+ * Schemat Zod do walidacji danych wejściowych formularza resetowania hasła.
+ * Wymaga nowego hasła (min. 8 znaków) oraz potwierdzenia hasła.
+ * Schemat zawiera również walidację sprawdzającą, czy hasło i potwierdzenie hasła są identyczne.
+ */
 const resetPasswordSchema = z
   .object({
     password: z.string().min(8, "Hasło musi mieć co najmniej 8 znaków"),
@@ -18,11 +23,43 @@ const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Typ danych formularza resetowania hasła wywnioskowany ze schematu `resetPasswordSchema`.
+ */
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
+/**
+ * Właściwości (props) komponentu ResetPasswordForm.
+ */
 interface ResetPasswordFormProps {
+  /** Token lub kod resetowania hasła przekazany do komponentu. Może pochodzić z URL. */
   token: string;
 }
 
+/**
+ * Komponent React renderujący formularz resetowania hasła.
+ * Umożliwia użytkownikowi ustawienie nowego hasła po kliknięciu w link resetujący otrzymany email.
+ * Komponent automatycznie wyciąga token resetowania z URL (hash, query params), localStorage lub propsów.
+ * Obsługuje walidację formularza, wysyła nowe hasło i token do endpointu API `/api/auth/reset-password`,
+ * obsługuje odpowiedzi (sukces/błąd) i zarządza stanem ładowania oraz komunikatami dla użytkownika.
+ * Czyści token z URL i/lub localStorage po jego wyodrębnieniu.
+ *
+ * @component
+ * @param {ResetPasswordFormProps} props - Właściwości komponentu.
+ * @returns {JSX.Element} Formularz resetowania hasła w postaci elementu JSX.
+ * @dependencies
+ * - react: `useState`, `useEffect` do zarządzania stanem i efektami ubocznymi.
+ * - react-hook-form: `useForm` do zarządzania formularzem i walidacją.
+ * - @hookform/resolvers/zod: Integracja Zod z react-hook-form.
+ * - zod: Definicja schematu walidacji `resetPasswordSchema`.
+ * - ../ui/button, ../ui/input, ../ui/form: Komponenty UI (Shadcn/ui).
+ * @sideEffects
+ * - Modyfikuje stan komponentu (isLoading, isSuccess, serverError, finalToken, debugInfo).
+ * - Odczytuje i potencjalnie usuwa dane z `localStorage` (`reset_password_token`).
+ * - Modyfikuje URL przeglądarki (`window.location.hash`, `window.history.replaceState`).
+ * - Wysyła żądanie POST do `/api/auth/reset-password`.
+ * - W przypadku sukcesu przekierowuje użytkownika (`window.location.href`).
+ */
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -30,13 +67,34 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [finalToken, setFinalToken] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>("");
 
-  // Debug helper
+  /**
+   * Funkcja pomocnicza do logowania debugowych informacji do konsoli i stanu komponentu.
+   *
+   * @param {string} message - Wiadomość do zalogowania.
+   */
   const logDebug = (message: string) => {
     console.log(message);
     setDebugInfo((prev) => prev + message + "\n");
   };
 
-  // Wyodrębnij token z różnych źródeł przy pierwszym renderze
+  /**
+   * Efekt uboczny uruchamiany przy pierwszym renderowaniu komponentu.
+   * Odpowiada za próbę wyodrębnienia tokenu resetowania hasła z różnych źródeł:
+   * 1. Propsy komponentu (`token`).
+   * 2. `localStorage` (klucz `reset_password_token`).
+   * 3. Hash URL (`#access_token=...`).
+   * 4. Query params URL (`?token=...` lub `?code=...`).
+   * Znaleziony token jest zapisywany w stanie `finalToken`. W przypadku znalezienia
+   * tokenu w hash URL lub localStorage, token jest odpowiednio czyszczony z tych źródeł
+   * dla bezpieczeństwa.
+   *
+   * @dependencies [token] - Efekt reaguje na zmianę wartości tokenu przekazanego w propsach.
+   * @sideEffects
+   * - Odczytuje `window.location.href`, `window.location.hash`, `window.location.search`.
+   * - Odczytuje i usuwa element z `localStorage`.
+   * - Modyfikuje `window.history.replaceState` w celu wyczyszczenia hasha URL.
+   * - Ustawia stan `finalToken` i `debugInfo`.
+   */
   useEffect(() => {
     logDebug("ResetPasswordForm - rozpoczęcie wyciągania tokenu");
     logDebug(`URL: ${window.location.href}`);
@@ -138,6 +196,24 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     },
   });
 
+  /**
+   * Funkcja obsługująca wysyłanie formularza resetowania hasła.
+   * Waliduje nowe hasło i potwierdzenie hasła przy użyciu `resetPasswordSchema`.
+   * Sprawdza, czy dostępny jest token resetowania (`finalToken`).
+   * Wysyła token i nowe hasło do endpointu API `/api/auth/reset-password`.
+   * Przetwarza odpowiedź serwera, ustawia komunikaty o błędach lub sukcesie,
+   * i zarządza stanem ładowania. W przypadku sukcesu wyświetla komunikat
+   * lub przekierowuje użytkownika.
+   *
+   * @param {ResetPasswordFormValues} values - Zwalidowane dane z formularza (nowe hasło, potwierdzenie hasła).
+   * @returns {Promise<void>} Promise, który rozwiązuje się po zakończeniu procesu wysyłania.
+   * @throws {Error} Może rzucić błąd w przypadku problemów z siecią lub przetwarzaniem odpowiedzi (choć są one łapane wewnętrznie).
+   * @sideEffects
+   * - Ustawia stany `isLoading`, `isSuccess`, `serverError`.
+   * - Wywołuje `fetch` do endpointu API `/api/auth/reset-password`.
+   * - Wywołuje `form.reset()` w przypadku sukcesu.
+   * - Może wywołać `window.location.href` w przypadku przekierowania z API.
+   */
   async function onSubmit(values: ResetPasswordFormValues) {
     setIsLoading(true);
     setServerError(null);

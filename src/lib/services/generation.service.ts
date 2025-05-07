@@ -5,6 +5,12 @@ import type { GenerationWithProposedFlashcardsDto } from "../../types";
 import { generateFlashcardsWithAI } from "./ai.service";
 import crypto from "crypto";
 
+/**
+ * Converts an unknown error type into a string representation.
+ * This is useful for logging errors consistently.
+ * @param err - The unknown error object or value.
+ * @returns A string representation of the error.
+ */
 function stringifyError(err: unknown): string {
   if (typeof err === "object" && err !== null) {
     const errorObj = err as Record<string, unknown>;
@@ -16,12 +22,15 @@ function stringifyError(err: unknown): string {
 }
 
 /**
- * Generates flashcards based on provided text using AI
- * @param supabase Supabase client instance
- * @param userId User ID for whom to generate flashcards
- * @param text Text to generate flashcards from
- * @param language Optional language code (e.g. 'pl', 'en')
- * @returns Generated flashcards and generation metadata
+ * Generates flashcards based on provided text using an AI service and saves the generation record and proposed flashcards to the database.
+ * Creates an initial generation record, calls the AI service, updates the generation record with the results, and returns the generation data and proposed flashcards.
+ * Handles potential errors during database operations and AI generation.
+ * @param supabase - Supabase client instance obtained from context.
+ * @param userId - The ID of the user for whom to generate flashcards.
+ * @param text - The source text from which to generate flashcards.
+ * @param [language] - Optional language code for generation (e.g., 'pl', 'en').
+ * @returns A promise that resolves with an object containing the generation metadata and the proposed flashcard DTOs.
+ * @throws {Error} If there is a failure in creating or updating the generation record, an expired JWT token, a failure in AI generation, or an unexpected error.
  */
 export async function generateFlashcards(
   supabase: SupabaseClient<Database>,

@@ -6,6 +6,37 @@ import { createFlashcardsService } from "../../../../lib/services/flashcard.serv
 
 export const prerender = false;
 
+/**
+ * @module Generations API Endpoint - Accept Flashcards
+ * @description Handles API requests for accepting and saving generated flashcards.
+ */
+
+/**
+ * @typedef {object} AcceptFlashcardsRequestDto - Represents the structure of the request body for accepting flashcards.
+ * @property {Array<object>} flashcards - An array of flashcard objects to be saved. Must contain at least one flashcard.
+ * @property {string} flashcards[].front - The front text of the flashcard. Cannot be empty.
+ * @property {string} flashcards[].back - The back text of the flashcard. Cannot be empty.
+ * @property {"ai-full"|"ai-edited"|"manual"} flashcards[].source - The source of the flashcard.
+ * @property {number|null} flashcards[].generation_id - The ID of the generation process, can be null.
+ * @property {boolean} [isSaveAll] - Optional flag indicating whether to save all flashcards regardless of individual errors.
+ */
+
+/**
+ * @typedef {object} AcceptFlashcardsResponseDto - Represents the structure of the successful response body.
+ * @property {object} generation - Information about the generation process update.
+ * @property {number} generation.id - The ID of the generation.
+ * @property {number} generation.accepted_unedited_count - Count of accepted flashcards with 'ai-full' source.
+ * @property {number} generation.accepted_edited_count - Count of accepted flashcards with 'ai-edited' source.
+ * @property {string} generation.updated_at - ISO string of the update timestamp.
+ * @property {FlashcardDto[]} flashcards - An array of the successfully created flashcard DTOs.
+ */
+
+/**
+ * @typedef {object} ValidationErrorResponseDto - Represents the structure of a validation error response.
+ * @property {string} error - A general error message.
+ * @property {string} [details] - Optional details about the error.
+ */
+
 // Validation schema for request body
 const flashcardSchema = z.object({
   front: z.string().min(1, "Pole przodu fiszki nie może być puste"),
@@ -23,6 +54,30 @@ const requestSchema = z.object({
 const recentSubmissions = new Map<string, number>();
 const CACHE_EXPIRY_MS = 10000; // 10 seconds
 
+/**
+ * Handles POST requests to accept and save generated flashcards for a specific generation ID.
+ * Validates the generation ID from the path and the request body against `requestSchema`.
+ * Includes a cache to prevent duplicate submissions within a short time frame.
+ * Requires user authentication.
+ *
+ * @type {APIRoute}
+ * @param {object} context - The Astro API context.
+ * @param {object} context.request - The incoming request object. Expects a JSON body conforming to `AcceptFlashcardsRequestDto`.
+ * @param {object} context.params - The parameters object containing the generation ID.
+ * @param {string} context.params.id - The ID of the generation as a string.
+ * @param {object} context.locals - The locals object containing `user` and `supabase`.
+ * @param {object} context.locals.user - The authenticated user object, must have an `id`.
+ * @param {object} context.locals.supabase - The Supabase client instance.
+ * @returns {Promise<Response>} A Promise that resolves to a Response object.
+ * Returns 200 OK with the accepted flashcards and updated generation info on success.
+ * Returns 401 Unauthorized if the user is not logged in.
+ * Returns 400 Bad Request if the generation ID or request body is invalid.
+ * Returns 429 Too Many Requests if a potential duplicate submission is detected.
+ * Returns 500 Internal Server Error on other errors.
+ * @throws {Error} If an unexpected error occurs during processing (e.g., Supabase client not found).
+ * @dependencies {@link createFlashcardsService}, Supabase client, Zod validation, `recentSubmissions` cache.
+ * @remarks The endpoint expects the generation ID in the URL path.
+ */
 export const POST: APIRoute = async ({ request, params, locals }) => {
   try {
     const requestId = Date.now().toString(36) + Math.random().toString(36).substring(2);

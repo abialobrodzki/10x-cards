@@ -5,7 +5,12 @@ import { createSupabaseServerInstance } from "../../../db/supabase.client";
 
 export const prerender = false;
 
-// Schema dla walidacji danych włącznie z tokenem odzyskiwania
+/**
+ * Schemat Zod do walidacji danych wejściowych dla żądania resetowania hasła.
+ * Wymaga tokenu/kodu resetu, nowego hasła (min. 8 znaków) oraz potwierdzenia hasła.
+ * Schemat zawiera walidację sprawdzającą, czy hasło i potwierdzenie hasła są identyczne
+ * oraz czy token/kod nie jest pusty.
+ */
 const resetPasswordSchema = z
   .object({
     token: z // Może to być token lub kod
@@ -22,6 +27,27 @@ const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Obsługuje żądania POST do endpointu `/api/auth/reset-password`.
+ * Waliduje dane wejściowe (`token`, `password`, `confirmPassword`) przy użyciu `resetPasswordSchema`.
+ * Wymienia otrzymany token/kod na sesję użytkownika, a następnie aktualizuje hasło tego użytkownika
+ * przy użyciu Supabase. Zwraca odpowiedź z sukcesem lub błędem.
+ *
+ * @param {APIContext} context - Kontekst API Astro.
+ * @param {object} context.request - Obiekt żądania zawierający dane resetu hasła w ciele (JSON).
+ * @returns {Promise<Response>} - Zwraca Promise resolvingujący do obiektu Response.
+ *                                W przypadku sukcesu zwraca Response ze statusem 200 i obiektem JSON
+ *                                informującym o pomyślnej zmianie hasła.
+ *                                W przypadku nieprawidłowych danych wejściowych zwraca Response ze statusem 400.
+ *                                W przypadku błędów Supabase (np. nieprawidłowy/wygasły token, błąd aktualizacji) zwraca Response ze statusem 400 lub 500.
+ *                                W przypadku innych błędów serwera zwraca Response ze statusem 500.
+ * @dependencies
+ * - Zod: Używany do walidacji danych wejściowych (`resetPasswordSchema`).
+ * - Supabase Auth API: Używany do wymiany kodu na sesję (`supabase.auth.exchangeCodeForSession`)
+ *                      i aktualizacji hasła użytkownika (`supabase.auth.updateUser`).
+ * - `createSupabaseServerInstance`: Funkcja do tworzenia instancji klienta Supabase po stronie serwera.
+ * @throws {Error} - Może rzucić błąd w przypadku problemów z parsowaniem JSON lub nieoczekiwanych błędów serwera.
+ */
 export async function POST(context: APIContext) {
   const { request } = context;
   try {

@@ -28,6 +28,10 @@ interface CacheItem {
   timestamp: number;
 }
 
+/**
+ * Service for interacting with the OpenRouter API to generate AI content, specifically flashcards and chat messages.
+ * Handles API requests, response parsing, error handling, and basic caching.
+ */
 export class OpenRouterService {
   // Public fields
   public systemMessage = "";
@@ -47,7 +51,10 @@ export class OpenRouterService {
   private cacheExpiryTimeMs: number;
 
   /**
-   * Constructor for OpenRouterService
+   * Constructs a new instance of the OpenRouterService.
+   * Validates the provided configuration and initializes the service with API endpoint, API key, model, and parameters.
+   * @param config - The configuration object for the OpenRouter service.
+   * @throws {OpenRouterError} If the configuration is invalid.
    */
   constructor(config: OpenRouterConfig) {
     try {
@@ -83,28 +90,37 @@ export class OpenRouterService {
   }
 
   /**
-   * Sets the system message for the chat
+   * Sets the system message for the chat.
+   * This message provides context or instructions to the AI model.
+   * @param message - The system message string.
    */
   public setSystemMessage(message: string): void {
     this.systemMessage = sanitizeInput(message);
   }
 
   /**
-   * Sets the user message for the chat
+   * Sets the user message for the chat.
+   * This message represents the user's input to the AI model.
+   * @param message - The user message string.
    */
   public setUserMessage(message: string): void {
     this.userMessage = sanitizeInput(message);
   }
 
   /**
-   * Sets the response format for the API request
+   * Sets the desired response format for the API request.
+   * This is typically used to request a JSON object conforming to a specific schema.
+   * @param schema - The response format schema.
    */
   public setResponseFormat(schema: ResponseFormat): void {
     this.responseFormat = schema;
   }
 
   /**
-   * Sets the model name and parameters
+   * Sets the model name and parameters for the API requests.
+   * Ensures the model name is in the "provider/model" format.
+   * @param name - The name of the model (e.g., "gpt-4", "openai/gpt-4").
+   * @param [parameters={}] - Optional model parameters like temperature or max tokens.
    */
   public setModel(name: string, parameters: ModelParameters = {}): void {
     // Ensure model name is in the format "provider/model"
@@ -116,7 +132,8 @@ export class OpenRouterService {
   }
 
   /**
-   * Configure cache settings
+   * Configures the cache expiry time for responses.
+   * @param expiryTimeMinutes - The cache expiry time in minutes.
    */
   public setCacheConfig(expiryTimeMinutes: number): void {
     this.cacheExpiryTimeMs = expiryTimeMinutes * 60 * 1000;
@@ -124,7 +141,7 @@ export class OpenRouterService {
   }
 
   /**
-   * Clears the entire response cache
+   * Clears the entire response cache.
    */
   public clearCache(): void {
     // Clear the object-based cache
@@ -133,7 +150,7 @@ export class OpenRouterService {
   }
 
   /**
-   * Clears the chat history
+   * Clears the chat history.
    */
   public clearHistory(): void {
     this.chatHistory = [];
@@ -165,7 +182,12 @@ export class OpenRouterService {
   }
 
   /**
-   * Specialized method to call OpenRouter API for flashcard generation
+   * Generates a flashcard proposal from the provided source text using the OpenRouter API.
+   * This method tailors the system message for flashcard generation and uses a specific JSON schema for the response.
+   * It also includes caching for repeated requests with the same source text.
+   * @param sourceText - The text from which to generate the flashcard.
+   * @returns A promise that resolves with the generated flashcard proposal DTO.
+   * @throws {OpenRouterError} If the API request fails, the response is invalid, or caching fails.
    */
   public async callAIService(sourceText: string): Promise<FlashcardProposalDto> {
     try {
@@ -249,7 +271,12 @@ export class OpenRouterService {
   }
 
   /**
-   * Sends a chat message to the OpenRouter API
+   * Sends a chat message to the OpenRouter API and returns the AI's response.
+   * Optionally appends a new user message to the chat history before sending.
+   * The chat history is truncated to fit within the maximum token limit.
+   * @param [userMessage] - An optional new user message to send.
+   * @returns A promise that resolves with the AI's response payload.
+   * @throws {OpenRouterError} If the API request fails, or the response is invalid.
    */
   public async sendChatMessage(userMessage?: string): Promise<ResponsePayload> {
     let responsePayload: ResponsePayload | null = null;

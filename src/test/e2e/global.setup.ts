@@ -1,7 +1,23 @@
+/**
+ * @file Globalny skrypt setup dla testów end-to-end Playwright.
+ * Uruchamiany raz przed wszystkimi testami e2e.
+ * Odpowiedzialny za wczytanie zmiennych środowiskowych i sprawdzenie połączenia z bazą danych Supabase.
+ */
+
 /* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 
+/**
+ * Globalna funkcja setup dla testów Playwright.
+ * Wczytuje wymagane zmienne środowiskowe (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`),
+ * wyświetla informacje diagnostyczne i próbuje nawiązać połączenie z bazą danych Supabase
+ * w celu weryfikacji dostępności i poprawności konfiguracji przed uruchomieniem testów.
+ * Jeśli zmienne środowiskowe nie są ustawione, wyświetla ostrzeżenie.
+ *
+ * @async
+ * @returns {Promise<void>} Obietnica, która rozwiązuje się po zakończeniu setupu.
+ */
 async function globalSetup() {
   // Wyświetl informację o rozpoczęciu zestawu testów E2E
   console.log("Global Setup: Rozpoczynam zestaw testów E2E...");

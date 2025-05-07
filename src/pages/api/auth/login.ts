@@ -4,12 +4,35 @@ import type { APIContext } from "astro";
 
 export const prerender = false;
 
-// Schema dla walidacji danych logowania
+/**
+ * Schemat Zod do walidacji danych wejściowych dla żądania logowania.
+ * Wymaga adresu email (prawidłowy format) i hasła (niepuste).
+ */
 const loginSchema = z.object({
   email: z.string().email("Nieprawidłowy adres email"),
   password: z.string().min(1, "Hasło jest wymagane"),
 });
 
+/**
+ * Obsługuje żądania POST do endpointu `/api/auth/login`.
+ * Waliduje dane logowania (email, hasło), próbuje zalogować użytkownika za pomocą Supabase
+ * i zwraca odpowiedź z sukcesem lub błędem.
+ *
+ * @param {APIContext} context - Kontekst API Astro.
+ * @param {object} context.request - Obiekt żądania zawierający dane logowania w ciele (JSON).
+ * @param {object} context.locals - Obiekt locals, w którym middleware udostępnia instancję Supabase.
+ * @returns {Promise<Response>} - Zwraca Promise resolvingujący do obiektu Response.
+ *                                W przypadku sukcesu zwraca Response ze statusem 200 i obiektem JSON
+ *                                zawierającym `success: true`, `redirectUrl` i dane użytkownika.
+ *                                W przypadku nieprawidłowych danych wejściowych zwraca Response ze statusem 400.
+ *                                W przypadku błędu logowania Supabase zwraca Response ze statusem 401.
+ *                                W przypadku innych błędów serwera zwraca Response ze statusem 500.
+ * @dependencies
+ * - Zod: Używany do walidacji danych wejściowych (`loginSchema`).
+ * - Supabase Auth API: Używany do logowania użytkownika (`supabase.auth.signInWithPassword`).
+ * - Middleware: Dostarcza zainicjowaną instancję Supabase w `context.locals.supabase`.
+ * @throws {Error} - Może rzucić błąd, jeśli parsowanie JSON lub inne operacje zawiodą przed obsługą Supabase.
+ */
 export async function POST(context: APIContext) {
   const { request, locals } = context;
   try {

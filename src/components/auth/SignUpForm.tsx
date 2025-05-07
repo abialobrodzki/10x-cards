@@ -7,6 +7,11 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 
+/**
+ * Schemat Zod do walidacji danych wejściowych formularza rejestracji.
+ * Wymaga adresu email (prawidłowy format), hasła (min. 8 znaków) oraz potwierdzenia hasła.
+ * Schemat zawiera również walidację sprawdzającą, czy hasło i potwierdzenie hasła są identyczne.
+ */
 const signUpSchema = z
   .object({
     email: z.string().email("Nieprawidłowy adres email"),
@@ -18,8 +23,30 @@ const signUpSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Typ danych formularza rejestracji wywnioskowany ze schematu `signUpSchema`.
+ */
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
+/**
+ * Komponent React renderujący formularz rejestracji.
+ * Obsługuje walidację formularza przy użyciu react-hook-form i Zod,
+ * wysyła dane rejestracji do endpointu API `/api/auth/register`,
+ * obsługuje odpowiedzi (sukces/błąd, wymagana weryfikacja email) i zarządza
+ * stanem ładowania oraz komunikatami dla użytkownika.
+ *
+ * @component
+ * @returns {JSX.Element} Formularz rejestracji w postaci elementu JSX.
+ * @dependencies
+ * - react: `useState` do zarządzania stanem.
+ * - react-hook-form: `useForm` do zarządzania formularzem i walidacją.
+ * - @hookform/resolvers/zod: Integracja Zod z react-hook-form.
+ * - zod: Definicja schematu walidacji `signUpSchema`.
+ * - ../ui/button, ../ui/input, ../ui/form: Komponenty UI (Shadcn/ui).
+ * @sideEffects
+ * - Wysyła żądanie POST do `/api/auth/register`.
+ * - W przypadku pomyślnej rejestracji i braku wymogu potwierdzenia email może modyfikować `window.location.href` (przekierowanie z API).
+ */
 export function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -35,6 +62,21 @@ export function SignUpForm() {
     },
   });
 
+  /**
+   * Funkcja obsługująca wysyłanie formularza rejestracji.
+   * Waliduje dane, wysyła je do endpointu API `/api/auth/register`,
+   * przetwarza odpowiedź serwera, ustawia komunikaty o błędach lub sukcesie,
+   * i zarządza stanem ładowania. Resetuje formularz w przypadku sukcesu.
+   *
+   * @param {SignUpFormValues} values - Zwalidowane dane z formularza (email, hasło, potwierdzenie hasła).
+   * @returns {Promise<void>} Promise, który rozwiązuje się po zakończeniu procesu wysyłania.
+   * @throws {Error} Może rzucić błąd w przypadku problemów z siecią lub przetwarzaniem odpowiedzi (choć są one łapane wewnętrznie).
+   * @sideEffects
+   * - Ustawia stany `isLoading`, `serverError`, `registrationSuccess`, `requiresEmailConfirmation`.
+   * - Wywołuje `fetch` do endpointu API `/api/auth/register`.
+   * - Wywołuje `form.reset()` w przypadku sukcesu.
+   * - Może wywołać `window.location.assign` lub `window.location.href` w przypadku przekierowania z API.
+   */
   async function onSubmit(values: SignUpFormValues) {
     console.log("[onSubmit] Start");
     if (isLoading) {

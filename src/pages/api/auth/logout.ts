@@ -3,9 +3,32 @@ import type { APIContext } from "astro";
 
 export const prerender = false;
 
-// Nazwy ciasteczek używane przez Supabase
+/**
+ * Tablica zawierająca nazwy ciasteczek związanych z uwierzytelnianiem Supabase,
+ * które powinny zostać usunięte podczas wylogowywania.
+ */
 const AUTH_COOKIE_NAMES = ["sb-access-token", "sb-refresh-token", "supabase-auth-token"];
 
+/**
+ * Obsługuje żądania POST do endpointu `/api/auth/logout`.
+ * Wylogowuje użytkownika z Supabase i usuwa związane z sesją ciasteczka.
+ * W zależności od nagłówka 'Accept' zwraca odpowiedź JSON (dla wywołań AJAX/Fetch) lub przekierowuje
+ * użytkownika do strony logowania.
+ *
+ * @param {APIContext} context - Kontekst API Astro.
+ * @param {object} context.request - Obiekt żądania (używany do odczytu nagłówków i ciasteczek).
+ * @param {object} context.cookies - Obiekt cookies do zarządzania ciasteczkami.
+ * @param {function} context.redirect - Funkcja do przekierowywania na inny adres URL.
+ * @param {object} context.locals - Obiekt locals, w którym middleware udostępnia instancję Supabase.
+ * @returns {Promise<Response>} - Zwraca Promise resolvingujący do obiektu Response.
+ *                                W przypadku sukcesu zwraca Response ze statusem 200 i obiektem JSON
+ *                                (jeśli żądanie akceptuje JSON) lub przekierowanie do `/auth/login`.
+ *                                W przypadku błędów Supabase lub innych błędów serwera zwraca Response ze statusem 500.
+ * @dependencies
+ * - Supabase Auth API: Używany do wylogowania użytkownika (`supabase.auth.signOut`).
+ * - Middleware: Dostarcza zainicjowaną instancję Supabase w `context.locals.supabase`.
+ * @throws {Error} - Może rzucić błąd w przypadku nieoczekiwanych błędów serwera.
+ */
 export async function POST(context: APIContext) {
   const { request, cookies, redirect, locals } = context;
   console.log("Rozpoczynam proces wylogowywania");

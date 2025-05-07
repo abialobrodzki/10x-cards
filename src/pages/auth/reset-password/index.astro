@@ -2,32 +2,76 @@
 import MainLayout from "../../../layouts/MainLayout.astro";
 import { ResetPasswordForm } from "../../../components/auth/ResetPasswordForm";
 
-// Force client-side rendering for this page
+/**
+ * Wymusza renderowanie tej strony po stronie serwera (SSR).
+ * Jest to potrzebne do działania logiki pobierania parametrów z URL i potencjalnego przekierowania
+ * przed renderowaniem komponentu React.
+ */
 export const prerender = false;
 
+/**
+ * Pobiera parametry błędu (`error`, `errorCode`, `errorDescription`) z parametrów zapytania URL.
+ * Parametry te są ustawiane przez Supabase w przypadku błędów podczas procesu resetowania hasła.
+ */
 // Pobierz błędy z URL params
 const error = Astro.url.searchParams.get("error");
 const errorCode = Astro.url.searchParams.get("error_code");
 const errorDescription = Astro.url.searchParams.get("error_description");
+
+/**
+ * Flaga wskazująca, czy na stronie powinien zostać wyświetlony komunikat o błędzie,
+ * na podstawie obecności parametru `error` w URL.
+ */
 const hasError = !!error;
 
+/**
+ * Logika przekierowania w przypadku, gdy kod błędu wskazuje na wygasły token resetujący.
+ * Jeśli `errorCode` jest równe 'otp_expired', użytkownik zostaje przekierowany
+ * na stronę żądania resetowania hasła z odpowiednim powodem w URL.
+ */
 // Jeśli kod błędu to otp_expired (wygaśnięcie linku) przekieruj na forgot-password
 if (errorCode === "otp_expired") {
   return Astro.redirect("/auth/forgot-password?reason=expired");
 }
 
+/**
+ * Próbuje pobrać token resetowania hasła z parametrów zapytania URL (`?token=...` lub `?code=...`).
+ * Ta wartość jest przekazywana do komponentu React `ResetPasswordForm`.
+ * Komponent ten ma dodatkową logikę do wyodrębniania tokenu z innych źródeł (np. hash URL).
+ */
 // Próba pobrania tokenu z URL query params
 const tokenFromQuery = Astro.url.searchParams.get("token") || "";
 ---
 
 <MainLayout title="10xCards - Resetowanie hasła">
+  {
+    /* 
+    Ten skrypt in-line próbuje pobrać token resetowania hasła z hash URL.
+    Token z hasha jest często używany przez Supabase w przepływie resetowania.
+    Skrypt ten zapisuje znaleziony token w localStorage, aby komponent React
+    mógł go odczytać, a następnie czyści hash URL.
+  */
+  }
   <!-- Skrypt pobierający token z hash URL -->
   <script src="/token-extractor.js" is:inline></script>
 
+  {
+    /* 
+    Główny kontener strony resetowania hasła.
+    Warunkowo renderuje komunikat o błędzie (jeśli `hasError` jest true)
+    lub formularz resetowania hasła (`ResetPasswordForm`).
+  */
+  }
   <div class="container max-w-md mx-auto px-4 py-8">
     <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
       {
+        // Warunkowe renderowanie: wyświetl komunikat o błędzie lub formularz resetowania hasła.
         hasError ? (
+          /* 
+            Sekcja wyświetlana w przypadku błędu w linku resetującym.
+            Zawiera nagłówek, opis błędu pobrany z URL (`errorDescription`) i link
+            do strony żądania nowego linku resetującego.
+          */
           <div class="space-y-6">
             <div class="space-y-2 text-center">
               <h1 class="text-2xl font-bold">Nieprawidłowy link</h1>
@@ -35,6 +79,7 @@ const tokenFromQuery = Astro.url.searchParams.get("token") || "";
             </div>
 
             <div class="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+              {/* Wyświetla opis błędu, zastępując znaki '+' spacjami. */}
               {errorDescription
                 ? errorDescription.replace(/\+/g, " ")
                 : "Link do resetowania hasła jest nieprawidłowy lub wygasł"}
@@ -50,6 +95,10 @@ const tokenFromQuery = Astro.url.searchParams.get("token") || "";
             </div>
           </div>
         ) : (
+          /* 
+            Komponent formularza resetowania hasła, renderowany tylko po stronie klienta (`client:load`).
+            Otrzymuje token próbnie pobrany z query params URL jako właściwość.
+          */
           <ResetPasswordForm client:load token={tokenFromQuery} />
         )
       }

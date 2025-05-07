@@ -7,13 +7,39 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 
+/**
+ * Schemat Zod do walidacji danych wejściowych formularza logowania.
+ * Wymaga adresu email (prawidłowy format) i hasła (niepuste).
+ */
 const loginSchema = z.object({
   email: z.string().email("Nieprawidłowy adres email"),
   password: z.string().min(1, "Hasło jest wymagane"),
 });
 
+/**
+ * Typ danych formularza logowania wywnioskowany ze schematu `loginSchema`.
+ */
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/**
+ * Komponent React renderujący formularz logowania.
+ * Obsługuje walidację formularza przy użyciu react-hook-form i Zod,
+ * wysyła dane logowania do endpointu API `/api/auth/login` i przekierowuje
+ * użytkownika po pomyślnym zalogowaniu. Obsługuje również wyświetlanie błędów serwera
+ * i stan ładowania.
+ *
+ * @component
+ * @returns {JSX.Element} Formularz logowania w postaci elementu JSX.
+ * @dependencies
+ * - react: `useState` do zarządzania stanem.
+ * - react-hook-form: `useForm` do zarządzania formularzem i walidacją.
+ * - @hookform/resolvers/zod: Integracja Zod z react-hook-form.
+ * - zod: Definicja schematu walidacji `loginSchema`.
+ * - ../ui/button, ../ui/input, ../ui/form: Komponenty UI (Shadcn/ui).
+ * @sideEffects
+ * - Wysyła żądania POST do `/api/auth/logout` (próba wyczyszczenia ciasteczek) i `/api/auth/login`.
+ * - W przypadku sukcesu modyfikuje `window.location.href` w celu przekierowania.
+ */
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -26,6 +52,20 @@ export function LoginForm() {
     },
   });
 
+  /**
+   * Funkcja obsługująca wysyłanie formularza logowania.
+   * Waliduje dane, próbuje wyczyścić stare ciasteczka sesji (opcjonalnie),
+   * wysyła dane logowania do API, obsługuje odpowiedzi (sukces/błąd)
+   * i zarządza stanem ładowania oraz błędami serwera.
+   *
+   * @param {LoginFormValues} values - Zwalidowane dane z formularza (email i hasło).
+   * @returns {Promise<void>} Promise, który rozwiązuje się po zakończeniu procesu wysyłania.
+   * @throws {Error} Może rzucić błąd w przypadku problemów z siecią lub przetwarzaniem odpowiedzi (choć są one łapane wewnętrznie).
+   * @sideEffects
+   * - Ustawia stan `isLoading` i `serverError`.
+   * - Wywołuje `fetch` do endpointów API.
+   * - Modyfikuje `window.location.href` w przypadku pomyślnego logowania.
+   */
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     setServerError(null);

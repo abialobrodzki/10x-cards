@@ -15,10 +15,11 @@ const FLASHCARDS_TABLE = "flashcards";
 const DEFAULT_FLASHCARD_SELECT = "id, front, back, source, created_at, updated_at, generation_id";
 
 /**
- * Sprawdza i loguje błąd zwrócony przez Supabase.
- * @param error Obiekt błędu PostgrestError lub null.
- * @param context String opisujący operację, podczas której wystąpił błąd.
- * @returns True, jeśli wystąpił błąd, w przeciwnym razie false.
+ * Checks for and logs a Supabase error.
+ * This helper function centralizes error logging for Supabase operations.
+ * @param error - The Supabase PostgrestError object or null.
+ * @param context - A string describing the operation during which the error occurred.
+ * @returns True if an error occurred and was logged, false otherwise.
  */
 function checkAndLogSupabaseError(error: PostgrestError | null, context: string): boolean {
   if (error) {
@@ -34,11 +35,20 @@ function checkAndLogSupabaseError(error: PostgrestError | null, context: string)
 }
 
 /**
- * Retrieves a paginated list of flashcards for a user
- * @param supabase Supabase client from context.locals
- * @param userId User ID from the authenticated session
- * @param params Filter and pagination parameters
- * @returns Paginated list of flashcards and total count
+ * Retrieves a paginated list of flashcards for a user from the database.
+ * Supports filtering by generation ID, source, and text search, as well as pagination and sorting.
+ * @param supabase - Supabase client instance obtained from context.locals.
+ * @param userId - The ID of the user whose flashcards are to be retrieved.
+ * @param params - An object containing parameters for filtering, pagination, and sorting.
+ * @param [params.page=1] - The page number for pagination.
+ * @param [params.pageSize=20] - The number of flashcards per page.
+ * @param [params.sortBy='created_at'] - The field to sort the flashcards by.
+ * @param [params.sortOrder='desc'] - The sorting order ('asc' or 'desc').
+ * @param [params.generationId] - Optional filter for flashcards generated in a specific generation process.
+ * @param [params.source] - Optional filter for flashcards from a specific source.
+ * @param [params.searchText] - Optional text to search within flashcard front and back content.
+ * @returns A promise that resolves with an object containing the paginated list of flashcards and the total count.
+ * @throws {PostgrestError | Error} If a Supabase error occurs during the database query or an unexpected error occurs.
  */
 export async function getFlashcardsService(
   supabase: SupabaseClient<Database>,
@@ -195,11 +205,12 @@ function applySorting(
 }
 
 /**
- * Fetches a specific flashcard by ID
- * @param supabase Supabase client from context.locals
- * @param userId User ID from the authenticated session
- * @param flashcardId ID of the flashcard to retrieve
- * @returns The flashcard or null if not found
+ * Fetches a specific flashcard for a user by its ID.
+ * @param supabase - Supabase client instance obtained from context.locals.
+ * @param userId - The ID of the user who owns the flashcard.
+ * @param flashcardId - The ID of the flashcard to retrieve.
+ * @returns A promise that resolves with the flashcard DTO if found, or null if not found or if a specific Supabase "Not Found" error occurs.
+ * @throws {PostgrestError | Error} If a Supabase error other than "Not Found" occurs during the query or an unexpected error occurs.
  */
 export async function getFlashcardByIdService(
   supabase: SupabaseClient<Database>,
@@ -263,12 +274,13 @@ export async function getFlashcardByIdService(
 }
 
 /**
- * Updates a flashcard
- * @param supabase Supabase client from context.locals
- * @param userId User ID from the authenticated session
- * @param flashcardId ID of the flashcard to update
- * @param flashcardData Data to update the flashcard with
- * @returns The updated flashcard or null if not found
+ * Updates an existing flashcard for a user.
+ * @param supabase - Supabase client instance obtained from context.locals.
+ * @param userId - The ID of the user who owns the flashcard.
+ * @param flashcardId - The ID of the flashcard to update.
+ * @param flashcardData - The data to update the flashcard with.
+ * @returns A promise that resolves with the updated flashcard DTO if successful, or null if the flashcard was not found.
+ * @throws {PostgrestError | Error} If a Supabase error occurs during the update or an unexpected error occurs.
  */
 export async function updateFlashcardService(
   supabase: SupabaseClient<Database>,
@@ -305,11 +317,12 @@ export async function updateFlashcardService(
 }
 
 /**
- * Deletes a flashcard
- * @param supabase Supabase client from context.locals
- * @param userId User ID from the authenticated session
- * @param flashcardId ID of the flashcard to delete
- * @returns True if the flashcard was deleted, false if not found
+ * Deletes a flashcard for a user by its ID.
+ * @param supabase - Supabase client instance obtained from context.locals.
+ * @param userId - The ID of the user who owns the flashcard.
+ * @param flashcardId - The ID of the flashcard to delete.
+ * @returns A promise that resolves with true if the flashcard was deleted successfully, false if it was not found.
+ * @throws {PostgrestError | Error} If a Supabase error occurs during the deletion or an unexpected error occurs.
  */
 export async function deleteFlashcardService(
   supabase: SupabaseClient<Database>,
@@ -429,11 +442,12 @@ export async function deleteFlashcardService(
 }
 
 /**
- * Creates a single flashcard
- * @param supabase Supabase client from context.locals
- * @param userId User ID from the authenticated session
- * @param flashcardData Data for the new flashcard
- * @returns The created flashcard
+ * Creates a new flashcard for a user.
+ * @param supabase - Supabase client instance obtained from context.locals.
+ * @param userId - The ID of the user for whom the flashcard is being created.
+ * @param flashcardData - The data for the new flashcard.
+ * @returns A promise that resolves with the created flashcard DTO.
+ * @throws {PostgrestError | Error} If a Supabase error occurs during creation or an unexpected error occurs.
  */
 export async function createFlashcardService(
   supabase: SupabaseClient<Database>,
@@ -493,12 +507,16 @@ export async function createFlashcardService(
 }
 
 /**
- * Creates multiple flashcards
- * @param supabase Supabase client from context.locals
- * @param userId User ID from the authenticated session
- * @param flashcardsData Data for the new flashcards
- * @param isSaveAll Flag indicating if we're saving all flashcards (Zapisz wszystkie option)
- * @returns The created flashcards
+ * Creates multiple new flashcards for a user.
+ * Offers an option to save all flashcards in a single transaction or individually.
+ * @param supabase - Supabase client instance obtained from context.locals.
+ * @param userId - The ID of the user for whom the flashcards are being created.
+ * @param flashcardsData - An object containing the array of flashcard data to create and potentially a generation ID.
+ * @param flashcardsData.flashcards - An array of flashcard data objects.
+ * @param [flashcardsData.generationId] - Optional ID of the generation process that created these flashcards.
+ * @param [isSaveAll=false] - If true, attempts to save all flashcards in a single transaction. If false, saves them individually.
+ * @returns A promise that resolves with an array of the created flashcard DTOs.
+ * @throws {PostgrestError | Error} If a Supabase error occurs during creation (either batch or individual) or an unexpected error occurs.
  */
 export async function createFlashcardsService(
   supabase: SupabaseClient<Database>,

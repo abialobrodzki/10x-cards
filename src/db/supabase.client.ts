@@ -4,22 +4,54 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { APIContext } from "astro";
 import type { Database } from "./database.types";
 
-// Rozszerzony typ APIContext dla środowiska Cloudflare Pages z dostępem do .env
-interface CloudflareAPIContext extends APIContext {
+/**
+ * Rozszerzony typ APIContext dla środowiska Cloudflare Pages z dostępem do zmiennych środowiskowych.
+ * Zapewnia dostęp do kluczy SUPABASE_URL, SUPABASE_KEY oraz opcjonalnego DEFAULT_USER_ID.
+ */
+export interface CloudflareAPIContext extends APIContext {
+  /**
+   * Zmienne środowiskowe dostępne w środowisku Cloudflare Pages.
+   */
   env: {
-    // Definiujemy strukturę env, która powinna być dostępna w Cloudflare Pages
+    /**
+     * Adres URL projektu Supabase.
+     */
     SUPABASE_URL: string;
+    /**
+     * Klucz API Supabase (anon lub service_role w zależności od potrzeb i bezpieczeństwa).
+     */
     SUPABASE_KEY: string;
+    /**
+     * Opcjonalne domyślne ID użytkownika, używane głównie w środowisku deweloperskim lub testach.
+     * @deprecated Nie używać w produkcji.
+     */
     DEFAULT_USER_ID?: string;
     // Dodaj tutaj inne zmienne środowiskowe, jeśli są potrzebne i dostępne w .env
   };
 }
 
-// Re-eksportuj typ SupabaseClient dla spójności
+/**
+ * Re-eksport typu SupabaseClient z biblioteki `@supabase/supabase-js` dla spójności
+ * w całym projekcie. Używaj tego typu przy typowaniu instancji klienta Supabase.
+ */
 export type { SupabaseClient };
 
 const defaultUserId = import.meta.env.DEFAULT_USER_ID;
 
+/**
+ * Tworzy i konfiguruje instancję klienta Supabase po stronie serwera (SSR) dla Astro.
+ * Klient jest skonfigurowany do pracy ze zmiennymi środowiskowymi dostępnymi w kontekście Astro/Cloudflare Pages
+ * oraz do obsługi ciasteczek dla zarządzania sesją użytkownika.
+ *
+ * Próbuje pobrać klucz SUPABASE_URL i SUPABASE_KEY z następujących źródeł (w kolejności):
+ * 1. `context.env` (standard dla adapterów Astro)
+ * 2. `context.locals.runtime.env` (specyficzne dla Cloudflare Pages Workers)
+ * 3. `import.meta.env` (tylko w trybie deweloperskim, jako fallback)
+ *
+ * @param context - Obiekt kontekstu Astro API, potencjalnie rozszerzony o właściwości środowiska uruchomieniowego (np. Cloudflare).
+ * @returns Instancja klienta Supabase skonfigurowana dla SSR.
+ * @throws Error jeśli zmienne środowiskowe SUPABASE_URL lub SUPABASE_KEY nie zostaną znalezione.
+ */
 export const createSupabaseServerInstance = (context: CloudflareAPIContext) => {
   let supabaseUrl: string | undefined;
   let supabaseKey: string | undefined;

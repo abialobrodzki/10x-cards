@@ -3,11 +3,33 @@ import type { APIContext } from "astro";
 
 export const prerender = false;
 
-// Schema dla walidacji danych
+/**
+ * Schemat Zod do walidacji danych wejściowych dla żądania resetowania hasła (tylko email).
+ * Wymaga adresu email (prawidłowy format).
+ */
 const forgotPasswordSchema = z.object({
   email: z.string().email("Nieprawidłowy adres email"),
 });
 
+/**
+ * Obsługuje żądania POST do endpointu `/api/auth/forgot-password`.
+ * Waliduje adres email, a następnie wysyła link do resetowania hasła na podany email
+ * za pomocą Supabase. Zawsze zwraca odpowiedź z sukcesem (status 200) dla celów bezpieczeństwa,
+ * niezależnie od tego, czy email istnieje w bazie, aby uniknąć enumeracji użytkowników.
+ *
+ * @param {APIContext} context - Kontekst API Astro.
+ * @param {object} context.request - Obiekt żądania zawierający adres email w ciele (JSON).
+ * @param {object} context.locals - Obiekt locals, w którym middleware udostępnia instancję Supabase.
+ * @returns {Promise<Response>} - Zwraca Promise resolvingujący do obiektu Response ze statusem 200
+ *                                informującym o wysłaniu linku (jeśli email istnieje).
+ *                                W przypadku nieprawidłowych danych wejściowych zwraca Response ze statusem 400.
+ *                                W przypadku innych błędów serwera zwraca Response ze statusem 500.
+ * @dependencies
+ * - Zod: Używany do walidacji danych wejściowych (`forgotPasswordSchema`).
+ * - Supabase Auth API: Używany do wysyłania linka resetującego hasło (`supabase.auth.resetPasswordForEmail`).
+ * - Middleware: Dostarcza zainicjowaną instancję Supabase w `context.locals.supabase`.
+ * @throws {Error} - Może rzucić błąd, jeśli parsowanie JSON lub inne operacje zawiodą przed obsługą Supabase.
+ */
 export async function POST({ request, locals }: APIContext) {
   try {
     // Parsowanie body requestu

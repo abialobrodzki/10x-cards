@@ -8,7 +8,9 @@ import type {
 } from "../../types/viewModels";
 import type { GenerationWithFlashcardsResponseDto } from "../../types";
 
-// Define action types
+/**
+ * Defines the possible actions that can be dispatched to the reducer.
+ */
 type Action =
   | { type: "GENERATE_START" }
   | { type: "GENERATE_SUCCESS"; payload: GenerationWithFlashcardsResponseDto }
@@ -22,7 +24,9 @@ type Action =
   | { type: "SAVE_ERROR"; payload: string }
   | { type: "CLEAR_STATE" };
 
-// Define state type
+/**
+ * Defines the shape of the state managed by the useGenerateFlashcardsView hook.
+ */
 interface State {
   flashcards: FlashcardViewModel[];
   generation: {
@@ -39,7 +43,9 @@ interface State {
   selectedFlashcardIndex: number;
 }
 
-// Initial state
+/**
+ * The initial state for the useGenerateFlashcardsView hook.
+ */
 const initialState: State = {
   flashcards: [],
   generation: {
@@ -56,7 +62,12 @@ const initialState: State = {
   selectedFlashcardIndex: -1,
 };
 
-// Reducer function
+/**
+ * Reducer function to handle state updates based on dispatched actions.
+ * @param state The current state.
+ * @param action The dispatched action.
+ * @returns The new state.
+ */
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "GENERATE_START":
@@ -289,11 +300,20 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+/**
+ * A React hook for managing the state and logic related to generating, accepting, rejecting, editing, and saving flashcards.
+ * It provides the necessary state variables and functions to interact with the flashcard generation process.
+ * @returns An object containing the current generation, flashcards, and saving states, as well as functions to trigger actions.
+ */
 export function useGenerateFlashcardsView() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const savingInProgressRef = useRef(false);
 
-  // Function to generate flashcards
+  /**
+   * Initiates the flashcard generation process.
+   * Dispatches 'GENERATE_START', calls the API, and dispatches 'GENERATE_SUCCESS' or 'GENERATE_ERROR'.
+   * @param text The input text based on which flashcards should be generated.
+   */
   const generateFlashcards = async (text: string) => {
     try {
       dispatch({ type: "GENERATE_START" });
@@ -318,7 +338,11 @@ export function useGenerateFlashcardsView() {
     }
   };
 
-  // Functions for managing flashcards
+  /**
+   * Marks a flashcard as accepted.
+   * Dispatches 'ACCEPT_FLASHCARD' action.
+   * @param index The index of the flashcard in the flashcards list.
+   */
   const acceptFlashcard = (index: number) => {
     logger.debug(`Accepting flashcard at index ${index}`);
 
@@ -344,6 +368,12 @@ export function useGenerateFlashcardsView() {
     }, 50);
   };
 
+  /**
+   * Updates an existing flashcard with new data.
+   * Dispatches 'EDIT_FLASHCARD' action.
+   * @param index The index of the flashcard to edit.
+   * @param updatedData An object containing the updated front and back text.
+   */
   const editFlashcard = (index: number, updatedData: FlashcardBaseData) => {
     logger.debug(`Editing flashcard at index ${index}`, updatedData);
     dispatch({
@@ -353,6 +383,11 @@ export function useGenerateFlashcardsView() {
     dispatch({ type: "SELECT_FLASHCARD", payload: index });
   };
 
+  /**
+   * Marks a flashcard as rejected.
+   * Dispatches 'REJECT_FLASHCARD' action.
+   * @param index The index of the flashcard in the flashcards list.
+   */
   const rejectFlashcard = (index: number) => {
     logger.debug(`Rejecting flashcard at index ${index}`);
 
@@ -377,13 +412,22 @@ export function useGenerateFlashcardsView() {
     }, 50);
   };
 
-  // Function to select a flashcard without accepting it
+  /**
+   * Selects a flashcard.
+   * Dispatches 'SELECT_FLASHCARD' action.
+   * @param index The index of the flashcard to select.
+   */
   const selectFlashcard = (index: number) => {
     logger.debug(`Selecting flashcard at index ${index} (without accepting)`);
     dispatch({ type: "SELECT_FLASHCARD", payload: index });
   };
 
-  // Function to map FlashcardViewModel to CreateFlashcardDto
+  /**
+   * Maps a FlashcardViewModel to a CreateFlashcardDto for saving.
+   * @param flashcard The flashcard view model.
+   * @param generationId The ID of the generation the flashcard belongs to.
+   * @returns The flashcard data in CreateFlashcardDto format.
+   */
   const mapToCreateFlashcardDto = (flashcard: FlashcardViewModel, generationId: number): CreateFlashcardDto => {
     // Asercje bezpieczeństwa - weryfikujemy stan fiszki przed mapowaniem
     if (flashcard.isRejected) {
@@ -414,7 +458,11 @@ export function useGenerateFlashcardsView() {
     };
   };
 
-  // Function to save selected (accepted) flashcards
+  /**
+   * Saves the currently selected flashcards.
+   * Filters for accepted and edited flashcards, maps them to DTOs, and calls the save API.
+   * Dispatches 'SAVE_START', 'SAVE_SUCCESS', or 'SAVE_ERROR'.
+   */
   const saveSelectedFlashcards = async () => {
     if (savingInProgressRef.current || state.saving.isSaving) {
       logger.warn("Save already in progress");
@@ -509,7 +557,11 @@ export function useGenerateFlashcardsView() {
     }
   };
 
-  // Function to save all flashcards
+  /**
+   * Saves all generated flashcards that are not rejected.
+   * Filters for accepted and edited flashcards, maps them to DTOs, and calls the save API.
+   * Dispatches 'SAVE_START', 'SAVE_SUCCESS', or 'SAVE_ERROR'.
+   */
   const saveAllFlashcards = async () => {
     if (savingInProgressRef.current || state.saving.isSaving) {
       logger.warn("Save already in progress");

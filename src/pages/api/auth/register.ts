@@ -3,7 +3,11 @@ import type { APIContext } from "astro";
 
 export const prerender = false;
 
-// Schema dla walidacji danych rejestracji
+/**
+ * Schemat Zod do walidacji danych wejściowych dla żądania rejestracji.
+ * Wymaga adresu email (prawidłowy format), hasła (min. 8 znaków) oraz potwierdzenia hasła.
+ * Schemat zawiera również walidację sprawdzającą, czy hasło i potwierdzenie hasła są identyczne.
+ */
 const registerSchema = z
   .object({
     email: z.string().email("Nieprawidłowy adres email"),
@@ -15,6 +19,29 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Obsługuje żądania POST do endpointu `/api/auth/register`.
+ * Waliduje dane rejestracji (email, hasło, potwierdzenie hasła) przy użyciu `registerSchema`,
+ * próbuje zarejestrować nowego użytkownika za pomocą Supabase i zwraca odpowiedź z sukcesem lub błędem.
+ * W przypadku pomyślnej rejestracji (z potwierdzeniem email) zwraca status 200 informujący o potrzebie weryfikacji.
+ * W przypadku pomyślnej rejestracji (bez potwierdzenia email) przekierowuje do `/generate`.
+ *
+ * @param {APIContext} context - Kontekst API Astro.
+ * @param {object} context.request - Obiekt żądania zawierający dane rejestracji w ciele (JSON).
+ * @param {function} context.redirect - Funkcja do przekierowywania na inny adres URL.
+ * @param {object} context.locals - Obiekt locals, w którym middleware udostępnia instancję Supabase.
+ * @returns {Promise<Response>} - Zwraca Promise resolvingujący do obiektu Response.
+ *                                W przypadku sukcesu zwraca Response ze statusem 200 (wymagana weryfikacja email)
+ *                                lub przekierowanie (bez wymaganej weryfikacji email).
+ *                                W przypadku nieprawidłowych danych wejściowych zwraca Response ze statusem 400.
+ *                                W przypadku błędu rejestracji Supabase zwraca Response ze statusem 400.
+ *                                W przypadku innych błędów serwera zwraca Response ze statusem 500.
+ * @dependencies
+ * - Zod: Używany do walidacji danych wejściowych (`registerSchema`).
+ * - Supabase Auth API: Używany do rejestracji użytkownika (`supabase.auth.signUp`).
+ * - Middleware: Dostarcza zainicjowaną instancję Supabase w `context.locals.supabase`.
+ * @throws {Error} - Może rzucić błąd, jeśli parsowanie JSON lub inne operacje zawiodą przed obsługą Supabase.
+ */
 export async function POST({ request, redirect, locals }: APIContext) {
   try {
     // Parsowanie body requestu

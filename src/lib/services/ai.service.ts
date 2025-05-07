@@ -20,9 +20,10 @@ export interface AIServiceConfig {
 }
 
 /**
- * Wykrywa prawdopodobny język tekstu na podstawie prostych heurystyk
- * @param text Tekst do analizy
- * @returns Kod języka ('pl' dla polskiego, 'en' dla angielskiego, inne dla nieznanych)
+ * Detects the probable language of the provided text using simple heuristics.
+ * Primarily distinguishes between Polish ('pl') and English ('en').
+ * @param text - The text to analyze for language detection.
+ * @returns The detected language code ('pl' for Polish, 'en' for English, or 'en' as a fallback).
  */
 export function detectLanguage(text: string): string {
   // Próbka tekstu do analizy (pierwsze 500 znaków)
@@ -62,9 +63,10 @@ export function detectLanguage(text: string): string {
 }
 
 /**
- * Tworzy instrukcję systemową dla AI na podstawie języka.
- * @param language Kod języka ('pl', 'en')
- * @returns Instrukcja systemowa dla modelu AI
+ * Builds the system instruction prompt for the AI based on the specified language.
+ * Provides instructions to the AI model on the desired output format and content for flashcard generation.
+ * @param language - The language code ('pl' or 'en') for which to build the prompt.
+ * @returns The system instruction string for the AI model.
  */
 function buildSystemPrompt(language: string): string {
   if (language === "pl") {
@@ -91,10 +93,12 @@ function buildSystemPrompt(language: string): string {
 }
 
 /**
- * Parsuje i czyści odpowiedź JSON od AI, próbując wyodrębnić tablicę fiszek.
- * @param content Zawartość odpowiedzi od AI (może być stringiem lub już obiektem)
- * @returns Sparsowane dane fiszek (oczekiwana tablica)
- * @throws Błąd, jeśli parsowanie się nie powiedzie lub nie znaleziono danych
+ * Parses and cleans the JSON response from the AI, attempting to extract a flashcard array or object.
+ * Handles cases where the response might be a string containing JSON or already a parsed object.
+ * Includes error handling and attempts to clean up common issues in string-based JSON responses.
+ * @param content - The content of the AI response, which can be a string or an object.
+ * @returns The parsed flashcard data, expected to be an array or object.
+ * @throws {Error} If the content is empty, not a string or object, or if JSON parsing fails even after cleanup attempts.
  */
 function parseAndCleanAiJsonResponse(content: unknown): unknown {
   if (!content) {
@@ -158,10 +162,16 @@ function parseAndCleanAiJsonResponse(content: unknown): unknown {
 }
 
 /**
- * Generates flashcards using OpenRouter.ai API or mock based on config
- * @param text Text to generate flashcards from
- * @param language Optional language code ('pl', 'en') - auto-detected if not provided
- * @param config Optional service configuration (apiKey, useMock, siteUrl)
+ * Generates flashcards using either the OpenRouter.ai API or a mock service based on the provided configuration.
+ * Detects language if not specified, builds the appropriate system prompt, sends the request to the AI (or uses the mock), parses the response, and returns the generated flashcards and the model name.
+ * @param text - The text from which to generate flashcards.
+ * @param [language] - Optional language code ('pl' or 'en'). If not provided, the language will be auto-detected.
+ * @param [config] - Optional service configuration object.
+ * @param [config.useMock=false] - If true, uses the mock AI service instead of the OpenRouter API.
+ * @param [config.apiKey] - The API key for the OpenRouter service. Required if useMock is false.
+ * @param [config.siteUrl='https://10xcards.app'] - The site URL to be sent in the HTTP referer header for API requests.
+ * @returns A promise that resolves with an object containing an array of base flashcard DTOs and the model name used.
+ * @throws {Error} If the API key is not set when not using the mock service, or if there is a failure during the API request, response parsing, or an unexpected error.
  */
 export async function generateFlashcardsWithAI(
   text: string,
