@@ -4,6 +4,8 @@
 
 10x-cards is an AI-powered flashcard generator designed to simplify the creation and management of educational flashcards. It leverages advanced language models via Openrouter.ai to automatically generate flashcard suggestions from user-provided text, saving time and effort in content creation.
 
+Actual project is hosted on Cloudflare Pages. Link: https://066346b0.10x-cards-4sq.pages.dev/
+
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
