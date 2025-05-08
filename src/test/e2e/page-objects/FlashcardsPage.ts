@@ -7,6 +7,9 @@ export class FlashcardsPage {
   readonly errorMessageContainer: Locator;
   readonly retryButton: Locator;
   readonly flashcardsList: Locator;
+  readonly flashcardsListEmpty: Locator;
+  readonly flashcardsSearchFilter: Locator;
+  readonly flashcardsSearchFilterClearButton: Locator;
   readonly flashcardModal: Locator;
   readonly flashcardDeleteModal: Locator;
   readonly flashcardDeleteButton: Locator;
@@ -15,6 +18,7 @@ export class FlashcardsPage {
   readonly flashcardFrontInput: Locator;
   readonly flashcardBackInput: Locator;
   readonly saveFlashcardButton: Locator;
+  readonly cancelFlashcardButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -23,6 +27,9 @@ export class FlashcardsPage {
     this.errorMessageContainer = page.getByTestId("error-message-container");
     this.retryButton = page.getByTestId("retry-button");
     this.flashcardsList = page.getByTestId("flashcards-grid-view");
+    this.flashcardsListEmpty = page.getByTestId("empty-flashcards-list");
+    this.flashcardsSearchFilter = page.getByTestId("search-input");
+    this.flashcardsSearchFilterClearButton = page.getByTestId("reset-filters-button");
     this.flashcardModal = page.getByTestId("flashcard-form-modal");
     this.flashcardDeleteModal = page.getByTestId("delete-confirmation-dialog");
     this.flashcardDeleteButton = page.getByTestId("confirm-delete-button");
@@ -31,6 +38,7 @@ export class FlashcardsPage {
     this.flashcardFrontInput = page.getByTestId("front-textarea");
     this.flashcardBackInput = page.getByTestId("back-textarea");
     this.saveFlashcardButton = page.getByTestId("save-button");
+    this.cancelFlashcardButton = page.getByTestId("cancel-button");
   }
 
   getFlashcardDeleteButton(flashcardId: number): Locator {

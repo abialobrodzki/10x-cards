@@ -21,6 +21,7 @@ test.describe("Visual tests @visual", () => {
     await loginPage.goto();
 
     // Assert
+    await expect(loginPage.emailInput).toBeVisible();
     await expect(page).toHaveScreenshot("login-page.png");
   });
 
@@ -32,6 +33,7 @@ test.describe("Visual tests @visual", () => {
     await registerPage.goto();
 
     // Assert
+    await expect(registerPage.emailInput).toBeVisible();
     await expect(page).toHaveScreenshot("register-page.png");
   });
 
@@ -43,6 +45,7 @@ test.describe("Visual tests @visual", () => {
     await forgotPasswordPage.goto();
 
     // Assert
+    await expect(forgotPasswordPage.emailInput).toBeVisible();
     await expect(page).toHaveScreenshot("forgot-password-page.png");
   });
 
@@ -60,15 +63,17 @@ test.describe("Visual tests @visual", () => {
     // Act
     await loginPage.goto();
     await loginPage.login(userEmail, userPassword);
-    await generatePage.goto();
 
     // Assert
+    await expect(generatePage.textInputForm).toBeVisible();
     await expect(page).toHaveScreenshot("generate-page.png");
   });
 
   test("takes a screenshot page: /flashcards @visual", async ({ page }) => {
     // Arrange
+    const emptySearch = "Wyszukiwanie nie istniejacej fiszki";
     loginPage = new LoginPage(page);
+    generatePage = new GeneratePage(page);
     flashcardsPage = new FlashcardsPage(page);
     const userEmail = process.env.TEST_USER_EMAIL;
     const userPassword = process.env.TEST_USER_PASSWORD;
@@ -80,9 +85,14 @@ test.describe("Visual tests @visual", () => {
     // Act
     await loginPage.goto();
     await loginPage.login(userEmail, userPassword);
+    await expect(generatePage.textInputForm).toBeVisible();
     await flashcardsPage.goto();
+    await flashcardsPage.flashcardsSearchFilter.fill(emptySearch);
+    await page.waitForLoadState("networkidle");
 
     // Assert
+    await expect(flashcardsPage.flashcardsSearchFilterClearButton).toBeVisible();
+    await expect(flashcardsPage.flashcardsListEmpty).toBeVisible();
     await expect(page).toHaveScreenshot("flashcards-page.png");
   });
 });
