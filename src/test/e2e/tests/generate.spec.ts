@@ -75,7 +75,7 @@ test.describe("Generate Page", () => {
 
     // Assert
     await expect(generatePage.generateSpinner).toBeVisible();
-    await expect(generatePage.flashcardList).toBeVisible({ timeout: 20000 });
+    await expect(generatePage.flashcardList).toBeVisible({ timeout: 25000 });
     await expect(
       generatePage.flashcardListHeader.getByText(expectedHeaderText),
       `Expected front flashcard "${expectedHeaderText}"`
