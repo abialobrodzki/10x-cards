@@ -4,7 +4,8 @@
 
 10x-cards is an AI-powered flashcard generator designed to simplify the creation and management of educational flashcards. It leverages advanced language models via Openrouter.ai to automatically generate flashcard suggestions from user-provided text, saving time and effort in content creation.
 
-Actual project is hosted on Cloudflare Pages. Link: https://10x-cards-4sq.pages.dev
+Actual project is hosted on Cloudflare Pages. Link: https://10x-cards-4sq.pages.dev.
+Built with Llama (meta-llama/llama-4-scout:free).
 
 ## Table of Contents
 
@@ -120,6 +121,8 @@ Please follow the AI guidelines and coding practices defined in the AI configura
 ## License
 
 This project is licensed under the **MIT License**.
+
+Llama 4 is licensed under the [Llama 4 License](https://github.com/meta-llama/llama-models/blob/main/models/llama4/LICENSE).
 
 ---
 
