@@ -132,6 +132,7 @@ describe("generateFlashcardsWithAI", () => {
           front: expect.stringContaining(`Mock Flashcard ${index + 1} Front`),
           back: expect.stringContaining(`Mock Answer ${index + 1}`),
           source: "ai-full",
+          user_id: expect.any(String),
         });
       });
     });

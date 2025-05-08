@@ -14,7 +14,14 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      exclude: ["msw/node", "src/mocks"],
+      exclude: [
+        "msw/node",
+        "src/mocks",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-form",
+        "@radix-ui/react-button",
+        "@radix-ui/react-slot",
+      ],
     },
   },
   adapter: cloudflare(),

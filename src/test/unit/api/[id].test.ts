@@ -353,7 +353,10 @@ describe("API /api/flashcards/[id]", () => {
         const response = await api.DELETE({ params: { id: "404" }, locals } as unknown as APIContext);
         // Verify Supabase update call structure
         expect(supabaseMock.from).toHaveBeenCalledWith("flashcards");
-        expect(supabaseFrom.update).toHaveBeenCalledWith({ deleted_at: expect.any(String) });
+        expect(supabaseFrom.update).toHaveBeenCalledWith({
+          front: "[DELETED] This flashcard has been deleted",
+          back: "[DELETED] This flashcard has been deleted",
+        });
         expect(supabaseUpdateReturn.eq).toHaveBeenCalledWith("id", 404);
         expect(response.status).toBe(204);
       });

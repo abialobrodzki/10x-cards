@@ -320,7 +320,7 @@ describe("POST /api/auth/login", () => {
     expect(response.status).toBe(500);
     const jsonResponse = await response.json();
     expect(jsonResponse.success).toBe(false);
-    expect(jsonResponse.error).toBe("Błąd serwera. Spróbuj ponownie później.");
+    expect(jsonResponse.error).toBe("Wystąpił błąd podczas logowania");
     expect(mockSupabase.auth.signInWithPassword).not.toHaveBeenCalled();
     expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
   });
