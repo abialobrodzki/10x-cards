@@ -19,6 +19,8 @@ export class FlashcardsPage {
   readonly flashcardBackInput: Locator;
   readonly saveFlashcardButton: Locator;
   readonly cancelFlashcardButton: Locator;
+  readonly flashcardFlashcardModalFrontErrorMessage: Locator;
+  readonly flashcardFlashcardModalBackErrorMessage: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -39,6 +41,8 @@ export class FlashcardsPage {
     this.flashcardBackInput = page.getByTestId("back-textarea");
     this.saveFlashcardButton = page.getByTestId("save-button");
     this.cancelFlashcardButton = page.getByTestId("cancel-button");
+    this.flashcardFlashcardModalFrontErrorMessage = page.getByTestId("front-form-message");
+    this.flashcardFlashcardModalBackErrorMessage = page.getByTestId("back-form-message");
   }
 
   getFlashcardDeleteButton(flashcardId: number): Locator {

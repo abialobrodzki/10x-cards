@@ -42,6 +42,58 @@ test.describe.serial("Flashcards Page", () => {
     await expect(flashcardsPage.container).toBeVisible();
   });
 
+  test("error validation of manual creation of flashcards", async () => {
+    // Arrange
+    const expectedFrontErrorMessage = "Tekst jest za krótki. Minimum to 3 znaki.";
+    const expectedBackErrorMessage = "Tekst jest za krótki. Minimum to 3 znaki.";
+
+    // Act
+    await flashcardsPage.goto();
+    await flashcardsPage.createFlashcardButton.click();
+    await flashcardsPage.flashcardFrontInput.fill(" ");
+    await flashcardsPage.flashcardBackInput.fill(" ");
+    await flashcardsPage.flashcardFrontInput.click();
+
+    // Assert
+    await expect(flashcardsPage.flashcardFlashcardModalFrontErrorMessage).toBeVisible();
+    await expect(
+      flashcardsPage.flashcardFlashcardModalFrontErrorMessage,
+      `Expected front flashcard error message "${expectedFrontErrorMessage}"`
+    ).toHaveText(expectedFrontErrorMessage);
+    await expect(flashcardsPage.flashcardFlashcardModalBackErrorMessage).toBeVisible();
+    await expect(
+      flashcardsPage.flashcardFlashcardModalBackErrorMessage,
+      `Expected back flashcard error message "${expectedBackErrorMessage}"`
+    ).toHaveText(expectedBackErrorMessage);
+    await expect(flashcardsPage.saveFlashcardButton).toBeDisabled();
+  });
+
+  test("error empty validation of manual creation of flashcards", async () => {
+    // Arrange
+    const expectedFrontErrorMessage = "Pole przodu fiszki nie może być puste";
+    const expectedBackErrorMessage = "Pole tyłu fiszki nie może być puste";
+
+    // Act
+    await flashcardsPage.goto();
+    await flashcardsPage.createFlashcardButton.click();
+    await flashcardsPage.flashcardFrontInput.fill("");
+    await flashcardsPage.flashcardBackInput.fill("");
+    await flashcardsPage.flashcardFrontInput.click();
+
+    // Assert
+    await expect(flashcardsPage.flashcardFlashcardModalFrontErrorMessage).toBeVisible();
+    await expect(
+      flashcardsPage.flashcardFlashcardModalFrontErrorMessage,
+      `Expected front flashcard error message "${expectedFrontErrorMessage}"`
+    ).toHaveText(expectedFrontErrorMessage);
+    await expect(flashcardsPage.flashcardFlashcardModalBackErrorMessage).toBeVisible();
+    await expect(
+      flashcardsPage.flashcardFlashcardModalBackErrorMessage,
+      `Expected back flashcard error message "${expectedBackErrorMessage}"`
+    ).toHaveText(expectedBackErrorMessage);
+    await expect(flashcardsPage.saveFlashcardButton).toBeDisabled();
+  });
+
   test("allows manual creation of a new flashcard", async () => {
     // Arrange
     const timestamp = new Date().getTime();

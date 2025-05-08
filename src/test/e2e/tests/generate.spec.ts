@@ -56,6 +56,15 @@ test.describe("Generate Page", () => {
     await expect(generatePage.generateButton).toBeDisabled();
   });
 
+  test("visible link to the Llama terms", async () => {
+    // Arrange
+
+    // Act
+
+    // Assert
+    await expect(generatePage.linkLlama).toBeVisible();
+  });
+
   test("allows generation of a new flashcards", async () => {
     // Arrange
     const expectedHeaderText = "Wygenerowane fiszki (5)";
@@ -83,7 +92,7 @@ test.describe("Generate Page", () => {
     await expect(generatePage.flashCardFifthItemBack).toBeVisible();
   });
 
-  test("allows all of a new flashcards", async () => {
+  test("save all of a new flashcards", async () => {
     // Arrange
     const expectedPopupText = "Zapisano wszystkie 5 fiszki";
     const randomText = generateRandomText(1100, 10000);
@@ -101,7 +110,7 @@ test.describe("Generate Page", () => {
     );
   });
 
-  test("allows simple and editable flashcards", async () => {
+  test("save simple and editable flashcards", async () => {
     // Arrange
     const expectedPopupText = "Zapisano 2 zaakceptowanych fiszek";
     const randomText = generateRandomText(1000, 10000);
@@ -118,5 +127,61 @@ test.describe("Generate Page", () => {
     await expect(generatePage.successAlert, `Expected front flashcard "${expectedPopupText}"`).toHaveText(
       expectedPopupText
     );
+  });
+
+  test("error validation of editable flashcards", async () => {
+    // Arrange
+    const expectedFrontErrorMessage = "Tekst jest za krótki. Minimum to 3 znaki.";
+    const expectedBackErrorMessage = "Tekst jest za krótki. Minimum to 3 znaki.";
+    const randomText = generateRandomText(1000, 10000);
+
+    // Act
+    await generatePage.generateFlashcards(randomText);
+    await expect(generatePage.flashcardList).toBeVisible({ timeout: 20000 });
+    await generatePage.flashCardFifthItemEditButton.click();
+    await generatePage.flashcardFlashcardModalFrontInput.fill(" ");
+    await generatePage.flashcardFlashcardModalBackInput.fill(" ");
+    await generatePage.flashcardFlashcardModalFrontInput.click();
+
+    // Assert
+    await expect(generatePage.flashcardFlashcardModalFrontErrorMessage).toBeVisible();
+    await expect(
+      generatePage.flashcardFlashcardModalFrontErrorMessage,
+      `Expected front flashcard error message "${expectedFrontErrorMessage}"`
+    ).toHaveText(expectedFrontErrorMessage);
+    await expect(generatePage.flashcardFlashcardModalBackErrorMessage).toBeVisible();
+    await expect(
+      generatePage.flashcardFlashcardModalBackErrorMessage,
+      `Expected back flashcard error message "${expectedBackErrorMessage}"`
+    ).toHaveText(expectedBackErrorMessage);
+    await expect(generatePage.flashcardFlashcardModalSaveButton).toBeDisabled();
+  });
+
+  test("error empty validation of editable flashcards", async () => {
+    // Arrange
+    const expectedFrontErrorMessage = "Pole przodu fiszki nie może być puste.";
+    const expectedBackErrorMessage = "Pole tyłu fiszki nie może być puste.";
+    const randomText = generateRandomText(1000, 10000);
+
+    // Act
+    await generatePage.generateFlashcards(randomText);
+    await expect(generatePage.flashcardList).toBeVisible({ timeout: 20000 });
+    await generatePage.flashCardFifthItemEditButton.click();
+    await generatePage.flashcardFlashcardModalFrontInput.clear();
+    await generatePage.flashcardFlashcardModalBackInput.clear();
+    await generatePage.flashcardFlashcardModalFrontInput.click();
+
+    // Assert
+    await expect(generatePage.flashcardFlashcardModalFrontErrorMessage).toBeVisible();
+    await expect(
+      generatePage.flashcardFlashcardModalFrontErrorMessage,
+      `Expected front flashcard error message "${expectedFrontErrorMessage}"`
+    ).toHaveText(expectedFrontErrorMessage);
+    await expect(generatePage.flashcardFlashcardModalBackErrorMessage).toBeVisible();
+    await expect(
+      generatePage.flashcardFlashcardModalBackErrorMessage,
+      `Expected back flashcard error message "${expectedBackErrorMessage}"`
+    ).toHaveText(expectedBackErrorMessage);
+    await expect(generatePage.flashcardFlashcardModalSaveButton).toBeDisabled();
   });
 });

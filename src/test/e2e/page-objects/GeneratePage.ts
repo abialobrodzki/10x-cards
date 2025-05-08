@@ -6,6 +6,7 @@ export class GeneratePage {
   readonly page: Page;
   readonly container: Locator;
   readonly textInputForm: Locator;
+  readonly linkLlama: Locator;
   readonly generateButton: Locator;
   readonly generateSpinner: Locator;
   readonly generatingIndicator: Locator;
@@ -18,6 +19,8 @@ export class GeneratePage {
   readonly flashcardFlashcardModalFrontInput: Locator;
   readonly flashcardFlashcardModalBackInput: Locator;
   readonly flashcardFlashcardModalSaveButton: Locator;
+  readonly flashcardFlashcardModalFrontErrorMessage: Locator;
+  readonly flashcardFlashcardModalBackErrorMessage: Locator;
   readonly flashCardFirstItemFront: Locator;
   readonly flashCardFirstItemBack: Locator;
   readonly flashCardSecondItemFront: Locator;
@@ -51,6 +54,7 @@ export class GeneratePage {
     this.page = page;
     this.container = page.getByTestId("generate-view-container");
     this.textInputForm = page.getByTestId("text-input-textarea");
+    this.linkLlama = page.getByRole("link", { name: "Built with Llama" });
     this.generateButton = page.getByTestId("generate-button");
     this.generateSpinner = page.getByTestId("loading-spinner-container").locator("div").nth(1);
     this.generatingIndicator = page.getByTestId("generating-state-indicator");
@@ -63,6 +67,8 @@ export class GeneratePage {
     this.flashcardFlashcardModalFrontInput = page.getByTestId("edit-flashcard-front-textarea");
     this.flashcardFlashcardModalBackInput = page.getByTestId("edit-flashcard-back-textarea");
     this.flashcardFlashcardModalSaveButton = page.getByTestId("save-edit-button");
+    this.flashcardFlashcardModalFrontErrorMessage = page.getByTestId("front-error-message");
+    this.flashcardFlashcardModalBackErrorMessage = page.getByTestId("back-error-message");
     this.flashCardFirstItemFront = page.getByTestId("flashcard-front-0");
     this.flashCardFirstItemBack = page.getByTestId("flashcard-back-0");
     this.flashCardFirstItemConfirmButton = page.getByTestId("flashcard-accept-button-0");
