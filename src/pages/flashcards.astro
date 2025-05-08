@@ -15,7 +15,7 @@ const userId = Astro.locals.user.id;
 ---
 
 <MainLayout title="Zarządzanie fiszkami | 10xCards">
-  <div class="bg-gray-50 min-h-screen">
+  <div class="bg-gray-50">
     <FlashcardsPage client:load userId={userId} />
   </div>
 </MainLayout>

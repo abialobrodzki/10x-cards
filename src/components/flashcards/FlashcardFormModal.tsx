@@ -75,6 +75,13 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
   const handleSubmit = async (values: FlashcardFormSchema) => {
     setSubmitError(null);
     try {
+      // Check if it is an AI flashcard being edited and if content has changed
+      if (isEditing && flashcard?.source === "ai-full") {
+        if (values.front !== flashcard.front || values.back !== flashcard.back) {
+          values.source = "ai-edited";
+        }
+      }
+
       await onSubmit(values as FlashcardFormValues);
 
       // Po pomyślnym utworzeniu nowej fiszki, resetuj formularz
