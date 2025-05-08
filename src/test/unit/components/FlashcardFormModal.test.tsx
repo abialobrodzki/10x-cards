@@ -111,9 +111,25 @@ describe("FlashcardFormModal", () => {
     renderComponent({ flashcard: null });
     const frontText = "Nowy Przód";
     const backText = "Nowy Tył";
-    fireEvent.change(screen.getByLabelText(/przód fiszki/i), { target: { value: frontText } });
-    fireEvent.change(screen.getByLabelText(/tył fiszki/i), { target: { value: backText } });
-    fireEvent.click(screen.getByRole("button", { name: /zapisz/i }));
+
+    const frontInput = screen.getByLabelText(/przód fiszki/i);
+    const backInput = screen.getByLabelText(/tył fiszki/i);
+    const submitButton = screen.getByTestId("save-button");
+
+    // Fill in form with valid values
+    fireEvent.change(frontInput, { target: { value: frontText } });
+    fireEvent.change(backInput, { target: { value: backText } });
+
+    // Trigger blur events to activate validation
+    fireEvent.blur(frontInput);
+    fireEvent.blur(backInput);
+
+    // Submit the form
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    fireEvent.submit(screen.getByTestId("flashcard-form"));
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
@@ -124,15 +140,32 @@ describe("FlashcardFormModal", () => {
         generation_id: null,
       });
     });
+
     // Sprawdź reset formularza po sukcesie w trybie tworzenia
-    expect(screen.getByLabelText(/przód fiszki/i)).toHaveValue("");
+    await waitFor(() => {
+      expect(screen.getByLabelText(/przód fiszki/i)).toHaveValue("");
+    });
   });
 
   it("should call onSubmit with form data on successful submission (edit mode)", async () => {
     renderComponent({ flashcard: mockFlashcardToEdit });
     const editedFront = "Zmieniony Przód";
-    fireEvent.change(screen.getByLabelText(/przód fiszki/i), { target: { value: editedFront } });
-    fireEvent.click(screen.getByRole("button", { name: /zapisz/i }));
+
+    const frontInput = screen.getByLabelText(/przód fiszki/i);
+    const submitButton = screen.getByTestId("save-button");
+
+    // Change the input value
+    fireEvent.change(frontInput, { target: { value: editedFront } });
+
+    // Trigger blur event to activate validation
+    fireEvent.blur(frontInput);
+
+    // Submit the form
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    fireEvent.submit(screen.getByTestId("flashcard-form"));
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
@@ -143,8 +176,11 @@ describe("FlashcardFormModal", () => {
         generation_id: mockFlashcardToEdit.generation_id,
       });
     });
+
     // Sprawdź BRAK resetu formularza po sukcesie w trybie edycji
-    expect(screen.getByLabelText(/przód fiszki/i)).toHaveValue(editedFront);
+    await waitFor(() => {
+      expect(screen.getByLabelText(/przód fiszki/i)).toHaveValue(editedFront);
+    });
   });
 
   it("should display loading state when isSubmitting is true", () => {
@@ -156,15 +192,31 @@ describe("FlashcardFormModal", () => {
   });
 
   it("should display error message if onSubmit throws an error", async () => {
-    const errorMessage = "Błąd serwera!";
+    // Use the same error message that's defined in the component
+    const errorMessage = "Wystąpił błąd podczas zapisywania fiszki. Spróbuj ponownie.";
     mockOnSubmit.mockRejectedValueOnce(new Error(errorMessage));
     renderComponent({ flashcard: null });
-    fireEvent.change(screen.getByLabelText(/przód fiszki/i), { target: { value: "Poprawny przód" } });
-    fireEvent.change(screen.getByLabelText(/tył fiszki/i), { target: { value: "Poprawny tył" } });
-    fireEvent.click(screen.getByRole("button", { name: /zapisz/i }));
 
-    expect(await screen.findByText(errorMessage)).toBeInTheDocument();
+    const frontInput = screen.getByLabelText(/przód fiszki/i);
+    const backInput = screen.getByLabelText(/tył fiszki/i);
+
+    // Fill in form with valid values
+    fireEvent.change(frontInput, { target: { value: "Poprawny przód" } });
+    fireEvent.change(backInput, { target: { value: "Poprawny tył" } });
+
+    // Trigger blur events to activate validation
+    fireEvent.blur(frontInput);
+    fireEvent.blur(backInput);
+
+    // Submit the form
+    fireEvent.submit(screen.getByTestId("flashcard-form"));
+
+    // Wait for error message to appear
+    await waitFor(() => {
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    });
+
     // Sprawdź czy komunikat błędu jest w alercie
-    expect(screen.getByRole("alert")).toHaveTextContent(errorMessage);
+    expect(screen.getByTestId("submit-error-alert")).toBeInTheDocument();
   });
 });

@@ -112,8 +112,8 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
     >
       <DialogContent className="sm:max-w-[540px]" data-testid="flashcard-form-modal">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edytuj fiszkę" : "Utwórz nową fiszkę"}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle data-testid="dialog-title">{isEditing ? "Edytuj fiszkę" : "Utwórz nową fiszkę"}</DialogTitle>
+          <DialogDescription data-testid="dialog-description">
             {isEditing ? "Zmodyfikuj zawartość fiszki poniżej." : "Wypełnij formularz aby utworzyć nową fiszkę."}
           </DialogDescription>
         </DialogHeader>
@@ -126,14 +126,14 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4" data-testid="flashcard-form">
             <FormField
               control={form.control}
               name="front"
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel>Przód fiszki</FormLabel>
+                    <FormLabel data-testid="front-label">Przód fiszki</FormLabel>
                     <span className="text-xs text-muted-foreground">{field.value.length}/500 znaków</span>
                   </div>
                   <div className="relative">
@@ -170,7 +170,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
                       </Button>
                     )}
                   </div>
-                  <FormMessage />
+                  <FormMessage data-testid="front-form-message" />
                 </FormItem>
               )}
             />
@@ -181,7 +181,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel>Tył fiszki</FormLabel>
+                    <FormLabel data-testid="back-label">Tył fiszki</FormLabel>
                     <span className="text-xs text-muted-foreground">{field.value.length}/500 znaków</span>
                   </div>
                   <div className="relative">
@@ -218,7 +218,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
                       </Button>
                     )}
                   </div>
-                  <FormMessage />
+                  <FormMessage data-testid="back-form-message" />
                 </FormItem>
               )}
             />
@@ -233,11 +233,11 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
               >
                 Anuluj
               </Button>
-              <Button type="submit" disabled={isSubmitting} data-testid="save-button">
+              <Button type="submit" disabled={isSubmitting || !form.formState.isValid} data-testid="save-button">
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Zapisywanie...</span>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loader-icon" />
+                    <span data-testid="loader-text">Zapisywanie...</span>
                   </>
                 ) : (
                   <span>Zapisz</span>
