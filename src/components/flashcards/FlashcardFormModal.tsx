@@ -49,7 +49,7 @@ const FlashcardFormModal = ({ isOpen, onClose, flashcard, onSubmit, isSubmitting
       source: "manual",
       generation_id: null,
     },
-    mode: "onBlur",
+    mode: "onTouched",
   });
 
   // Aktualizacja wartości formularza gdy flashcard się zmienia
