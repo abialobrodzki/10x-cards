@@ -84,21 +84,21 @@ jobs:
 
       - name: Build and run E2E Tests
         run: |
-          # Tworzenie pliku .env.runtime z wszystkimi potrzebnymi zmiennymi
-          echo "CI_TESTING=true" > .env.runtime
-          echo "SUPABASE_URL=$SUPABASE_URL" >> .env.runtime
-          echo "SUPABASE_KEY=$SUPABASE_KEY" >> .env.runtime
-          echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.runtime
-          echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY" >> .env.runtime
-          echo "E2E_USERNAME_ID=$E2E_USERNAME_ID" >> .env.runtime
-          echo "TEST_USER_EMAIL=$TEST_USER_EMAIL" >> .env.runtime
-          echo "TEST_USER_PASSWORD=$TEST_USER_PASSWORD" >> .env.runtime
-          
           # Build z załadowanymi zmiennymi
           CI_TESTING=true npm run build
           
-          # Uruchomienie serwera, który wczyta zmienne z .env.runtime
-          PORT=4321 NODE_ENV=test node -r dotenv/config ./dist/server/entry.mjs dotenv_config_path=.env.runtime &
+          # Uruchomienie serwera z bezpośrednim przekazaniem wszystkich zmiennych środowiskowych
+          SUPABASE_URL=$SUPABASE_URL \
+          SUPABASE_KEY=$SUPABASE_KEY \
+          SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY \
+          OPENROUTER_API_KEY=$OPENROUTER_API_KEY \
+          E2E_USERNAME_ID=$E2E_USERNAME_ID \
+          TEST_USER_EMAIL=$TEST_USER_EMAIL \
+          TEST_USER_PASSWORD=$TEST_USER_PASSWORD \
+          CI_TESTING=true \
+          PORT=4321 \
+          NODE_ENV=test \
+          node ./dist/server/entry.mjs &
           
           # Krótkie oczekiwanie na uruchomienie serwera
           sleep 5
