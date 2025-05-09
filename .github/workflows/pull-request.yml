@@ -81,10 +81,17 @@ jobs:
 
       - name: Start Wrangler Dev Server and Wait
         run: |
-          wrangler dev --local-protocol=http --port 8787 dist &> wrangler.log &
+          npx wrangler dev --local-protocol=http --port 8787 dist/_worker.js/index.js
           sleep 10
         # Wait for Wrangler to start (adjust sleep duration if needed)
         # Check logs for confirmation or use a more robust wait mechanism if necessary
+
+      - name: Display Wrangler Logs
+        if: always() # Ensure this step runs even if the previous one fails in some way (though wrangler dev in background might not cause immediate failure)
+        run: |
+          echo "--- Wrangler Logs ---"
+          cat wrangler.log
+          echo "---------------------"
 
       - name: Install Playwright browser Chromium
         run: npx playwright install --with-deps chromium
