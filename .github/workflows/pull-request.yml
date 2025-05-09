@@ -81,7 +81,7 @@ jobs:
 
       - name: Start Wrangler Dev Server and Wait
         run: |
-          npx wrangler dev --local-protocol=http --port 8787 dist/_worker.js/index.js
+          npx wrangler dev --local-protocol=http --port 8787 dist/_worker.js/index.js &> wrangler.log &
           sleep 10
         # Wait for Wrangler to start (adjust sleep duration if needed)
         # Check logs for confirmation or use a more robust wait mechanism if necessary
