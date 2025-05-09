@@ -20,7 +20,7 @@ const cloudflareAdapter = () => cloudflare();
 export default defineConfig({
   output: "server",
   integrations: [react(), sitemap()],
-  server: { port: 3000 },
+  server: { port: parseInt(process.env.PORT || "3000", 10) },
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
