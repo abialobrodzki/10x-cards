@@ -27,7 +27,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined, // Maksymalna liczba workerów/procesów do równoległego uruchamiania testów (w CI 1, lokalnie auto)
   reporter: [["html", { open: "never" }], ["list"]], // Konfiguracja raportów (generuje raport HTML i listę wyników w konsoli)
   use: {
-    baseURL: "http://localhost:4321", // Bazowy URL dla wszystkich stron w testach (używany z `await page.goto('/')`)
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:4321", // Bazowy URL dla wszystkich stron w testach (używany z `await page.goto('/')`)
     trace: "retain-on-failure", // Zbiera śledzenie testów i zachowuje je tylko w przypadku niepowodzenia testu
     screenshot: "only-on-failure", // Robi zrzuty ekranu tylko w przypadku niepowodzenia testu
     video: "retain-on-failure", // Nagrywa wideo testów i zachowuje je tylko w przypadku niepowodzenia testu
