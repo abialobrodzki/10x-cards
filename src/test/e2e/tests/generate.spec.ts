@@ -13,7 +13,7 @@ function generateRandomText(minLength: number, maxLength: number): string {
   return result;
 }
 
-test.describe("Generate Page", () => {
+test.describe.serial("Generate Page", () => {
   let loginPage: LoginPage;
   let generatePage: GeneratePage;
   let userEmail: string;

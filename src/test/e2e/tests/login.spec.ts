@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { LoginPage } from "../page-objects/LoginPage";
 
-test.describe("Login Page", () => {
+test.describe.serial("Login Page", () => {
   let loginPage: LoginPage;
   let userEmail: string;
   let userPassword: string;

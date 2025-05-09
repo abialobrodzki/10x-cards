@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { RegisterPage } from "../page-objects/RegisterPage";
 import { LoginPage } from "../page-objects/LoginPage";
 
-test.describe("Register Page", () => {
+test.describe.serial("Register Page", () => {
   let registerPage: RegisterPage;
 
   test.beforeEach(async ({ page }) => {

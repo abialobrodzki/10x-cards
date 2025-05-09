@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { LoginPage } from "../page-objects/LoginPage";
 
-test.describe("Smoke tests", () => {
+test.describe.serial("Smoke tests", () => {
   let loginPage: LoginPage;
 
   test.beforeEach(async ({ page }) => {

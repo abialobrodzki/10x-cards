@@ -6,7 +6,7 @@ import { GeneratePage } from "../page-objects/GeneratePage";
 import { FlashcardsPage } from "../page-objects/FlashcardsPage";
 
 // Aby wygenerować bazowe zrzuty, najpierw uruchom test z flagą --update-snapshots
-test.describe("Visual tests @visual", () => {
+test.describe.serial("Visual tests @visual", () => {
   let loginPage: LoginPage;
   let registerPage: RegisterPage;
   let forgotPasswordPage: ForgotPasswordPage;
