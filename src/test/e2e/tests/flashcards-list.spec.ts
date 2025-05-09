@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { LoginPage } from "../page-objects/LoginPage";
 import { FlashcardsPage } from "../page-objects/FlashcardsPage";
+import { GeneratePage } from "../page-objects/GeneratePage";
 
 test.describe.serial("Flashcards Page", () => {
   let loginPage: LoginPage;
   let flashcardsPage: FlashcardsPage;
+  let generatePage: GeneratePage;
   let userEmail: string;
   let userPassword: string;
 
@@ -25,9 +27,11 @@ test.describe.serial("Flashcards Page", () => {
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     flashcardsPage = new FlashcardsPage(page);
+    generatePage = new GeneratePage(page);
     await loginPage.goto();
     await loginPage.login(userEmail, userPassword);
     await expect(page).toHaveURL("/generate");
+    await expect(generatePage.linkLlama).toBeVisible();
   });
 
   test("successfully navigates to the flashcards page", async ({ page }) => {

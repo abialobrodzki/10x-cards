@@ -105,6 +105,7 @@ export class GeneratePage {
   }
 
   async generateFlashcards(text: string) {
+    await this.textInputForm.click();
     await this.textInputForm.fill(text);
     await this.generateButton.click();
   }

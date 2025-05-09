@@ -39,6 +39,7 @@ test.describe("Generate Page", () => {
     await loginPage.goto();
     await loginPage.login(userEmail, userPassword);
     await expect(page).toHaveURL("/generate");
+    await expect(generatePage.linkLlama).toBeVisible();
   });
 
   test("successfully navigates to the generate page", async ({ page }) => {
@@ -68,7 +69,7 @@ test.describe("Generate Page", () => {
   test("allows generation of a new flashcards", async () => {
     // Arrange
     const expectedHeaderText = "Wygenerowane fiszki (5)";
-    const randomText = generateRandomText(1000, 10000);
+    const randomText = generateRandomText(1100, 9900);
 
     // Act
     await generatePage.generateFlashcards(randomText);
@@ -113,9 +114,9 @@ test.describe("Generate Page", () => {
   test("save simple and editable flashcards", async () => {
     // Arrange
     const expectedPopupText = "Zapisano 2 zaakceptowanych fiszek";
-    const randomText = generateRandomText(1000, 10000);
-    const front = generateRandomText(3, 100);
-    const back = generateRandomText(3, 100);
+    const randomText = generateRandomText(1100, 9900);
+    const front = generateRandomText(4, 90);
+    const back = generateRandomText(4, 90);
 
     // Act
     await generatePage.generateFlashcards(randomText);
@@ -133,7 +134,7 @@ test.describe("Generate Page", () => {
     // Arrange
     const expectedFrontErrorMessage = "Tekst jest za krótki. Minimum to 3 znaki.";
     const expectedBackErrorMessage = "Tekst jest za krótki. Minimum to 3 znaki.";
-    const randomText = generateRandomText(1000, 10000);
+    const randomText = generateRandomText(1100, 9900);
 
     // Act
     await generatePage.generateFlashcards(randomText);
@@ -161,7 +162,7 @@ test.describe("Generate Page", () => {
     // Arrange
     const expectedFrontErrorMessage = "Pole przodu fiszki nie może być puste.";
     const expectedBackErrorMessage = "Pole tyłu fiszki nie może być puste.";
-    const randomText = generateRandomText(1000, 10000);
+    const randomText = generateRandomText(1100, 9900);
 
     // Act
     await generatePage.generateFlashcards(randomText);
