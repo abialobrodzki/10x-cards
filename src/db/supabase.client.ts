@@ -100,7 +100,7 @@ export const createSupabaseServerInstance = (context: CloudflareAPIContext) => {
       console.log(`createSupabaseServerInstance: Attempting to use ${sourceDescription}`);
       supabaseUrl = process.env.SUPABASE_URL;
       supabaseKey = process.env.SUPABASE_KEY;
-      
+
       if (!supabaseUrl || !supabaseKey) {
         // In production/deployment, if nothing was found, we should fail.
         sourceDescription = "production environment (all sources checked)";

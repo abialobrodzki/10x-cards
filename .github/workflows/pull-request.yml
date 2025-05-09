@@ -86,7 +86,7 @@ jobs:
         run: |
           # Build z załadowanymi zmiennymi
           CI_TESTING=true npm run build
-          
+
           # Tworzenie pliku .env.runtime z wszystkimi potrzebnymi zmiennymi
           echo "SUPABASE_URL=$SUPABASE_URL" > .env.runtime
           echo "SUPABASE_KEY=$SUPABASE_KEY" >> .env.runtime
@@ -98,13 +98,13 @@ jobs:
           echo "CI_TESTING=true" >> .env.runtime
           echo "PORT=4321" >> .env.runtime
           echo "NODE_ENV=test" >> .env.runtime
-          
+
           # Uruchomienie serwera z załadowaniem zmiennych z pliku .env.runtime
           node -r dotenv/config ./dist/server/entry.mjs dotenv_config_path=.env.runtime &
-          
+
           # Krótkie oczekiwanie na uruchomienie serwera
           sleep 5
-          
+
           # Uruchomienie testów Playwright
           npx playwright test --project=chromium --grep-invert @visual
         env:
