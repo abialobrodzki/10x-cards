@@ -55,20 +55,6 @@ export default defineConfig({
     //   use: { ...devices["iPhone 14"] },
     // },
   ],
-  webServer: {
-    command: "npm run preview -- --port 4321", // Komenda do uruchomienia serwera webowego przed testami
-    port: 4321, // Port, na którym serwer webowy będzie nasłuchiwał
-    reuseExistingServer: !process.env.CI, // Ponownie używa istniejącego serwera, jeśli jest dostępny (wyłączone w CI)
-    env: {
-      // Pass Supabase and other required runtime env vars to the preview server
-      // These are read from process.env, which gets them from GitHub secrets
-      SUPABASE_URL: process.env.SUPABASE_URL ?? "", // Przekazuje URL Supabase do serwera webowego
-      SUPABASE_KEY: process.env.SUPABASE_KEY ?? "", // Przekazuje klucz Supabase do serwera webowego
-      // Note: SERVICE_ROLE_KEY is typically NOT needed by the frontend/preview server
-      // Pass any other runtime variables your Astro app needs here
-      OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY ?? "", // Przekazuje klucz API OpenRouter do serwera webowego
-    }, // Zmienne środowiskowe przekazywane do procesu serwera webowego
-  },
   // Global Setup: czyszczenie bazy przed testami
   globalSetup: "./src/test/e2e/global.setup.ts", // Ścieżka do pliku globalnego setupu (uruchamiany raz przed wszystkimi testami)
   // Global Teardown: czyszczenie bazy po testach
