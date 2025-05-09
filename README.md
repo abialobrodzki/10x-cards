@@ -1,4 +1,4 @@
-# ![10x-cards Icon](public/favicon.png) 10x-cards
+# ![10x-cards Icon](public/favicon.png) 10x-cards.test
 
 ## ✨ Overview
 
