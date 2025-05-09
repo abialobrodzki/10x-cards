@@ -84,9 +84,26 @@ jobs:
 
       - name: Build and run E2E Tests
         run: |
+          # Tworzenie pliku .env.runtime z wszystkimi potrzebnymi zmiennymi
+          echo "CI_TESTING=true" > .env.runtime
+          echo "SUPABASE_URL=$SUPABASE_URL" >> .env.runtime
+          echo "SUPABASE_KEY=$SUPABASE_KEY" >> .env.runtime
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.runtime
+          echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY" >> .env.runtime
+          echo "E2E_USERNAME_ID=$E2E_USERNAME_ID" >> .env.runtime
+          echo "TEST_USER_EMAIL=$TEST_USER_EMAIL" >> .env.runtime
+          echo "TEST_USER_PASSWORD=$TEST_USER_PASSWORD" >> .env.runtime
+          
+          # Build z załadowanymi zmiennymi
           CI_TESTING=true npm run build
-          PORT=4321 NODE_ENV=test node ./dist/server/entry.mjs &
+          
+          # Uruchomienie serwera, który wczyta zmienne z .env.runtime
+          PORT=4321 NODE_ENV=test node -r dotenv/config ./dist/server/entry.mjs dotenv_config_path=.env.runtime &
+          
+          # Krótkie oczekiwanie na uruchomienie serwera
           sleep 5
+          
+          # Uruchomienie testów Playwright
           npx playwright test --project=chromium --grep-invert @visual
         env:
           CI_TESTING: true
