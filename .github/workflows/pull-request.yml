@@ -73,24 +73,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Application
-        run: npm run build
-
-      - name: Start Astro Dev Server and Wait
+      - name: Start Server for E2E tests (using dev:e2e script)
         env:
           PORT: 4321
         run: |
-          npm run dev -- --port $PORT &> astro_dev.log &
-          echo "Waiting for Astro dev server to be ready on http://localhost:$PORT..."
+          npm run dev:e2e &> astro_dev_e2e.log &
+          echo "Waiting for server (dev:e2e) to be ready on http://localhost:$PORT..."
           npx wait-on http://localhost:$PORT --timeout 120000
-          echo "Astro dev server is ready!"
+          echo "Server (dev:e2e) is ready!"
 
-      - name: Display Astro Dev Server Logs
+      - name: Display Server (dev:e2e) Logs
         if: always()
         run: |
-          echo "--- Astro Dev Server Logs ---"
-          cat astro_dev.log || echo "astro_dev.log not found or empty"
-          echo "-----------------------------"
+          echo "--- Server (dev:e2e) Logs ---"
+          cat astro_dev_e2e.log || echo "astro_dev_e2e.log not found or empty"
+          echo "---------------------------"
 
       - name: Install Playwright browser Chromium
         run: npx playwright install --with-deps chromium
