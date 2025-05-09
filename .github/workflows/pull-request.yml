@@ -73,25 +73,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Wrangler
-        run: npm install -g wrangler
-
       - name: Build Application
         run: npm run build
 
-      - name: Start Wrangler Dev Server and Wait
+      - name: Start Astro Dev Server and Wait
+        env:
+          PORT: 4321
         run: |
-          npx wrangler dev --local-protocol=http --port 8787 dist/_worker.js/index.js &> wrangler.log &
-          sleep 10
-        # Wait for Wrangler to start (adjust sleep duration if needed)
-        # Check logs for confirmation or use a more robust wait mechanism if necessary
+          npm run dev -- --port $PORT &> astro_dev.log &
+          echo "Waiting for Astro dev server to be ready on http://localhost:$PORT..."
+          npx wait-on http://localhost:$PORT --timeout 120000
+          echo "Astro dev server is ready!"
 
-      - name: Display Wrangler Logs
-        if: always() # Ensure this step runs even if the previous one fails in some way (though wrangler dev in background might not cause immediate failure)
+      - name: Display Astro Dev Server Logs
+        if: always()
         run: |
-          echo "--- Wrangler Logs ---"
-          cat wrangler.log
-          echo "---------------------"
+          echo "--- Astro Dev Server Logs ---"
+          cat astro_dev.log || echo "astro_dev.log not found or empty"
+          echo "-----------------------------"
 
       - name: Install Playwright browser Chromium
         run: npx playwright install --with-deps chromium
@@ -106,12 +105,7 @@ jobs:
           E2E_USERNAME_ID: ${{ secrets.E2E_USERNAME_ID }}
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          # Configure Playwright to use the wrangler dev server address
-          PLAYWRIGHT_TEST_BASE_URL: http://localhost:8787
-
-      # You might want to add a step here to stop the background wrangler process,
-      # but GitHub Actions typically cleans up background processes when a step finishes.
-      # If issues arise, a specific kill command might be needed.
+          PLAYWRIGHT_TEST_BASE_URL: http://localhost:4321
 
       - name: Upload E2E test coverage reports
         uses: actions/upload-artifact@v4
