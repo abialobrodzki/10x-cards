@@ -101,8 +101,8 @@ npm run build
 │ └── assets/ # Static assets
 └── public/ # Public assets
 └── src/test/ # Test files
-│   ├── unit/ # Unit and integration tests
-│   └── e2e/ # End-to-end tests
+│ ├── unit/ # Unit and integration tests
+│ └── e2e/ # End-to-end tests
 ```
 
 ## 📦 Deployments & Hosting
@@ -140,10 +140,10 @@ Llama 4 is licensed under the [Llama 4 License](https://github.com/meta-llama/ll
 
 This document outlines the testing infrastructure and practices for the 10xCards project.
 
-| Testing Type               | Tools                                              |
-|----------------------------|----------------------------------------------------|
+| Testing Type                 | Tools                                                         |
+| ---------------------------- | ------------------------------------------------------------- |
 | Unit and Integration Testing | Vitest, React Testing Library, MSW, @testing-library/jest-dom |
-| End-to-End Testing         | Playwright, Axe-core                               |
+| End-to-End Testing           | Playwright, Axe-core                                          |
 
 ### Testing Structure
 
@@ -153,16 +153,16 @@ This document outlines the testing infrastructure and practices for the 10xCards
 
 ### Running Tests
 
-| Test Type    | Description                      | Command                          |
-|--------------|----------------------------------|----------------------------------|
-| Unit Tests   | Run all unit tests               | `npm test`                       |
-| Unit Tests   | Watch mode for development       | `npm run test:watch`             |
-| Unit Tests   | Open UI for interactive testing  | `npm run test:ui`                |
-| Unit Tests   | Generate coverage report         | `npm run test:coverage`          |
-| E2E Tests    | Run all E2E tests                | `npm run test:e2e`               |
-| E2E Tests    | Open UI for interactive E2E testing | `npm run test:e2e:ui`            |
-| E2E Tests    | Debug mode with step-by-step execution | `npm run test:e2e:debug`         |
-| E2E Tests    | Update screenshot baselines      | `npm run test:e2e -- --update-snapshots` |
+| Test Type  | Description                            | Command                                  |
+| ---------- | -------------------------------------- | ---------------------------------------- |
+| Unit Tests | Run all unit tests                     | `npm test`                               |
+| Unit Tests | Watch mode for development             | `npm run test:watch`                     |
+| Unit Tests | Open UI for interactive testing        | `npm run test:ui`                        |
+| Unit Tests | Generate coverage report               | `npm run test:coverage`                  |
+| E2E Tests  | Run all E2E tests                      | `npm run test:e2e`                       |
+| E2E Tests  | Open UI for interactive E2E testing    | `npm run test:e2e:ui`                    |
+| E2E Tests  | Debug mode with step-by-step execution | `npm run test:e2e:debug`                 |
+| E2E Tests  | Update screenshot baselines            | `npm run test:e2e -- --update-snapshots` |
 
 ### Setting up Local Environment for Testing
 
@@ -180,13 +180,13 @@ dev:e2e npm run dev astro dev -- --mode test --port4321 # for e2e tests in port 
 
 ### Unit Testing and E2E Testing Best Practices
 
-| Unit Testing Best Practices             | E2E Testing Best Practices                      |
-| :-------------------------------------- | :---------------------------------------------- |
-| Use `test.each` for parameterized tests | Use the Page Object Model pattern for maintainable tests |
-| Mock external dependencies              | Use locators for resilient element selection    |
+| Unit Testing Best Practices                   | E2E Testing Best Practices                                         |
+| :-------------------------------------------- | :----------------------------------------------------------------- |
+| Use `test.each` for parameterized tests       | Use the Page Object Model pattern for maintainable tests           |
+| Mock external dependencies                    | Use locators for resilient element selection                       |
 | Focus on testing behavior, not implementation | Implement visual comparison with `expect(page).toHaveScreenshot()` |
-| Use the smallest possible rendering scope | Use trace viewer for debugging test failures      |
-| Keep tests isolated from each other     | Test accessibility with axe-core                |
+| Use the smallest possible rendering scope     | Use trace viewer for debugging test failures                       |
+| Keep tests isolated from each other           | Test accessibility with axe-core                                   |
 
 ### Common Issues
 
