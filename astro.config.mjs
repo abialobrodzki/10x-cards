@@ -1,5 +1,4 @@
 // @ts-check
-/* eslint-disable no-undef */
 import { defineConfig } from "astro/config";
 import process from "node:process";
 
