@@ -76,8 +76,12 @@ jobs:
       - name: Install Playwright browser Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E Tests and collect coverage
-        run: npm run test:e2e:run -- --project=chromium --grep-invert @visual
+      - name: Build and run E2E Tests
+        run: |
+          CI_TESTING=true npm run build
+          NODE_ENV=test node ./dist/server/entry.mjs &
+          sleep 5
+          npx playwright test --project=chromium --grep-invert @visual
         env:
           CI_TESTING: true
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
