@@ -43,7 +43,7 @@ test.describe.serial("Register Page", () => {
 
   test("allows resetting password with valid credentials", async ({ page }) => {
     // Arrange
-    const email = process.env.TEST_USER_EMAIL_RESEND;
+    const email = process.env.TEST_USER_EMAIL;
     const expectedUrl = "/auth/forgot-password";
     const forgotPasswordPage = new ForgotPasswordPage(page);
 
