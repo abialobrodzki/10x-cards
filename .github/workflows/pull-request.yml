@@ -79,6 +79,7 @@ jobs:
       - name: Run E2E Tests and collect coverage
         run: npm run test:e2e:run -- --project=chromium --grep-invert @visual
         env:
+          CI_TESTING: true
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}

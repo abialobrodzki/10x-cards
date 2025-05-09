@@ -1,10 +1,17 @@
 // @ts-check
+
 import { defineConfig } from "astro/config";
+import process from "node:process";
 
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
+import node from "@astrojs/node";
+
+// Funkcje tworzące adapter dla czytelności i uniknięcia błędów lintowania
+const nodeAdapter = () => node({ mode: "standalone" });
+const cloudflareAdapter = () => cloudflare();
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,7 +31,8 @@ export default defineConfig({
       ],
     },
   },
-  adapter: cloudflare(),
+  // Używamy adaptera Node w środowisku testowym CI, a Cloudflare w produkcji
+  adapter: process.env.CI_TESTING ? nodeAdapter() : cloudflareAdapter(),
   experimental: {
     session: true,
   },
