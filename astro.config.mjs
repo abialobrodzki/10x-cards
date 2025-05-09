@@ -1,5 +1,5 @@
 // @ts-check
-
+/* eslint-disable no-undef */
 import { defineConfig } from "astro/config";
 import process from "node:process";
 
@@ -13,7 +13,7 @@ import node from "@astrojs/node";
 const nodeAdapter = () =>
   node({
     mode: "standalone",
-    port: process.env.PORT || 4321, // Użycie portu 4321 jako domyślnego dla testów E2E
+    // Port jest ustawiany przez zmienną środowiskową PORT, nie przez konfigurację adaptera
   });
 const cloudflareAdapter = () => cloudflare();
 

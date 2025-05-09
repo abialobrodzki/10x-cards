@@ -58,7 +58,7 @@ export default defineConfig({
   webServer: {
     command: "npm run preview -- --port 4321", // Komenda do uruchomienia serwera webowego przed testami
     port: 4321, // Port, na którym serwer webowy będzie nasłuchiwał
-    reuseExistingServer: !process.env.CI, // Ponownie używa istniejącego serwera, jeśli jest dostępny (wyłączone w CI)
+    reuseExistingServer: true, // Zawsze używaj istniejącego serwera, jeśli jest dostępny
     env: {
       // Pass Supabase and other required runtime env vars to the preview server
       // These are read from process.env, which gets them from GitHub secrets

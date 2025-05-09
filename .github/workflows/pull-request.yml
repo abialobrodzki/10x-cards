@@ -76,6 +76,12 @@ jobs:
       - name: Install Playwright browser Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Check and kill process on port 4321
+        run: |
+          lsof -i :4321 | grep LISTEN | awk '{print $2}' | xargs -r kill -9 || true
+          # Sprawdź czy port jest wolny
+          nc -z localhost 4321 || echo "Port 4321 is free"
+
       - name: Build and run E2E Tests
         run: |
           CI_TESTING=true npm run build
