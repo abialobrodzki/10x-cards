@@ -79,7 +79,7 @@ jobs:
       - name: Build and run E2E Tests
         run: |
           CI_TESTING=true npm run build
-          NODE_ENV=test node ./dist/server/entry.mjs &
+          PORT=4321 NODE_ENV=test node ./dist/server/entry.mjs &
           sleep 5
           npx playwright test --project=chromium --grep-invert @visual
         env:

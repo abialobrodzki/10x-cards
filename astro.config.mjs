@@ -10,7 +10,11 @@ import cloudflare from "@astrojs/cloudflare";
 import node from "@astrojs/node";
 
 // Funkcje tworzące adapter dla czytelności i uniknięcia błędów lintowania
-const nodeAdapter = () => node({ mode: "standalone" });
+const nodeAdapter = () =>
+  node({
+    mode: "standalone",
+    port: process.env.PORT || 4321, // Użycie portu 4321 jako domyślnego dla testów E2E
+  });
 const cloudflareAdapter = () => cloudflare();
 
 // https://astro.build/config
