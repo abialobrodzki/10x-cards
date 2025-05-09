@@ -73,27 +73,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Start Server for E2E tests (using dev:e2e script)
-        env:
-          PORT: 4321
-        run: |
-          npm run dev:e2e &> astro_dev_e2e.log &
-          echo "Waiting for server (dev:e2e) to be ready on http://localhost:$PORT..."
-          npx wait-on http://localhost:$PORT --timeout 120000
-          echo "Server (dev:e2e) is ready!"
-
-      - name: Display Server (dev:e2e) Logs
-        if: always()
-        run: |
-          echo "--- Server (dev:e2e) Logs ---"
-          cat astro_dev_e2e.log || echo "astro_dev_e2e.log not found or empty"
-          echo "---------------------------"
-
       - name: Install Playwright browser Chromium
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E Tests and collect coverage
-        run: npx playwright test --project=chromium --grep-invert @visual
+        run: npm run test:e2e:run -- --project=chromium --grep-invert @visual
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -102,7 +86,6 @@ jobs:
           E2E_USERNAME_ID: ${{ secrets.E2E_USERNAME_ID }}
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          PLAYWRIGHT_TEST_BASE_URL: http://localhost:4321
 
       - name: Upload E2E test coverage reports
         uses: actions/upload-artifact@v4
