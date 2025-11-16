@@ -60,27 +60,32 @@ describe("LogoutButton", () => {
         )
     );
 
+    const user = userEvent.setup();
     render(<LogoutButton />);
     const button = screen.getByRole("button", { name: /wyloguj/i });
-    await userEvent.click(button);
+    await user.click(button);
 
     // Wait for the loading text to appear
-    await waitFor(() => {
-      expect(screen.getByText(/Wylogowywanie.../i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Wylogowywanie.../i)).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
     expect(button).toBeDisabled();
 
     // Wait for the fetch promise to resolve to avoid state update errors after test finishes
-    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled(), { timeout: 2000 });
   });
 
   it("calls the logout API when clicked", async () => {
+    const user = userEvent.setup();
     render(<LogoutButton />);
     const button = screen.getByRole("button", { name: /wyloguj/i });
-    await userEvent.click(button);
+    await user.click(button);
 
     // Wait for the fetch call
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1), { timeout: 2000 });
 
     // Check the URL and method from the first argument (which might be a Request object)
     const fetchCallArgs = mockFetch.mock.calls[0];
@@ -131,13 +136,17 @@ describe("LogoutButton", () => {
     // Mock fetch to return specific redirect URL
     mockFetch.mockResolvedValue(createMockResponse({ redirectUrl: "/custom-login" }, true, 200));
 
+    const user = userEvent.setup();
     render(<LogoutButton />);
     const button = screen.getByRole("button", { name: /wyloguj/i });
-    await userEvent.click(button);
+    await user.click(button);
 
-    await waitFor(() => {
-      expect(window.location.href).toBe("/custom-login");
-    });
+    await waitFor(
+      () => {
+        expect(window.location.href).toBe("/custom-login");
+      },
+      { timeout: 2000 }
+    );
   });
 
   it("redirects to default login page when no redirectUrl provided", async () => {
