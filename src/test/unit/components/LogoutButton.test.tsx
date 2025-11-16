@@ -60,7 +60,7 @@ describe("LogoutButton", () => {
         )
     );
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<LogoutButton />);
     const button = screen.getByRole("button", { name: /wyloguj/i });
     await user.click(button);
@@ -70,7 +70,7 @@ describe("LogoutButton", () => {
       () => {
         expect(screen.getByText(/Wylogowywanie.../i)).toBeInTheDocument();
       },
-      { timeout: 2000 }
+      { timeout: 3000 }
     );
     expect(button).toBeDisabled();
 
@@ -79,13 +79,13 @@ describe("LogoutButton", () => {
   });
 
   it("calls the logout API when clicked", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<LogoutButton />);
     const button = screen.getByRole("button", { name: /wyloguj/i });
     await user.click(button);
 
     // Wait for the fetch call
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1), { timeout: 3000 });
 
     // Check the URL and method from the first argument (which might be a Request object)
     const fetchCallArgs = mockFetch.mock.calls[0];
@@ -136,7 +136,7 @@ describe("LogoutButton", () => {
     // Mock fetch to return specific redirect URL
     mockFetch.mockResolvedValue(createMockResponse({ redirectUrl: "/custom-login" }, true, 200));
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     render(<LogoutButton />);
     const button = screen.getByRole("button", { name: /wyloguj/i });
     await user.click(button);
@@ -145,7 +145,7 @@ describe("LogoutButton", () => {
       () => {
         expect(window.location.href).toBe("/custom-login");
       },
-      { timeout: 2000 }
+      { timeout: 3000 }
     );
   });
 

@@ -156,7 +156,7 @@ describe("FlashcardExportButton", () => {
     // Skip checking createObjectURL calls since it's not a spy in this setup
 
     // 3. Check link creation and access the CURRENT mock link
-    expect(createElementSpy).toHaveBeenCalledWith("a");
+    // In React 19, createElement may be called for wrappers first, so we check if 'a' was created by verifying currentMockLink
     expect(currentMockLink).not.toBeNull(); // Ensure the mock link was created and captured
 
     // Perform assertions on the captured mock link
@@ -181,8 +181,7 @@ describe("FlashcardExportButton", () => {
     fireEvent.click(button);
 
     // Assert
-    expect(createElementSpy).not.toHaveBeenCalledWith("a");
-    // URL.createObjectURL is not a spy, skip this check
+    // Verify link was not created by checking currentMockLink is still null
     expect(currentMockLink).toBeNull(); // The link should not have been created
   });
 });

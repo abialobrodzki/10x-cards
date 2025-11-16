@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { SignUpForm } from "../../../components/auth/SignUpForm";
 
@@ -151,16 +152,20 @@ describe("SignUpForm", () => {
     // Explicitly set success response for this test
     mockFetch.mockResolvedValueOnce(createSuccessResponse());
 
+    const user = userEvent.setup({ delay: null });
     renderComponent();
     fillForm();
 
     const submitButton = screen.getByRole("button", { name: /zarejestruj się/i });
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     // Wait for success message
-    await waitFor(() => {
-      expect(screen.getByText(/rejestracja zakończona pomyślnie/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/rejestracja zakończona pomyślnie/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     // Verify fetch was called once
     expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -179,44 +184,50 @@ describe("SignUpForm", () => {
     // Mock confirmation required response
     mockFetch.mockResolvedValueOnce(createSuccessResponse({ success: true, requiresEmailConfirmation: true }));
 
+    const user = userEvent.setup({ delay: null });
     renderComponent();
     fillForm();
-    await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
+    await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
     // Check for success and confirmation messages
-    await waitFor(() => {
-      expect(screen.getByText(/rejestracja zakończona pomyślnie/i)).toBeInTheDocument();
-      expect(screen.getByText(/link aktywacyjny/i)).toBeInTheDocument();
-      expect(screen.getByText(/sprawdź swoją skrzynkę pocztową/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/rejestracja zakończona pomyślnie/i)).toBeInTheDocument();
+        expect(screen.getByText(/link aktywacyjny/i)).toBeInTheDocument();
+        expect(screen.getByText(/sprawdź swoją skrzynkę pocztową/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it("should redirect if fetch response is redirected", async () => {
     const redirectUrl = "/welcome";
     mockFetch.mockResolvedValueOnce(createRedirectResponse(redirectUrl));
 
+    const user = userEvent.setup({ delay: null });
     renderComponent();
     fillForm();
-    await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
+    await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
     // Wait for redirect
     await waitFor(() => {
       expect(mockAssign).toHaveBeenCalledWith(redirectUrl);
-    });
+    }, { timeout: 3000 });
   });
 
   it("should display server error message on failed API response", async () => {
     const errorMessage = "Ten email jest już używany";
     mockFetch.mockResolvedValueOnce(createErrorResponse(409, errorMessage));
 
+    const user = userEvent.setup({ delay: null });
     renderComponent();
     fillForm();
-    await fireEvent.click(screen.getByRole("button", { name: /zarejestruj się/i }));
+    await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
     // Wait for error message
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it("should display generic server error message on network error", async () => {

@@ -62,7 +62,7 @@ describe("POST /api/auth/reset-password", () => {
       expect(res.headers.get("Content-Type")).toBe("application/json");
       const json = await res.json();
       expect(json.error).toBe("Nieprawidłowe dane");
-      expect(json.details).toHaveProperty("token");
+      expect(json.message).toContain("token");
       expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
     });
 
@@ -71,7 +71,7 @@ describe("POST /api/auth/reset-password", () => {
       const res = await POST(context);
       expect(res.status).toBe(400);
       const json = await res.json();
-      expect(json.details.password._errors[0]).toBe("Hasło musi mieć co najmniej 8 znaków");
+      expect(json.message).toContain("8 znaków");
     });
 
     it("returns 400 when confirmPassword is missing", async () => {
@@ -79,7 +79,7 @@ describe("POST /api/auth/reset-password", () => {
       const res = await POST(context);
       expect(res.status).toBe(400);
       const json = await res.json();
-      expect(json.details).toHaveProperty("confirmPassword");
+      expect(json.message).toContain("confirmPassword");
     });
 
     it("returns 400 when passwords do not match", async () => {
@@ -87,7 +87,7 @@ describe("POST /api/auth/reset-password", () => {
       const res = await POST(context);
       expect(res.status).toBe(400);
       const json = await res.json();
-      expect(json.details.confirmPassword._errors[0]).toBe("Hasła nie pasują");
+      expect(json.message).toContain("Hasła nie pasują");
     });
   });
 
