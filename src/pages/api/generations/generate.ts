@@ -78,10 +78,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.log("Validation result:", result.success ? "Passed" : "Failed");
 
     if (!result.success) {
-      console.log("Validation failed:", result.error.errors[0].message);
+      console.log("Validation failed:", result.error.issues[0]?.message);
       return new Response(
         JSON.stringify({
-          error: result.error.errors[0].message,
+          error: result.error.issues[0]?.message || "Validation error",
         }),
         {
           status: 400,

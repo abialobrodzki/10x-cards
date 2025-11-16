@@ -66,12 +66,11 @@ export async function POST(context: APIContext) {
     const validationResult = resetPasswordSchema.safeParse(body);
 
     if (!validationResult.success) {
-      console.error("Błąd walidacji:", validationResult.error.format());
+      console.error("Błąd walidacji:", validationResult.error.issues);
       return new Response(
         JSON.stringify({
           error: "Nieprawidłowe dane",
-          details: validationResult.error.format(),
-          message: validationResult.error.errors[0]?.message || "Brak tokenu/kodu resetu lub nieprawidłowe hasło",
+          message: validationResult.error.issues[0]?.message || "Brak tokenu/kodu resetu lub nieprawidłowe hasło",
         }),
         {
           status: 400,

@@ -126,7 +126,7 @@ export const responseFormatSchema = z.object({
   json_schema: z.object({
     name: z.string(),
     strict: z.boolean(),
-    schema: z.record(z.unknown()),
+    schema: z.record(z.string(), z.unknown()),
   }),
 });
 
