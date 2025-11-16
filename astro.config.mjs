@@ -36,7 +36,4 @@ export default defineConfig({
   },
   // Używamy adaptera Node w środowisku testowym CI, a Cloudflare w produkcji
   adapter: process.env.CI_TESTING ? nodeAdapter() : cloudflareAdapter(),
-  experimental: {
-    session: true,
-  },
 });
